@@ -29,7 +29,7 @@ export class ManagedTransaction {
   status: TransactionStatus;
 
   @Column({ type: 'text', nullable: true, name: 'dispute_reason' })
-  disputeReason: string;
+  disputeReason: string | null;
 
   @Column({ type: 'boolean', default: false, name: 'is_disputed' })
   isDisputed: boolean;

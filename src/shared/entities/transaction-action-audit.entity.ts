@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { ManagedTransaction } from './managed-transaction.entity';
 import { AdminUser } from './admin-user.entity';
 
@@ -7,29 +7,31 @@ export class TransactionActionAudit {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @ManyToOne(() => ManagedTransaction, (t) => t.actionAudits, { onDelete: 'CASCADE', nullable: false })
+  @Column({ name: 'transaction_id', type: 'bigint' })
+  transactionId: number;
+
+  @ManyToOne(() => ManagedTransaction, (t) => t.actionAudits, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'transaction_id' })
   transaction: ManagedTransaction;
-  @RelationId((a: TransactionActionAudit) => a.transaction)
-  readonly transactionId?: number;
 
-  @Column({ type: 'varchar', length: 50, name: 'action_type' })
-  actionType: string;
+  @Column({ name: 'performed_by', type: 'bigint' })
+  performedById: number;
 
-  @ManyToOne(() => AdminUser, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => AdminUser, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'performed_by' })
   performedBy: AdminUser;
-  @RelationId((a: TransactionActionAudit) => a.performedBy)
-  readonly performedById?: number;
+
+  @Column({ name: 'action_type', type: 'varchar', length: 50 })
+  actionType: string;
 
   @Column({ type: 'text', nullable: true })
-  reason: string;
+  reason: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true, name: 'old_status' })
-  oldStatus: string;
+  @Column({ name: 'old_status', type: 'varchar', length: 50, nullable: true })
+  oldStatus: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true, name: 'new_status' })
-  newStatus: string;
+  @Column({ name: 'new_status', type: 'varchar', length: 50, nullable: true })
+  newStatus: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
