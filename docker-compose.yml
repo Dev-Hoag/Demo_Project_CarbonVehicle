@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   mysql:
@@ -8,17 +8,21 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: admin_service_db
       TZ: Asia/Ho_Chi_Minh
-    command: ["--default-authentication-plugin=mysql_native_password"]
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --default-time-zone=Asia/Ho_Chi_Minh
     ports:
-      - "3307:3306"
+      - "3307:3306"   # host:container
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql   # dùng lại thư mục dữ liệu cũ
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - admin_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+    restart: unless-stopped
 
   adminer:
     image: adminer
@@ -30,6 +34,49 @@ services:
       - "8080:8080"
     networks:
       - admin_network
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: admin_service_app
+    environment:
+      # ===== DB (kết nối qua network nội bộ compose) =====
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: admin_service_db
+
+      # ===== APP =====
+      APP_PORT: "3000"
+      NODE_ENV: production
+
+      # ===== JWT =====
+      JWT_SECRET: your-secret-key
+      JWT_EXPIRATION: "3600"
+
+      # ===== CORS whitelist (Swagger + FE dev) =====
+      # Thêm/đổi origin FE của bạn nếu khác cổng/domain
+      CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+
+      # ===== Cookie config (nếu set cookie trong AuthController) =====
+      AUTH_COOKIE_NAME: "access_token"
+      AUTH_COOKIE_MAX_AGE_MS: "604800000" # 7 ngày
+
+      # (tùy bạn) flags/stub
+      TRANSACTION_SERVICE_ENABLED: "false"
+      WALLET_SERVICE_ENABLED: "false"
+      LISTING_SERVICE_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - admin_network
+    restart: unless-stopped
 
 networks:
   admin_network:

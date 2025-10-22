@@ -1,134 +1,217 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm'; // 👈 thêm DeepPartial
 import { ManagedUser } from '../../shared/entities/managed-user.entity';
 import { UserActionAudit } from '../../shared/entities/user-action-audit.entity';
-import { ManagedUserStatus, UserType } from '../../shared/enums/admin.enums';
-import { CreateManagedUserDto, UpdateManagedUserDto, ManagedUserResponseDto, UserListResponseDto } from '../../shared/dtos/user-management.dto';
+import {
+  ManagedUserStatus,
+  UserType,
+  KycStatus,
+} from '../../shared/enums/admin.enums';
+import {
+  CreateManagedUserDto,
+  UpdateManagedUserDto,
+  ManagedUserResponseDto,
+  UserListResponseDto,
+} from '../../shared/dtos/user-management.dto';
 import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Injectable()
 export class UserManagementService {
+  private readonly logger = new Logger(UserManagementService.name);
+
   constructor(
     @InjectRepository(ManagedUser)
-    private managedUserRepository: Repository<ManagedUser>,
+    private readonly managedUserRepository: Repository<ManagedUser>,
     @InjectRepository(UserActionAudit)
-    private userActionAuditRepository: Repository<UserActionAudit>,
-    private auditLogService: AuditLogService,
+    private readonly userActionAuditRepository: Repository<UserActionAudit>,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async createUser(createDto: CreateManagedUserDto): Promise<ManagedUserResponseDto> {
+    const email = createDto.email.trim().toLowerCase();
+    const userType = createDto.userType as UserType;
+    const fullName = createDto.fullName?.trim() || undefined;
+    const phone = createDto.phone?.trim() || undefined;
+    const externalUserId = createDto.externalUserId?.trim() || undefined;
+
     try {
-      const user = this.managedUserRepository.create({
-        ...createDto,
+      // check trùng
+      const existedEmail = await this.managedUserRepository.findOne({ where: { email } });
+      if (existedEmail) throw new ConflictException('Email already exists');
+
+      if (externalUserId) {
+        const existedExt = await this.managedUserRepository.findOne({ where: { externalUserId } });
+        if (existedExt) throw new ConflictException('External user ID already exists');
+      }
+
+      // 👇 RẤT QUAN TRỌNG: ép kiểu payload là DeepPartial<ManagedUser>
+      const payload: DeepPartial<ManagedUser> = {
+        email,
+        userType,
+        fullName,
+        phone,
+        externalUserId, // có thể null
         status: ManagedUserStatus.ACTIVE,
-      });
+        kycStatus: KycStatus.PENDING,
+      };
 
-      const saved = await this.managedUserRepository.save(user);
+      // 👇 Ép kiểu kết quả là single entity
+      const user: ManagedUser = this.managedUserRepository.create(payload);
+      const saved: ManagedUser = await this.managedUserRepository.save(user);
 
-      await this.auditLogService.log({
-        actionName: 'CREATE_USER',
-        resourceType: 'USER',
-        resourceId: saved.id.toString(),
-        description: `Created user: ${createDto.email}`,
-        newValue: { email: saved.email, userType: saved.userType },
-      });
+      // audit (không để fail API)
+      try {
+        await this.auditLogService.log({
+          actionName: 'CREATE_USER',
+          resourceType: 'USER',
+          resourceId: String(saved.id),
+          description: `Created user: ${saved.email}`,
+          newValue: {
+            email: saved.email,
+            userType: saved.userType,
+            externalUserId: saved.externalUserId,
+          },
+        });
+      } catch (auditErr: any) {
+        this.logger.warn(
+          `audit log failed for CREATE_USER id=${saved.id}: ${auditErr?.message}`,
+        );
+      }
 
       return this.toResponseDto(saved);
-    } catch (error) {
-      throw new BadRequestException('Error creating user');
+    } catch (error: any) {
+      this.logger.error(`createUser failed: ${error?.message}`, error?.stack);
+      const code = error?.code || error?.driverError?.code;
+      const msg =
+        error?.sqlMessage || error?.driverError?.sqlMessage || error?.message || '';
+
+      if (error instanceof ConflictException) throw error;
+
+      if (code === 'ER_DUP_ENTRY') {
+        if (/external_user_id/i.test(msg)) throw new ConflictException('External user ID already exists');
+        if (/email/i.test(msg)) throw new ConflictException('Email already exists');
+        throw new ConflictException('Duplicate entry');
+      }
+      if (code === 'ER_BAD_NULL_ERROR') {
+        const col = /Column '(.+?)' cannot be null/i.exec(msg)?.[1];
+        throw new BadRequestException(`Missing required field${col ? `: ${col}` : ''}`);
+      }
+      if (code === 'ER_TRUNCATED_WRONG_VALUE' || code === 'ER_WRONG_VALUE_FOR_TYPE') {
+        throw new BadRequestException('Invalid value for enum/typed column');
+      }
+
+      throw new BadRequestException('Could not create user');
     }
   }
 
-  async getAllUsers(page: number = 1, limit: number = 10, filters?: any): Promise<UserListResponseDto> {
-    const query = this.managedUserRepository.createQueryBuilder('user');
+  async getAllUsers(
+    page = 1,
+    limit = 10,
+    filters?: any,
+  ): Promise<UserListResponseDto> {
+    const qb = this.managedUserRepository.createQueryBuilder('user');
 
-    if (filters?.status) {
-      query.where('user.status = :status', { status: filters.status });
-    }
+    if (filters?.status) qb.where('user.status = :status', { status: filters.status });
+    if (filters?.userType) qb.andWhere('user.userType = :userType', { userType: filters.userType });
+    if (filters?.search)
+      qb.andWhere('(user.email LIKE :s OR user.fullName LIKE :s)', { s: `%${filters.search}%` });
 
-    if (filters?.userType) {
-      query.andWhere('user.userType = :userType', { userType: filters.userType });
-    }
-
-    if (filters?.search) {
-      query.andWhere('(user.email LIKE :search OR user.fullName LIKE :search)', {
-        search: `%${filters.search}%`,
-      });
-    }
-
-    const [data, total] = await query
+    const [rows, total] = await qb
       .orderBy('user.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
 
-    return {
-      data: data.map((u) => this.toResponseDto(u)),
-      total,
-      page,
-      limit,
-    };
+    return { data: rows.map((u) => this.toResponseDto(u)), total, page, limit };
   }
 
   async getUserById(id: number): Promise<ManagedUserResponseDto> {
     const user = await this.managedUserRepository.findOne({ where: { id } });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
+    if (!user) throw new NotFoundException('User not found');
     return this.toResponseDto(user);
   }
 
   async updateUser(id: number, updateDto: UpdateManagedUserDto): Promise<ManagedUserResponseDto> {
     const user = await this.managedUserRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
 
-    if (!user) {
-      throw new BadRequestException('User not found');
+    if (updateDto.email) {
+      const nextEmail = updateDto.email.trim().toLowerCase();
+      if (nextEmail !== user.email) {
+        const owner = await this.managedUserRepository
+          .createQueryBuilder('u')
+          .where('u.email = :email', { email: nextEmail })
+          .andWhere('u.id != :id', { id })
+          .getOne();
+        if (owner) throw new ConflictException('Email already exists');
+        updateDto.email = nextEmail;
+      }
     }
 
-    const oldValue = { email: user.email, fullName: user.fullName, kycStatus: user.kycStatus };
+    const oldValue = {
+      email: user.email,
+      fullName: user.fullName,
+      kycStatus: user.kycStatus,
+    };
 
     Object.assign(user, updateDto);
-    const updated = await this.managedUserRepository.save(user);
 
-    await this.auditLogService.log({
-      actionName: 'UPDATE_USER',
-      resourceType: 'USER',
-      resourceId: id.toString(),
-      description: `Updated user: ${user.email}`,
-      oldValue,
-      newValue: updateDto,
-    });
+    try {
+      const updated: ManagedUser = await this.managedUserRepository.save(user);
 
-    return this.toResponseDto(updated);
+      try {
+        await this.auditLogService.log({
+          actionName: 'UPDATE_USER',
+          resourceType: 'USER',
+          resourceId: String(id),
+          description: `Updated user: ${user.email}`,
+          oldValue,
+          newValue: updateDto,
+        });
+      } catch (auditErr: any) {
+        this.logger.warn(
+          `audit log failed for UPDATE_USER id=${id}: ${auditErr?.message}`,
+        );
+      }
+
+      return this.toResponseDto(updated);
+    } catch (e: any) {
+      this.logger.error(`updateUser failed: ${e?.message}`, e?.stack);
+      const msg = e?.sqlMessage || e?.message || '';
+      if (e?.code === 'ER_DUP_ENTRY') {
+        if (/email/i.test(msg)) throw new ConflictException('Email already exists');
+        throw new ConflictException('Duplicate entry');
+      }
+      throw new BadRequestException('Could not update user');
+    }
   }
 
   async lockUser(id: number, adminId: number, reason: string): Promise<ManagedUserResponseDto> {
     const user = await this.managedUserRepository.findOne({ where: { id } });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     user.status = ManagedUserStatus.LOCKED;
-    const updated = await this.managedUserRepository.save(user);
+    const updated: ManagedUser = await this.managedUserRepository.save(user);
 
-    // Record action audit
-await this.userActionAuditRepository.save({
-  managedUser: { id } as any,            // ✅ thay vì managedUserId: id
-  actionType: 'LOCK',
-  performedBy: { id: adminId } as any,   // ✅ thay vì performedBy: adminId (number)
-  reason,
-});
+    await this.userActionAuditRepository.save({
+      managedUser: { id } as any,
+      actionType: 'LOCK',
+      performedBy: { id: adminId } as any,
+      reason,
+    });
 
-    // Record general audit
     await this.auditLogService.log({
       adminUserId: adminId,
       actionName: 'LOCK_USER',
       resourceType: 'USER',
-      resourceId: id.toString(),
+      resourceId: String(id),
       description: `Locked user: ${reason}`,
       oldValue: { status: ManagedUserStatus.ACTIVE },
       newValue: { status: ManagedUserStatus.LOCKED },
@@ -139,28 +222,23 @@ await this.userActionAuditRepository.save({
 
   async unlockUser(id: number, adminId: number): Promise<ManagedUserResponseDto> {
     const user = await this.managedUserRepository.findOne({ where: { id } });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     user.status = ManagedUserStatus.ACTIVE;
-    const updated = await this.managedUserRepository.save(user);
+    const updated: ManagedUser = await this.managedUserRepository.save(user);
 
     await this.userActionAuditRepository.save({
-  managedUser: { id } as any,
-  actionType: 'UNLOCK',
-  performedBy: { id: adminId } as any,
-  reason: 'User unlocked by admin',
-});
+      managedUser: { id } as any,
+      actionType: 'UNLOCK',
+      performedBy: { id: adminId } as any,
+      reason: 'User unlocked by admin',
+    });
 
-
-    // Record general audit
     await this.auditLogService.log({
       adminUserId: adminId,
       actionName: 'UNLOCK_USER',
       resourceType: 'USER',
-      resourceId: id.toString(),
+      resourceId: String(id),
       description: 'User unlocked',
       oldValue: { status: ManagedUserStatus.LOCKED },
       newValue: { status: ManagedUserStatus.ACTIVE },
@@ -171,47 +249,40 @@ await this.userActionAuditRepository.save({
 
   async suspendUser(id: number, adminId: number, reason: string): Promise<ManagedUserResponseDto> {
     const user = await this.managedUserRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
 
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
+    const oldStatus = user.status;
     user.status = ManagedUserStatus.SUSPENDED;
     user.suspensionReason = reason;
-    const updated = await this.managedUserRepository.save(user);
+    const updated: ManagedUser = await this.managedUserRepository.save(user);
 
     await this.userActionAuditRepository.save({
-  managedUser: { id } as any,
-  actionType: 'SUSPEND',
-  performedBy: { id: adminId } as any,
-  reason,
-});
+      managedUser: { id } as any,
+      actionType: 'SUSPEND',
+      performedBy: { id: adminId } as any,
+      reason,
+    });
 
-
-    // Record general audit
     await this.auditLogService.log({
       adminUserId: adminId,
       actionName: 'SUSPEND_USER',
       resourceType: 'USER',
-      resourceId: id.toString(),
+      resourceId: String(id),
       description: `Suspended user: ${reason}`,
-      oldValue: { status: user.status },
+      oldValue: { status: oldStatus },
       newValue: { status: ManagedUserStatus.SUSPENDED, suspensionReason: reason },
     });
 
     return this.toResponseDto(updated);
   }
 
-  async getUserActionHistory(userId: number, page: number = 1, limit: number = 10) {
+  async getUserActionHistory(userId: number, page = 1, limit = 10) {
     const [data, total] = await this.userActionAuditRepository.findAndCount({
-  where: { managedUser: { id: userId } },   // ✅
-  order: { createdAt: 'DESC' },
-  skip: (page - 1) * limit,
-  take: limit,
-  // (tuỳ chọn) nếu muốn trả kèm user/admin:
-  // relations: ['managedUser', 'performedBy'],
-});
-
+      where: { managedUser: { id: userId } },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return { data, total, page, limit };
   }
@@ -230,35 +301,33 @@ await this.userActionAuditRepository.save({
       updatedAt: user.updatedAt,
     };
   }
+
   async deleteUser(id: number, adminId: number, reason: string) {
-  const user = await this.managedUserRepository.findOne({ where: { id } });
-  if (!user) throw new BadRequestException('User not found');
+    const user = await this.managedUserRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
 
-  const oldStatus = user.status;                     // <-- giữ lại trước khi đổi
+    const oldStatus = user.status;
 
-  user.status = ManagedUserStatus.DELETED;
-  const updated = await this.managedUserRepository.save(user);
+    user.status = ManagedUserStatus.DELETED;
+    const updated: ManagedUser = await this.managedUserRepository.save(user);
 
-  // Ghi user_action_audit: dùng quan hệ thay vì số FK
-  await this.userActionAuditRepository.save({
-    managedUser: { id } as any,                      // ✅ thay cho managedUserId: id
-    actionType: 'DELETE',
-    performedBy: { id: adminId } as any,             // ✅ thay cho performedBy: adminId
-    reason,
-  });
+    await this.userActionAuditRepository.save({
+      managedUser: { id } as any,
+      actionType: 'DELETE',
+      performedBy: { id: adminId } as any,
+      reason,
+    });
 
-  // Ghi audit_log: giữ nguyên, nhưng dùng oldStatus đã capture
-  await this.auditLogService.log({
-    adminUserId: adminId,
-    actionName: 'DELETE_USER',
-    resourceType: 'USER',
-    resourceId: String(id),
-    description: `Deleted user: ${reason}`,
-    oldValue: { status: oldStatus },                 // ✅ dùng trạng thái trước khi đổi
-    newValue: { status: ManagedUserStatus.DELETED },
-  });
+    await this.auditLogService.log({
+      adminUserId: adminId,
+      actionName: 'DELETE_USER',
+      resourceType: 'USER',
+      resourceId: String(id),
+      description: `Deleted user: ${reason}`,
+      oldValue: { status: oldStatus },
+      newValue: { status: ManagedUserStatus.DELETED },
+    });
 
-  return this.toResponseDto(updated);
-}
-
+    return this.toResponseDto(updated);
+  }
 }
