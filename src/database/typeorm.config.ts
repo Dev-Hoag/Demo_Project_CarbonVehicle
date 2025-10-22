@@ -14,7 +14,7 @@ import { MetricDaily } from '../shared/entities/metric-daily.entity';
 import { AdminConfig } from '../shared/entities/admin-config.entity';
 
 // ⬇️ ADD
-import { Outbox } from '../shared/entities/outbox.entity';
+
 export const typeOrmConfig = (): TypeOrmModuleOptions => {
   return {
     type: 'mysql',
@@ -37,8 +37,8 @@ export const typeOrmConfig = (): TypeOrmModuleOptions => {
       OverrideRequest,
       MetricDaily,
       AdminConfig,
-      // ⬇️ ADD
-      Outbox,
+      
+    
 
     ],
     synchronize: false, // bạn đang để false => cần tạo bảng bằng SQL/migration

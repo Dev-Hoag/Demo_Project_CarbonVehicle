@@ -1,13 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { typeOrmConfig } from './database/typeorm.config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
+// Modules
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { UserManagementModule } from './modules/user-management/user-management.module';
 import { TransactionManagementModule } from './modules/transaction-management/transaction-management.module';
-import { OutboxModule } from './modules/outbox/outbox.module'; // ★ NEW
+import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
+import { ListingManagementModule } from './modules/listing-management/listing-management.module';
 
 @Module({
   imports: [
@@ -16,11 +21,17 @@ import { OutboxModule } from './modules/outbox/outbox.module'; // ★ NEW
       envFilePath: '.env',
     }),
     TypeOrmModule.forRoot(typeOrmConfig()),
+    ScheduleModule.forRoot(),
+    
+    // Feature modules
     AuthModule,
     AuditLogModule,
     UserManagementModule,
     TransactionManagementModule,
-    OutboxModule, // ★ NEW
+    WalletManagementModule,      // ✅ NEW
+    ListingManagementModule,     // ✅ NEW
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
