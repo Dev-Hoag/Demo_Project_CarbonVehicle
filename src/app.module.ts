@@ -1,3 +1,4 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,25 +14,35 @@ import { UserManagementModule } from './modules/user-management/user-management.
 import { TransactionManagementModule } from './modules/transaction-management/transaction-management.module';
 import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
 import { ListingManagementModule } from './modules/listing-management/listing-management.module';
+import { ReportModule } from './modules/report/report.module';
+import { OverrideRequestModule } from './modules/override-request/override-request.module';
+
+// ⚠️ Sửa đường dẫn: 'health' (không phải 'heatlh')
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRoot(typeOrmConfig()),
     ScheduleModule.forRoot(),
-    
+
     // Feature modules
     AuthModule,
     AuditLogModule,
     UserManagementModule,
     TransactionManagementModule,
-    WalletManagementModule,      // ✅ NEW
-    ListingManagementModule,     // ✅ NEW
+    WalletManagementModule,
+    ListingManagementModule,
+    ReportModule,
+    OverrideRequestModule,
+
+    // ❌ KHÔNG đưa Controller vào đây
+    // HealthController,
   ],
-  controllers: [AppController],
+  controllers: [
+    AppController,
+    HealthController, // ✅ đặt Controller ở đây
+  ],
   providers: [AppService],
 })
 export class AppModule {}

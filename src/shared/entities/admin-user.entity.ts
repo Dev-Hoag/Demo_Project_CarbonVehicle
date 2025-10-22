@@ -1,3 +1,4 @@
+// src/shared/entities/admin-user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { AdminUserStatus } from '../enums/admin.enums';
 import { AuditLog } from './audit-log.entity';
@@ -13,7 +14,8 @@ export class AdminUser {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255, name: 'password_hash' })
+  // 👇 THAY ĐỔI: ẩn cột password
+  @Column({ type: 'varchar', length: 255, name: 'password_hash', select: false })
   passwordHash: string;
 
   @Column({ type: 'varchar', length: 255, name: 'full_name' })

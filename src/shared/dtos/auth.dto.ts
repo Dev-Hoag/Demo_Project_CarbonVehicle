@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, MinLength, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsEmail, MaxLength } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({ description: 'Username for login', example: 'admin_super' })
@@ -78,4 +78,11 @@ export class CurrentUserDto {
 
   @ApiProperty({ description: 'Is super admin' })
   isSuperAdmin: boolean;
+}
+export class LockReasonDto {
+  @ApiProperty({ description: 'Reason', example: 'Suspicious activity' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason: string;
 }

@@ -43,3 +43,5 @@ export class ManagedUser {
   @OneToMany(() => UserActionAudit, (audit) => audit.managedUser, { onDelete: 'CASCADE' })
   actionAudits: UserActionAudit[];
 }
+
+export { ManagedUserStatus };
