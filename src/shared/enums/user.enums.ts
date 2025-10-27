@@ -1,0 +1,26 @@
+export enum UserType {
+  EV_OWNER = 'EV_OWNER',
+  BUYER = 'BUYER',
+  CVA = 'CVA',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  PENDING = 'PENDING',
+  SUSPENDED = 'SUSPENDED',
+  DELETED = 'DELETED',
+}
+
+export enum KycStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum DocumentType {
+  ID_CARD = 'ID_CARD',
+  PASSPORT = 'PASSPORT',
+  DRIVER_LICENSE = 'DRIVER_LICENSE',
+  VEHICLE_REGISTRATION = 'VEHICLE_REGISTRATION',
+  BUSINESS_LICENSE = 'BUSINESS_LICENSE',
+}
