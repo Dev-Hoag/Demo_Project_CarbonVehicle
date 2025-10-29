@@ -30,7 +30,7 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'last_login_at' })
   lastLoginAt: Date | null;
 
-  // ✅ map đúng cột snake_case
+ 
   @Column({ type: 'tinyint', width: 1, default: 0, name: 'is_verified' })
   isVerified: boolean;
 
@@ -45,4 +45,31 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true, name: 'reset_token_expires' })
   resetTokenExpires: Date | null;
+  // 👇 THÊM CÁC FIELDS NÀY
+  @Column({ type: 'timestamp', nullable: true })
+  lockedAt: Date;
+
+  @Column({ nullable: true })
+  lockedBy: number; // Admin ID
+
+  @Column({ type: 'text', nullable: true })
+  lockReason: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  suspendedAt: Date;
+
+  @Column({ nullable: true })
+  suspendedBy: number;
+
+  @Column({ type: 'text', nullable: true })
+  suspendReason: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date; // Soft delete
+
+  @Column({ nullable: true })
+  deletedBy: number;
+
+  @Column({ type: 'text', nullable: true })
+  deleteReason: string;
 }

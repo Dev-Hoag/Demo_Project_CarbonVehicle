@@ -21,7 +21,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-RUN apk add --no-cache libc6-compat
+# Retry tối đa 3 lần nếu mirror lỗi tạm thời
+RUN set -eux; \
+  for i in 1 2 3; do \
+    apk update && apk add --no-cache libc6-compat && break || (echo "apk retry $i/3"; sleep 5); \
+  done
 
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules

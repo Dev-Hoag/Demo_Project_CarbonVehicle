@@ -47,7 +47,7 @@ If you did not request this, please ignore this email.`,
          <p><code>${url}</code></p>
          <p>If you did not request this, please ignore this email.</p>`,
 
-      // ✅ Tắt click-tracking để SendGrid không “bọc” link (đỡ bị Gmail nghi ngờ)
+      
       trackingSettings: {
         clickTracking: { enable: false, enableText: false },
       },

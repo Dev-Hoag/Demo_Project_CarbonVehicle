@@ -5,7 +5,7 @@ import {
   Body,
   Param,
   ParseIntPipe,
-  UseGuards,           // ✅ import decorator thật từ Nest
+  UseGuards,          
 } from '@nestjs/common';
 import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { KycService } from './kyc.service';
@@ -16,7 +16,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @ApiTags('Internal KYC')
 @ApiBearerAuth()
 @Controller('internal/kyc')
-@UseGuards(JwtAuthGuard)     // ✅ dùng decorator thật
+@UseGuards(JwtAuthGuard)     
 export class InternalKycController {
   constructor(private readonly kycService: KycService) {}
 
