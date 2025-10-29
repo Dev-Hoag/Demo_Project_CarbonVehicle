@@ -1,0 +1,25 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: trip-service
+
+  datasource:
+    url: "jdbc:mysql://localhost:3306/trip_service"
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  cloud:
+    config:
+      enabled: false
+
+#  eureka:
+#    client:
+#      register-with-eureka: true
+#      fetch-registry: true
+#      service-url:
+#        defaultZone: http://localhost:8761/eureka/
