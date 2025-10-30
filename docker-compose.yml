@@ -22,7 +22,7 @@ services:
   adminer:
     image: adminer
     container_name: payment_service_adminer
-    restart: always
+    restart: "no"
     ports:
       - '8082:8080'
     environment:
