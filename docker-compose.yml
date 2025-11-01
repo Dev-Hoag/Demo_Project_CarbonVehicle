@@ -1,20 +1,14 @@
-# docker-compose.yml
-# Lưu ý: Docker Compose v2 không cần dòng "version:"
-# Nếu bạn muốn, có thể để lại cũng không sao (nhưng Docker sẽ cảnh báo obsolete).
-
 services:
   mysql:
     image: mysql:8.0
-    container_name: payment_service_mysql
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: payment_service_db
     ports:
-      - "3309:3306"                                  # Expose MySQL ra host (nếu chạy app ngoài container dùng 127.0.0.1:3309)
+      - "3309:3306"
     volumes:
       - payment_service_data:/var/lib/mysql
-      # - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro  # (tuỳ chọn) script init lần đầu
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
       interval: 10s
@@ -23,16 +17,15 @@ services:
     networks:
       default:
         aliases:
-          - payment-mysql                             # alias riêng tránh đụng tên 'mysql' ở mạng khác
+          - payment-mysql     # ⭐ alias duy nhất cho DB của stack này
 
   adminer:
     image: adminer
-    container_name: payment_service_adminer
     restart: "no"
     ports:
       - "8082:8080"
     environment:
-      ADMINER_DEFAULT_SERVER: payment_service_mysql   # Trỏ thẳng đúng container DB của stack này
+      ADMINER_DEFAULT_SERVER: payment-mysql   # ⭐ dùng alias mới
     depends_on:
       mysql:
         condition: service_healthy
@@ -43,7 +36,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: payment_service_app
     depends_on:
       mysql:
         condition: service_healthy
@@ -53,28 +45,25 @@ services:
       TZ: Asia/Ho_Chi_Minh
       INTERNAL_SECRET: super-secret-payment-key
 
-      # QUAN TRỌNG: dùng đúng tên container của MySQL để không thể trỏ nhầm
-      DB_HOST: payment_service_mysql
+      # ⭐ Trỏ đúng alias để tránh đụng MySQL ở mạng khác
+      DB_HOST: payment-mysql
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
       DB_DATABASE: payment_service_db
 
-      # VNPay sandbox
       VNPAY_TMN_CODE: U94AQ1QM
       VNPAY_HASH_SECRET: KJTJVFNOQM3MMD742PZ4UO5GN8SU9SIK
       VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 
-      # Callback nội bộ (khi chạy độc lập không có gateway)
+      BACKEND_PUBLIC_URL: http://localhost:3002
       VNPAY_RETURN_URL: http://localhost:3002/api/payments/vnpay/callback
       VNPAY_IPN_URL: http://localhost:3002/api/payments/vnpay/ipn
-
-      BACKEND_PUBLIC_URL: http://localhost:3002
     ports:
       - "3002:3002"
     networks:
-      - default             # để thấy MySQL của stack hiện tại
-      - ccm_net             # để gateway bên ngoài có thể gọi vào (nếu cần)
+      - default            # ⭐ đủ để thấy DB qua alias payment-mysql
+      - ccm_net            # (nếu cần gateway gọi vào) — vẫn OK, vì DB_HOST không còn là 'mysql'
     restart: unless-stopped
 
 volumes:
@@ -82,5 +71,4 @@ volumes:
 
 networks:
   ccm_net:
-    external: true          # mạng ngoài; đảm bảo đã tạo: docker network create ccm_net
-  # 'default' sẽ tự tạo
+    external: true
