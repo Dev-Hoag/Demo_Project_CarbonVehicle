@@ -1,4 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
 import { AdminUser } from '../shared/entities/admin-user.entity';
 import { AuditLog } from '../shared/entities/audit-log.entity';
 import { ManagedUser } from '../shared/entities/managed-user.entity';
@@ -13,13 +14,12 @@ import { OverrideRequest } from '../shared/entities/override-request.entity';
 import { MetricDaily } from '../shared/entities/metric-daily.entity';
 import { AdminConfig } from '../shared/entities/admin-config.entity';
 
-// ⬇️ ADD
-
 export const typeOrmConfig = (): TypeOrmModuleOptions => {
   return {
     type: 'mysql',
-    host: process.env.DB_HOST ?? 'localhost',
-    port: parseInt(process.env.DB_PORT ?? '3307'),
+    // ⬇️ MẶC ĐỊNH ĐÚNG KHI CHẠY TRONG DOCKER
+    host: process.env.DB_HOST ?? 'mysql',
+    port: parseInt(process.env.DB_PORT ?? '3306'),
     username: process.env.DB_USERNAME ?? 'root',
     password: process.env.DB_PASSWORD ?? 'root',
     database: process.env.DB_DATABASE ?? 'admin_service_db',
@@ -37,11 +37,9 @@ export const typeOrmConfig = (): TypeOrmModuleOptions => {
       OverrideRequest,
       MetricDaily,
       AdminConfig,
-      
-    
-
     ],
-    synchronize: false, // bạn đang để false => cần tạo bảng bằng SQL/migration
+    // ⬇️ Bật qua biến môi trường để tạo bảng 1 lần rồi tắt
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.NODE_ENV === 'development',
   };
 };

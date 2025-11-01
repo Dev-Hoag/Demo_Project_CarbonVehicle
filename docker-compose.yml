@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mysql:
     image: mysql:8.0
@@ -10,16 +8,16 @@ services:
       TZ: Asia/Ho_Chi_Minh
     command:
       - --default-authentication-plugin=mysql_native_password
-      - --default-time-zone=Asia/Ho_Chi_Minh
+      - --default-time-zone=+07:00
     ports:
-      - "3307:3306"
+      - "3307:3306"            # host:container (host dùng 3307)
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     networks:
       - admin_network
     restart: unless-stopped
@@ -41,34 +39,23 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: admin_service_app
-    environment:
-      DB_HOST: mysql
-      DB_PORT: "3306"
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      DB_DATABASE: admin_service_db
-      APP_PORT: "3000"
-      NODE_ENV: production
-      JWT_SECRET: your-secret-key
-      JWT_EXPIRATION: "3600"
-      CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
-      AUTH_COOKIE_NAME: "access_token"
-      AUTH_COOKIE_MAX_AGE_MS: "604800000"
-      TRANSACTION_SERVICE_ENABLED: "false"
-      WALLET_SERVICE_ENABLED: "false"
-      LISTING_SERVICE_ENABLED: "false"
+    env_file:
+      - .env
     depends_on:
       mysql:
         condition: service_healthy
     ports:
-      - "3000:3000"   # có thể bỏ sau khi gateway ổn
+      - "3000:3000"
     networks:
       - admin_network
-      - ccm_net        # <<< THÊM mạng dùng chung
+      - ccm_net
     restart: unless-stopped
 
 networks:
   admin_network:
     driver: bridge
-  ccm_net:              # <<< external network dùng chung
+  ccm_net:
     external: true
+
+volumes:
+  mysql_data:
