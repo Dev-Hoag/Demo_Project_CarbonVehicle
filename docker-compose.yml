@@ -9,28 +9,35 @@ services:
       MYSQL_DATABASE: user_service_db
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --default-time-zone=+07:00
     ports:
-      - '3308:3306'         # host:container
+      - '3308:3306'                 # host:container (kết nối từ HOST dùng 3308)
     volumes:
       - user_service_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 20
     networks:
-      - ccm_net
+      ccm_net:
+        aliases:
+          - mysql                   # đảm bảo hostname 'mysql' luôn resolve được
+    restart: unless-stopped
 
   adminer:
     image: adminer
     container_name: user_service_adminer
-    restart: "no"
-    ports:
-      - '8081:8080'
     environment:
       ADMINER_DEFAULT_SERVER: mysql
+    ports:
+      - '8081:8080'
     networks:
       - ccm_net
+    restart: "no"
 
   user-service:
     image: user-service:dev
@@ -39,8 +46,7 @@ services:
       mysql:
         condition: service_healthy
     env_file:
-      - .env
-    # Không dùng alias DB_USER/DB_PASS/DB_NAME nữa — để .env quyết định
+      - .env                        # DB_HOST=mysql, DB_PORT=3306, ...
     environment:
       APP_URL: http://localhost:3001
       APP_PORT: 3001
