@@ -10,7 +10,7 @@ import { UserStatus } from '../../shared/enums/user.enums';
 import { ConfigService } from '@nestjs/config';
 import { type StringValue } from 'ms';
 import { EmailService } from './email.service';
-
+import { parseTtl } from '../../common/utils/ttl.util'; 
 @Injectable()
 export class AuthService {
   constructor(
@@ -183,30 +183,42 @@ export class AuthService {
   }
 
   private async generateTokens(user: User) {
-    const payload = { sub: user.id, email: user.email, userType: user.userType };
+  const payload = { sub: user.id, email: user.email, userType: user.userType };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') as StringValue,
-    });
+  const accessTtl =
+    parseTtl(this.configService.get<string>('ACCESS_TOKEN_TTL')
+          ?? this.configService.get<string>('JWT_EXPIRES_IN'), 3600);
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as StringValue,
-    });
+  const refreshTtl =
+    parseTtl(this.configService.get<string>('REFRESH_TOKEN_TTL')
+          ?? this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'), '7d');
 
-    const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
+  const accessSecret  = this.configService.get<string>('JWT_SECRET')!;
+  const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
+                    ?? this.configService.get<string>('JWT_SECRET')!;
 
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        userType: user.userType,
-        fullName: profile?.fullName || '',
-        kycStatus: user.kycStatus,
-      },
-    };
-  }
+  const accessToken = this.jwtService.sign(payload, {
+    secret: accessSecret,
+    expiresIn: accessTtl as unknown as any,
+  });
+
+  const refreshToken = this.jwtService.sign(payload, {
+    secret: refreshSecret,
+    expiresIn: refreshTtl as unknown as any,
+  });
+
+  const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      userType: user.userType,
+      fullName: profile?.fullName || '',
+      kycStatus: user.kycStatus,
+    },
+  };
+}
 }

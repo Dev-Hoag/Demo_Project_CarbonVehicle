@@ -10,7 +10,7 @@ services:
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
-      - '3308:3306'         # host:container
+      - '3308:3306'                # MySQL nghe trong container 3306, host map 3308
     volumes:
       - user_service_data:/var/lib/mysql
     healthcheck:
@@ -18,8 +18,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ccm_net
 
   adminer:
     image: adminer
@@ -29,30 +27,31 @@ services:
       - '8081:8080'
     environment:
       ADMINER_DEFAULT_SERVER: mysql
-    networks:
-      - ccm_net
 
   user-service:
-    image: user-service:dev
+    image: user-service:dev           # hoặc build tại chỗ: build: { context: ., dockerfile: Dockerfile }
     container_name: user_service_app
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_healthy    # đợi DB sẵn sàng
     env_file:
-      - .env
-    # Không dùng alias DB_USER/DB_PASS/DB_NAME nữa — để .env quyết định
+      - .env                          # chứa JWT, SENDGRID, DB_...
     environment:
+      # Nếu không dùng env_file, đặt tay các biến sau:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: user_service_db
+      # PORT app đang listen trong code (phải khớp EXPOSE):
+      PORT: 3001
+      # URL công khai để tạo link verify trong email (tunnel/ngrok hoặc domain):
       APP_URL: http://localhost:3001
-      APP_PORT: 3001
     ports:
       - '3001:3001'
-    networks:
-      - ccm_net
     restart: unless-stopped
+    # Nếu cần chạy migration trước khi start:
+    # command: sh -c "npm run typeorm:migrate && node dist/main"
 
 volumes:
   user_service_data:
-
-networks:
-  ccm_net:
-    external: true
