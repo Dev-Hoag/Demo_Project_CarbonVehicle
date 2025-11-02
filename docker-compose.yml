@@ -14,7 +14,7 @@ services:
     container_name: verification-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: verification_db
     ports:
       - "3306:3306"
