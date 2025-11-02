@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     DB_HOST: str = "mysql"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = "rootpassword"
+    DB_PASSWORD: str = "root"
     DB_NAME: str = "verification_db"
     
     # JWT
-    JWT_SECRET_KEY: str = "your-secret-key"
+    JWT_SECRET_KEY: str = "superkey"
     JWT_ALGORITHM: str = "HS256"
     
     @property
