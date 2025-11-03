@@ -1,10 +1,10 @@
 # ============================================
 # SQLAlchemy Models (Database Tables)
 # ============================================
-from sqlalchemy import Column, String, DECIMAL, Enum, Text, TIMESTAMP
+from sqlalchemy import Column, String, DECIMAL, Enum, Text, TIMESTAMP, Index
 from sqlalchemy.sql import func
 import enum
-from app.config.database import Base
+from app.config.database import Bas
 
 class VerificationStatus(str, enum.Enum):
     PENDING = "PENDING"
