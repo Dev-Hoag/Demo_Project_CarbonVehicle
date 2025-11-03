@@ -7,10 +7,10 @@ import enum
 from app.config.database import Bas
 
 class VerificationStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    IN_REVIEW = "IN_REVIEW"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
+    """Trạng thái xác minh"""
+    PENDING = "PENDING"      # Chờ CVA xác minh
+    APPROVED = "APPROVED"    # Đã phê duyệt
+    REJECTED = "REJECTED"    # Bị từ chối
 
 class Priority(str, enum.Enum):
     LOW = "LOW"
