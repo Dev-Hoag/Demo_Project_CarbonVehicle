@@ -130,3 +130,38 @@ class Verification(Base):
         return f"<Verification(id={self.id}, trip_id={self.trip_id}, status={self.status})>"
 
 
+class VerificationEvent(Base):
+    """
+    Bảng verification_events - Lưu events để publish qua Kafka
+    (Outbox Pattern - đảm bảo eventual consistency)
+    """
+    __tablename__ = "verification_events"
+    
+    id = Column(String(36), primary_key=True)
+    verification_id = Column(String(36), nullable=False)
+    
+    event_type = Column(
+        String(50), 
+        nullable=False,
+        comment="APPROVED, REJECTED"
+    )
+    
+    payload = Column(
+        Text, 
+        nullable=False,
+        comment="JSON data của event"
+    )
+    
+    published = Column(
+        Boolean,
+        default=False,
+        comment="Đã publish qua Kafka chưa"
+    )
+    
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    published_at = Column(TIMESTAMP, nullable=True)
+    
+    __table_args__ = (
+        Index('idx_published', 'published'),
+        Index('idx_verification_id', 'verification_id'),
+    )
