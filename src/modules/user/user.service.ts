@@ -5,6 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -23,6 +24,8 @@ import {
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -539,7 +542,7 @@ export class UserService {
       await this.actionLogRepo.save(log);
     } catch (error) {
       // Log error but don't throw (action logging shouldn't break main flow)
-      console.error('Failed to log user action:', error);
+      this.logger.error(`Failed to log user action: ${error.message}`);
     }
   }
 }

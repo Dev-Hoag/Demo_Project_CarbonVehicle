@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailService, type MailDataRequired } from '@sendgrid/mail';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private sg: MailService;
 
   constructor(private readonly config: ConfigService) {
     this.sg = new MailService();
     const key = this.config.get<string>('SENDGRID_API_KEY');
     if (key) this.sg.setApiKey(key);
-    else console.warn('[EmailService] SENDGRID_API_KEY is missing – emails will fail.');
+    else this.logger.warn('SENDGRID_API_KEY is missing – emails will fail.');
   }
 
   private fromEmail() {

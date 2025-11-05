@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, UnauthorizedException, HttpCode } from '@nestjs/common';
+import { Controller, Get, Headers, UnauthorizedException, HttpCode, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 /**
@@ -16,6 +16,8 @@ import { JwtService } from '@nestjs/jwt';
  */
 @Controller('internal/auth')
 export class InternalAuthController {
+  private readonly logger = new Logger(InternalAuthController.name);
+
   constructor(private readonly jwtService: JwtService) {}
 
   /**
@@ -66,7 +68,7 @@ export class InternalAuthController {
 
     } catch (error) {
       // Token invalid, expired, hoặc signature không khớp
-      console.error('JWT verification failed:', error.message);
+      this.logger.error(`JWT verification failed: ${error.message}`);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

@@ -13,6 +13,10 @@ yarn-error.log
 .env.test.local
 .env.production.local
 
+# Test tokens và temporary files
+token.txt
+*.token
+
 # Uploads (KYC files, temporary storage)
 uploads/
 

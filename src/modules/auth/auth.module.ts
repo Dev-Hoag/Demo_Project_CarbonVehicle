@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { InternalAuthController } from './internal-auth.controller'; // 👈 Import controller mới
 
 // 👇 entities mà AuthService inject bằng @InjectRepository(...)
 import { User } from '../../shared/entities/user.entity';
@@ -28,7 +29,10 @@ import { EmailService } from './email.service';
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [
+    AuthController,           // Public endpoints: /api/auth/login, /api/auth/register
+    InternalAuthController    // 👈 Internal endpoints: /internal/auth/verify (chỉ cho Gateway gọi)
+  ],
   providers: [AuthService, JwtStrategy, EmailService],
   exports: [AuthService, EmailService],
 })
