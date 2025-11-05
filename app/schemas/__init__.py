@@ -8,6 +8,15 @@ from app.schemas.verification import (
     VerificationStatus,
     ApiResponse
 )
+from app.schemas.report import (
+    ReportGenerateRequest,
+    ReportResponse,
+    ReportListResponse,
+)
+from app.schemas.request import (
+    RequestInfoResponse,
+    RequestListResponse,
+)
 
 __all__ = [
     "VerificationCreate",
@@ -18,4 +27,12 @@ __all__ = [
     "VerificationStats",
     "VerificationStatus",
     "ApiResponse"
+]
+
+__all__ += [
+    "ReportGenerateRequest",
+    "ReportResponse",
+    "ReportListResponse",
+    "RequestInfoResponse",
+    "RequestListResponse",
 ]

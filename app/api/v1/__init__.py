@@ -1,3 +1,1 @@
-from app.api.v1.router import api_router
-
-__all__ = ["api_router"]
+# package marker; avoid importing router here to prevent circular imports
