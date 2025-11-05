@@ -3,10 +3,10 @@
 # ============================================
 import enum
 
-from sqlalchemy import DECIMAL, TIMESTAMP, Column, Enum, Index, String, Text
+from sqlalchemy import DECIMAL, TIMESTAMP, Column, Enum, Index, String, Text, Boolean
 from sqlalchemy.sql import func
 
-from app.config.database import Bas
+from app.config.database import Base
 
 
 class VerificationStatus(str, enum.Enum):
