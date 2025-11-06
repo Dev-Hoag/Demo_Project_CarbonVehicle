@@ -86,10 +86,12 @@ class VerificationService:
         user_id: Optional[str] = None,
         verifier_id: Optional[str] = None,
         page: int = 1,
-        page_size: int = 20
+        page_size: int = 20,
+        sort_by: str = "created_at",
+        sort_order: str = "DESC"
     ):
         """
-        Lấy danh sách verifications với filter
+        Lấy danh sách verifications với filter và sorting
         
         Returns:
             Tuple (items, total)
@@ -99,7 +101,9 @@ class VerificationService:
             user_id=user_id,
             verifier_id=verifier_id,
             page=page,
-            page_size=page_size
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_order=sort_order
         )
     
     # ========================================
