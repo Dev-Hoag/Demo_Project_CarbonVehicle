@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8080}
+  port: ${PORT:3002}
   servlet:
     context-path: /api
 
@@ -16,6 +16,14 @@ spring:
   cloud:
     config:
       enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 
 #  eureka:
 #    client:

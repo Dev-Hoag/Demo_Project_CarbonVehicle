@@ -12,10 +12,13 @@ import java.util.UUID;
 public class TripResponse {
     private UUID id;
     private UUID userId;
+    private UUID vehicleId;
     private Instant startTime;
     private Instant endTime;
     private Double distanceKm;
     private Double co2Reduced;
     private TripStatus status;
     private String verificationStatus;
+    private Instant createdAt;
+    private Instant updatedAt;
 }
