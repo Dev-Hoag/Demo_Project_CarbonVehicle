@@ -9,7 +9,7 @@ from app.utils.logger import logger
 router = APIRouter()
 
 @router.post(
-    "",
+    "/",
     response_model=VerificationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Tạo verification mới",
