@@ -8,6 +8,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { KycModule } from './modules/kyc/kyc.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -40,6 +41,9 @@ import { KycModule } from './modules/kyc/kyc.module';
       synchronize: process.env.NODE_ENV === 'development',
       logging: process.env.NODE_ENV === 'development',
     }),
+
+    // RabbitMQ Events Module
+    EventsModule,
 
     // Feature Modules
     AuthModule,
