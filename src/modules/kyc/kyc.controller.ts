@@ -9,7 +9,7 @@ import {
   Body,
   Param,
   ParseIntPipe,
-  BadRequestException, // <-- thêm
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -50,7 +50,7 @@ export class KycController {
           cb(null, `kyc-${uniqueSuffix}${ext}`);
         },
       }),
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      limits: { fileSize: 5 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
           return cb(new BadRequestException('Only images and PDFs are allowed!') as any, false);
@@ -62,7 +62,7 @@ export class KycController {
   async uploadDocument(
     @CurrentUser() user: any,
     @Body() dto: UploadKycDocumentDto,
-    @UploadedFile() file: Express.Multer.File, // sẽ hoạt động sau khi fix types bên dưới
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('File is required');

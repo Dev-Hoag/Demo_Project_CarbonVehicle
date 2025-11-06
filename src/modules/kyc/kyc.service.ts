@@ -15,6 +15,12 @@ export class KycService {
     private readonly userRepo: Repository<User>,
   ) {}
 
+  /**
+   * Upload KYC document
+   * - User upload file (ID card, passport, driver license, etc.)
+   * - File được lưu local tại /uploads/kyc/
+   * - Status mặc định là PENDING chờ admin/CVA verify
+   */
   async uploadDocument(userId: number, dto: UploadKycDocumentDto, fileUrl: string) {
     const doc = this.kycRepo.create({
       userId,
@@ -27,6 +33,9 @@ export class KycService {
     return this.kycRepo.save(doc);
   }
 
+  /**
+   * Lấy danh sách KYC documents của user
+   */
   async getMyDocuments(userId: number) {
     return this.kycRepo.find({
       where: { userId },
@@ -34,6 +43,11 @@ export class KycService {
     });
   }
 
+  /**
+   * Lấy KYC status tổng quan của user
+   * - Trạng thái KYC chung (PENDING, APPROVED, REJECTED)
+   * - Danh sách documents đã upload
+   */
   async getKycStatus(userId: number) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     const documents = await this.kycRepo.find({ where: { userId } });
@@ -49,6 +63,11 @@ export class KycService {
     };
   }
 
+  /**
+   * Xóa KYC document
+   * - User chỉ có thể xóa document chưa được approve
+   * - Document đã approve không được xóa
+   */
   async deleteDocument(userId: number, docId: number) {
     const doc = await this.kycRepo.findOne({ where: { id: docId, userId } });
     if (!doc) {
@@ -63,7 +82,12 @@ export class KycService {
     return { message: 'Document deleted' };
   }
 
-  // Admin/CVA actions
+  /**
+   * Verify KYC document (Admin/CVA only)
+   * - Admin/CVA approve hoặc reject document
+   * - Nếu tất cả documents được approve → user.kycStatus = APPROVED
+   * - Có thể kèm rejection reason nếu reject
+   */
   async verifyDocument(docId: number, verifierId: number, dto: VerifyKycDto) {
     const doc = await this.kycRepo.findOne({ where: { id: docId } });
     if (!doc) {

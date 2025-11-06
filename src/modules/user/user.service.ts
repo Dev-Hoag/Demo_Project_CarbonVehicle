@@ -1,5 +1,3 @@
-// src/modules/users/user.service.ts
-
 import {
   Injectable,
   NotFoundException,
@@ -36,12 +34,8 @@ export class UserService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  // ========================================
-  // PUBLIC API METHODS (Existing)
-  // ========================================
-
   /**
-   * Helper: map về DTO trả ra
+   * Map user và profile thành response DTO
    */
   private toProfileResponse(user: User, profile: UserProfile | null) {
     return {
@@ -58,7 +52,7 @@ export class UserService {
   }
 
   /**
-   * Get user profile (for authenticated user)
+   * Lấy profile của user (cho authenticated user)
    */
   async getProfile(userId: number) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -72,7 +66,10 @@ export class UserService {
   }
 
   /**
-   * Update user profile
+   * Update profile của user
+   * - User có thể update: fullName, phone, address, bio, v.v.
+   * - Fields phụ thuộc userType: vehicleType (EV_OWNER), companyName (BUYER), certificationNumber (CVA)
+   * - Log action và emit event
    */
   async updateProfile(userId: number, dto: UpdateProfileDto) {
     let profile: UserProfile | null = await this.profileRepo.findOne({
@@ -107,7 +104,8 @@ export class UserService {
   }
 
   /**
-   * Get user by ID (public info only)
+   * Lấy thông tin user theo ID (public info only)
+   * - Chỉ trả về thông tin cơ bản, không bao gồm sensitive data
    */
   async getUserById(id: number) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -127,12 +125,10 @@ export class UserService {
     };
   }
 
-  // ========================================
-  // INTERNAL API METHODS (New)
-  // ========================================
-
   /**
-   * Get full user info by ID (for internal services)
+   * Lấy full user info theo ID (cho internal services)
+   * - Bao gồm tất cả thông tin: status, lock, suspend, delete
+   * - Dùng cho Admin Service, Payment Service gọi
    */
   async getFullUserById(id: number) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -165,7 +161,8 @@ export class UserService {
   }
 
   /**
-   * Get user by email (for internal services)
+   * Lấy user theo email (cho internal services)
+   * - Trả về full user data + profile
    */
   async getUserByEmail(email: string) {
     const user = await this.userRepo.findOne({ where: { email } });
@@ -182,7 +179,7 @@ export class UserService {
   }
 
   /**
-   * Validate user status (for internal services)
+   * Validate user status đơn giản (check ACTIVE)
    */
   async validateUser(userId: number) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -191,7 +188,10 @@ export class UserService {
   }
 
   /**
-   * Validate user with detailed checks
+   * Validate user với các checks chi tiết
+   * - Check: deleted, status, locked, suspended, verified
+   * - Có thể require KYC approved
+   * - Return { valid, reason } để biết lý do nếu invalid
    */
   async validateUserStatus(userId: number, requireKyc = false) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -231,7 +231,9 @@ export class UserService {
   }
 
   /**
-   * Update user status
+   * Update user status (PENDING, ACTIVE, SUSPENDED, DELETED)
+   * - Log action vào user_action_logs
+   * - Emit event để các service khác xử lý
    */
   async updateUserStatus(id: number, dto: UpdateUserStatusDto) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -263,7 +265,10 @@ export class UserService {
   }
 
   /**
-   * Lock user account
+   * Lock user account (khóa tài khoản)
+   * - User không thể login khi bị lock
+   * - Lưu thông tin admin lock và lý do
+   * - Không thể lock user đã bị deleted
    */
   async lockUser(id: number, dto: LockUserDto) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -305,7 +310,9 @@ export class UserService {
   }
 
   /**
-   * Unlock user account
+   * Unlock user account (mở khóa tài khoản)
+   * - Clear thông tin lock
+   * - User có thể login lại
    */
   async unlockUser(id: number, adminId: number, notes?: string) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -342,7 +349,9 @@ export class UserService {
   }
 
   /**
-   * Suspend user account
+   * Suspend user account (đình chỉ tài khoản)
+   * - Tương tự lock nhưng có thể kèm thời hạn
+   * - Dùng cho vi phạm policy, TOS, etc.
    */
   async suspendUser(id: number, dto: SuspendUserDto) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -424,6 +433,9 @@ export class UserService {
 
   /**
    * Soft delete user account
+   * - Không xóa thật trong DB (giữ lại data)
+   * - Set deletedAt, status = DELETED
+   * - User không thể login, data vẫn query được
    */
   async softDeleteUser(id: number, adminId: number, reason: string) {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -498,7 +510,9 @@ export class UserService {
   }
 
   /**
-   * Get user action history
+   * Lấy lịch sử actions của user
+   * - Tất cả hành động: lock, unlock, suspend, activate, delete, v.v.
+   * - Phân trang với page và limit
    */
   async getUserActionHistory(userId: number, page = 1, limit = 50) {
     const [logs, total] = await this.actionLogRepo.findAndCount({
@@ -517,12 +531,11 @@ export class UserService {
     };
   }
 
-  // ========================================
-  // HELPER METHODS
-  // ========================================
-
   /**
-   * Log user action to database
+   * Log user action vào database
+   * - Lưu tất cả actions: lock, unlock, suspend, delete, v.v.
+   * - Metadata lưu dạng JSON string
+   * - Không throw error nếu log fail (để không ảnh hưởng main flow)
    */
   private async logAction(
     userId: number,

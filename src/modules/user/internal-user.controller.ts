@@ -1,4 +1,3 @@
-// src/modules/user/internal-user.controller.ts
 import {
   Controller,
   Get,
@@ -27,7 +26,7 @@ import {
 } from '../../shared/dtos/internal-user.dto';
 
 @ApiTags('Internal Users')
-@ApiSecurity('internalApi') // sẽ hiện ô nhập header x-internal-secret ở /api/docs-internal
+@ApiSecurity('internalApi')
 @Controller('internal/users')
 @UseGuards(InternalApiGuard)
 export class InternalUsersController {
