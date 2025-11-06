@@ -1,7 +1,7 @@
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status, Header
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import Depends, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
@@ -29,16 +29,32 @@ def get_db_session():
         db.close()
 
 
-def get_current_user(authorization: Optional[str] = Header(None)) -> CurrentUser:
-    """Decode JWT token from Authorization header and return CurrentUser"""
-    if not authorization:
-        raise UnauthorizedException("Missing Authorization header")
-    if not authorization.startswith("Bearer "):
-        raise UnauthorizedException("Invalid Authorization header")
-    token = authorization.split(" ", 1)[1]
+# HTTPBearer scheme for Swagger UI
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme)
+) -> CurrentUser:
+    """
+    Decode JWT token from HTTP Bearer auth and return CurrentUser
+    
+    Using Security(HTTPBearer) enables Swagger's Authorize button.
+    """
+    from app.utils.logger import logger
+    
+    if not credentials or not credentials.credentials:
+        logger.warning("❌ Missing credentials in get_current_user")
+        raise UnauthorizedException("Missing or invalid Authorization header")
+    
+    token = credentials.credentials
+    logger.debug(f"🔑 Received token: {token[:20]}...")
+    
     try:
         payload = decode_token(token)
-    except Exception:
+        logger.debug(f"✅ Token decoded successfully: user_id={payload.get('sub')}, role={payload.get('role')}")
+    except Exception as e:
+        logger.error(f"❌ Token decode failed: {str(e)}")
         raise UnauthorizedException("Invalid token")
 
     # Expect payload to contain sub, email, role
@@ -46,6 +62,7 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> CurrentUser
     email = payload.get("email")
     role = payload.get("role")
     if not user_id or not role:
+        logger.error(f"❌ Token missing claims: user_id={user_id}, role={role}")
         raise UnauthorizedException("Token missing required claims")
 
     return CurrentUser(id=user_id, email=email, role=role, full_name=payload.get("full_name"))
