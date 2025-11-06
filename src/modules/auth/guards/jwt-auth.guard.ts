@@ -5,6 +5,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
+/**
+ * JWT Auth Guard for Payment Service
+ * 
+ * NOTE: Guard này chỉ check Bearer token có tồn tại, KHÔNG verify signature
+ * Lý do: Gateway đã verify JWT trước khi forward request đến service này
+ * 
+ * TODO: Nếu cần verify đầy đủ, implement như User Service:
+ * - Install @nestjs/jwt, @nestjs/passport
+ * - Create JwtStrategy với passport
+ * - Verify signature và expiration
+ */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -15,16 +26,11 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid authorization header');
     }
 
-    // TODO: Verify JWT token
-    // For now, just check if Bearer token exists
     const token = authHeader.substring(7);
 
     if (!token) {
       throw new UnauthorizedException('Invalid token');
     }
-
-    // TODO: Decode JWT and attach user to request
-    // request.user = decodedUser;
 
     return true;
   }
