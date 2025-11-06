@@ -1,8 +1,10 @@
-// src/modules/auth/guards/internal-api.guard.ts
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'crypto';
 
+/**
+ * So sánh 2 string an toàn (tránh timing attack)
+ */
 function safeEqual(a: string, b: string) {
   const ab = Buffer.from(a || '');
   const bb = Buffer.from(b || '');
@@ -10,13 +12,20 @@ function safeEqual(a: string, b: string) {
   return timingSafeEqual(ab, bb);
 }
 
+/**
+ * Internal API Guard
+ * 
+ * Bảo vệ các internal endpoints (service-to-service communication)
+ * Require header: x-internal-secret phải khớp với config INTERNAL_API_SECRET
+ * Dùng constant-time comparison để tránh timing attack
+ */
 @Injectable()
 export class InternalApiGuard implements CanActivate {
   constructor(private readonly cfg: ConfigService) {}
 
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest();
-    // chấp nhận nhiều alias
+    
     const headerVal =
       req.header('x-internal-secret') ||
       req.header('x-internal-api-key') ||
@@ -25,8 +34,6 @@ export class InternalApiGuard implements CanActivate {
     const expected = this.cfg.get<string>('INTERNAL_API_SECRET');
 
     if (!expected) {
-
- 
       throw new UnauthorizedException('Internal API not configured');
     }
 

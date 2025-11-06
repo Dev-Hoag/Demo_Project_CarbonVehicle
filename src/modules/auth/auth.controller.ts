@@ -1,4 +1,3 @@
-// src/modules/auth/auth.controller.ts
 import {
   Controller, Post, Get, Body, UseGuards, Query, Res, BadRequestException,
 } from '@nestjs/common';
@@ -56,15 +55,11 @@ export class AuthController {
     return this.authService.forgotPassword(dto);
   }
 
-  // 👇 THÊM: Render form HTML đổi mật khẩu (GET từ email)
   @Get('reset-password')
   @ApiOperation({ summary: 'Render reset password form (HTML)' })
   @ApiQuery({ name: 'token', type: String, required: true })
   async renderResetPasswordForm(@Query('token') token: string, @Res() res: Response) {
     if (!token) throw new BadRequestException('Missing token');
-
-    // (tuỳ chọn) kiểm tra sơ bộ chữ ký/hạn token, không đổi DB:
-    // await this.authService.verifyResetToken(token);
 
     const html = `<!doctype html>
 <html><head><meta charset="utf-8"><title>Reset Password</title></head>

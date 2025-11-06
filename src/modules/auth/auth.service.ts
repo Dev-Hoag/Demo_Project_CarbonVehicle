@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { type StringValue } from 'ms';
 import { EmailService } from './email.service';
 import { parseTtl } from '../../common/utils/ttl.util'; 
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,9 +21,16 @@ export class AuthService {
     private readonly profileRepo: Repository<UserProfile>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly emailService: EmailService, // Thêm
+    private readonly emailService: EmailService,
   ) {}
 
+  /**
+   * Đăng ký tài khoản mới
+   * - Email phải unique
+   * - Password hash với bcrypt (10 rounds)
+   * - Status ban đầu là PENDING cho đến khi verify email
+   * - Gửi email verification với JWT token (expire 1 giờ)
+   */
   async register(dto: RegisterDto) {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existing) {
@@ -36,7 +44,7 @@ export class AuthService {
       passwordHash,
       userType: dto.userType,
       status: UserStatus.PENDING,
-      isVerified: false, // Thêm: Chưa verify
+      isVerified: false,
     });
 
     await this.profileRepo.save({
@@ -45,22 +53,28 @@ export class AuthService {
       phone: dto.phone,
     });
 
-    // Tạo verification token
     const verificationToken = this.jwtService.sign({ sub: user.id }, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: '1h' as StringValue,
     });
 
     user.verificationToken = verificationToken;
-    user.verificationTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1h
+    user.verificationTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
     await this.userRepo.save(user);
 
-    // Gửi email
     await this.emailService.sendVerificationEmail(user.email, verificationToken);
 
     return { message: 'Registration successful. Please check your email to verify.' };
   }
 
+  /**
+   * Đăng nhập và tạo JWT tokens
+   * - Kiểm tra email và password
+   * - User phải đã verify email (isVerified = true)
+   * - Account không bị suspended
+   * - Cập nhật lastLoginAt
+   * - Tạo access token (1h) và refresh token (7d)
+   */
   async login(dto: LoginDto) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) {
@@ -86,6 +100,12 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
+  /**
+   * Làm mới access token bằng refresh token
+   * - Verify refresh token signature và expiration
+   * - User phải còn tồn tại và đã verified
+   * - Tạo access token và refresh token mới
+   */
   async refreshTokens(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
@@ -104,6 +124,9 @@ export class AuthService {
     }
   }
 
+  /**
+   * Lấy thông tin profile user hiện tại
+   */
   async getMe(userId: number) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     const profile = await this.profileRepo.findOne({ where: { userId } });
@@ -114,13 +137,19 @@ export class AuthService {
       userType: user.userType,
       status: user.status,
       kycStatus: user.kycStatus,
-      isVerified: user.isVerified, // Thêm
+      isVerified: user.isVerified,
       fullName: profile?.fullName,
       phone: profile?.phone,
       createdAt: user.createdAt,
     };
   }
 
+  /**
+   * Verify email bằng token từ email
+   * - Kiểm tra token hợp lệ và chưa expire
+   * - Set isVerified = true, status = ACTIVE
+   * - Clear verification token
+   */
   async verifyEmail(token: string) {
     try {
       const payload = this.jwtService.verify(token, { secret: this.configService.get<string>('JWT_SECRET') });
@@ -142,10 +171,16 @@ export class AuthService {
     }
   }
 
+  /**
+   * Yêu cầu reset password
+   * - Tạo reset token (JWT, expire 1 giờ)
+   * - Gửi email với link reset
+   * - Không tiết lộ email có tồn tại hay không (security)
+   */
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) {
-      return { message: 'If the email exists, a reset link has been sent.' }; // Không leak info
+      return { message: 'If the email exists, a reset link has been sent.' };
     }
 
     const resetToken = this.jwtService.sign({ sub: user.id }, {
@@ -162,6 +197,12 @@ export class AuthService {
     return { message: 'If the email exists, a reset link has been sent.' };
   }
 
+  /**
+   * Reset password bằng token từ email
+   * - Verify reset token hợp lệ và chưa expire
+   * - Hash password mới
+   * - Clear reset token
+   */
   async resetPassword(dto: ResetPasswordDto) {
     try {
       const payload = this.jwtService.verify(dto.token, { secret: this.configService.get<string>('JWT_SECRET') });
@@ -182,6 +223,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Tạo access token và refresh token
+   * - Access token: default 1 giờ (3600s)
+   * - Refresh token: default 7 ngày
+   * - Payload: userId (sub), email, userType
+   */
   private async generateTokens(user: User) {
   const payload = { sub: user.id, email: user.email, userType: user.userType };
 
