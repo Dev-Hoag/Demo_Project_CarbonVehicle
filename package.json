@@ -20,6 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@ccm/events": "file:../libs/events",
+    "@golevelup/nestjs-rabbitmq": "^6.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -28,6 +30,7 @@
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/swagger": "^11.2.1",
     "@nestjs/typeorm": "^11.0.0",
+    "amqplib": "^0.10.9",
     "axios": "^1.13.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",

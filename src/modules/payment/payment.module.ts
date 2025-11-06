@@ -6,6 +6,7 @@ import { PaymentController } from './payment.controller';
 import { WebhookController } from './webhook.controller';
 import { InternalPaymentController } from './internal-payment.controller';
 import { PaymentService } from './payment.service';
+import { PaymentEventService } from './payment-event.service';
 import { Payment } from '../../shared/entities/payment.entity';
 import { PaymentCallback } from '../../shared/entities/payment-callback.entity';
 import { PaymentEvent } from '../../shared/entities/payment-event.entity';
@@ -34,12 +35,13 @@ import { InternalApiGuard } from '../auth/guards/internal-api.guard';
   ],
   providers: [
     PaymentService,
+    PaymentEventService,
     VNPayProvider,
     TestPaymentProvider,
     PaymentProviderFactory,
     JwtAuthGuard,
     InternalApiGuard,
   ],
-  exports: [PaymentService],
+  exports: [PaymentService, PaymentEventService],
 })
 export class PaymentModule {}

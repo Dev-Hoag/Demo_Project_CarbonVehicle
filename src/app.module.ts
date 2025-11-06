@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { getDatabaseConfig } from './config/database.config';
 import { PaymentModule } from './modules/payment/payment.module';
 import { OutboxModule } from './modules/outbox/outbox.module';
+import { RabbitMQModule } from './modules/rabbitmq/rabbitmq.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
+    RabbitMQModule,
     PaymentModule,
     OutboxModule,
   ],

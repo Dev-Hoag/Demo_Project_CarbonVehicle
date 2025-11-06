@@ -33,9 +33,10 @@ services:
       - default
 
   payment-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: payment-service:dev
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     depends_on:
       mysql:
         condition: service_healthy
@@ -51,6 +52,9 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: root
       DB_DATABASE: payment_service_db
+
+      # RabbitMQ
+      RABBITMQ_URL: amqp://ccm_admin:ccm_password_2024@ccm_rabbitmq:5672/ccm_vhost
 
       VNPAY_TMN_CODE: U94AQ1QM
       VNPAY_HASH_SECRET: KJTJVFNOQM3MMD742PZ4UO5GN8SU9SIK

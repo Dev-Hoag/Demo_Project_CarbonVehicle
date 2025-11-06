@@ -15,6 +15,7 @@ import {
   DuplicatePaymentException,
   PaymentExpiredException,
 } from '../../shared/exceptions/payment.exception';
+import { PaymentEventService } from './payment-event.service';
 
 @Injectable()
 export class PaymentService {
@@ -30,6 +31,7 @@ export class PaymentService {
     @InjectRepository(OutboxEvent)
     private outboxRepository: Repository<OutboxEvent>,
     private paymentProviderFactory: PaymentProviderFactory,
+    private paymentEventService: PaymentEventService,
   ) {}
 
   /**
@@ -131,13 +133,17 @@ export class PaymentService {
     payment.paymentUrl = response.paymentUrl;
     await this.paymentRepository.save(payment);
 
-    // Publish event to outbox
-    await this.publishEvent('PaymentInitiated', payment, {
+    // Publish PaymentInitiated event to outbox
+    await this.paymentEventService.publishPaymentInitiated({
       paymentCode: payment.paymentCode,
       transactionId: payment.transactionId,
       userId: payment.userId,
-      amount: payment.amount,
-      gateway: payment.gateway,
+      gateway: payment.gateway as any, // Will match PaymentGateway enum
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      orderInfo: payment.orderInfo,
+      bankCode: payment.bankCode,
+      ipAddress: payment.ipAddress,
     });
 
     return this.mapToResponseDto(payment);
@@ -242,22 +248,32 @@ export class PaymentService {
 
       // Publish event based on status
       if (payment.status === PaymentStatus.COMPLETED) {
-        await this.publishEvent('PaymentCompleted', payment, {
+        await this.paymentEventService.publishPaymentCompleted({
           paymentCode: payment.paymentCode,
           transactionId: payment.transactionId,
           userId: payment.userId,
-          amount: payment.amount,
+          gateway: payment.gateway as any,
+          amount: Number(payment.amount),
+          currency: payment.currency,
+          orderInfo: payment.orderInfo,
           gatewayTransactionId: payment.gatewayTransactionId,
+          gatewayResponseCode: payment.gatewayResponseCode,
+          completedAt: payment.completedAt.toISOString(),
         });
 
         this.logger.log(`Payment completed: ${payment.paymentCode}`);
       } else if (payment.status === PaymentStatus.FAILED) {
-        await this.publishEvent('PaymentFailed', payment, {
+        await this.paymentEventService.publishPaymentFailed({
           paymentCode: payment.paymentCode,
           transactionId: payment.transactionId,
           userId: payment.userId,
-          responseCode: payment.gatewayResponseCode,
-          responseMsg: payment.gatewayResponseMsg,
+          gateway: payment.gateway as any,
+          amount: Number(payment.amount),
+          currency: payment.currency,
+          reason: payment.gatewayResponseMsg || 'Payment failed',
+          gatewayResponseCode: payment.gatewayResponseCode,
+          gatewayResponseMsg: payment.gatewayResponseMsg,
+          failedAt: payment.updatedAt.toISOString(),
         });
 
         this.logger.log(`Payment failed: ${payment.paymentCode}`);
@@ -325,10 +341,7 @@ export class PaymentService {
         expiredAt: payment.expiredAt,
       });
 
-      await this.publishEvent('PaymentExpired', payment, {
-        paymentCode: payment.paymentCode,
-        transactionId: payment.transactionId,
-      });
+      // TODO: Add PaymentExpired event to @ccm/events package
     }
   }
 
@@ -352,28 +365,6 @@ export class PaymentService {
     });
 
     await this.eventRepository.save(event);
-  }
-
-  /**
-   * Publish event to outbox
-   */
-  private async publishEvent(
-    eventType: string,
-    payment: Payment,
-    payload: any,
-  ) {
-    const outboxEvent = this.outboxRepository.create({
-      eventId: CryptoUtil.uuid(),
-      aggregateType: 'Payment',
-      aggregateId: payment.paymentCode,
-      eventType,
-      payload,
-      routingKey: `payment.${eventType.toLowerCase()}`,
-      exchange: 'carbon-credit-events',
-    });
-
-    await this.outboxRepository.save(outboxEvent);
-    this.logger.log(`Event published to outbox: ${eventType}`);
   }
 
   /**
