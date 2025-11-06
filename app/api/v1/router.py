@@ -2,7 +2,7 @@
 # Router tổng hợp
 # ============================================
 from fastapi import APIRouter
-from app.api.v1.endpoints import verifications, reports, requests
+from app.api.v1.endpoints import verifications, reports, requests, auth
 
 # Tạo API router chính
 api_router = APIRouter()
@@ -26,4 +26,11 @@ api_router.include_router(
     requests.router,
     prefix="/requests",
     tags=["Requests"]
+)
+
+# Include auth routes (test token for development)
+api_router.include_router(
+    auth.router,
+    prefix="/auth",
+    tags=["Auth"]
 )
