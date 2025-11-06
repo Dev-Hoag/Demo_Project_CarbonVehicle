@@ -135,16 +135,13 @@ export class VNPayProvider implements IPaymentProvider {
         .createHmacSha512(this.cfg.vnp_HashSecret, signData)
         .toUpperCase();
 
-      // Build URL redirect: thêm SecureHashType & SecureHash
-      // Dùng URLSearchParams để final-encode (Node sẽ encode space thành '+')
-      const urlParams = new URLSearchParams();
-      Object.entries(sortedParams).forEach(([k, v]) => {
-        urlParams.append(k, String(v));
-      });
-      urlParams.append('vnp_SecureHashType', 'HmacSHA512');
-      urlParams.append('vnp_SecureHash', vnp_SecureHash);
+      this.logger.log('=== SECURE HASH ===');
+      this.logger.log(`Hash: ${vnp_SecureHash}`);
 
-      const paymentUrl = `${this.cfg.vnp_Url}?${urlParams.toString()}`;
+      // Build URL redirect: KHÔNG dùng URLSearchParams vì nó encode lại
+      // VNPay yêu cầu giữ nguyên format đã encode trong signData
+      const finalParams = `${signData}&vnp_SecureHash=${vnp_SecureHash}`;
+      const paymentUrl = `${this.cfg.vnp_Url}?${finalParams}`;
 
       this.logger.log('=== PAYMENT URL ===');
       this.logger.log(paymentUrl);
