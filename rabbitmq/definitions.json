@@ -1,0 +1,151 @@
+{
+  "rabbit_version": "3.12",
+  "rabbitmq_version": "3.12",
+  "users": [
+    {
+      "name": "ccm_admin",
+      "password": "ccm_password_2024",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "ccm_vhost"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "ccm_admin",
+      "vhost": "ccm_vhost",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "ccm.events",
+      "vhost": "ccm_vhost",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ccm.events.dlx",
+      "vhost": "ccm_vhost",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "payment.events",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "ccm.events.dlx",
+        "x-dead-letter-routing-key": "payment.dlq"
+      }
+    },
+    {
+      "name": "user.events",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "ccm.events.dlx",
+        "x-dead-letter-routing-key": "user.dlq"
+      }
+    },
+    {
+      "name": "kyc.events",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "ccm.events.dlx",
+        "x-dead-letter-routing-key": "kyc.dlq"
+      }
+    },
+    {
+      "name": "payment.events.dlq",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "user.events.dlq",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "kyc.events.dlq",
+      "vhost": "ccm_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "ccm.events",
+      "vhost": "ccm_vhost",
+      "destination": "payment.events",
+      "destination_type": "queue",
+      "routing_key": "payment.#",
+      "arguments": {}
+    },
+    {
+      "source": "ccm.events",
+      "vhost": "ccm_vhost",
+      "destination": "user.events",
+      "destination_type": "queue",
+      "routing_key": "user.#",
+      "arguments": {}
+    },
+    {
+      "source": "ccm.events",
+      "vhost": "ccm_vhost",
+      "destination": "kyc.events",
+      "destination_type": "queue",
+      "routing_key": "kyc.#",
+      "arguments": {}
+    },
+    {
+      "source": "ccm.events.dlx",
+      "vhost": "ccm_vhost",
+      "destination": "payment.events.dlq",
+      "destination_type": "queue",
+      "routing_key": "payment.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "ccm.events.dlx",
+      "vhost": "ccm_vhost",
+      "destination": "user.events.dlq",
+      "destination_type": "queue",
+      "routing_key": "user.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "ccm.events.dlx",
+      "vhost": "ccm_vhost",
+      "destination": "kyc.events.dlq",
+      "destination_type": "queue",
+      "routing_key": "kyc.dlq",
+      "arguments": {}
+    }
+  ]
+}

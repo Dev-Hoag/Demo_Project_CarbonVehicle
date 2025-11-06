@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # ==================== MESSAGE BROKER ====================
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ccm_rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP protocol
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ccm_admin
+      RABBITMQ_DEFAULT_PASS: ccm_password_2024
+      RABBITMQ_DEFAULT_VHOST: ccm_vhost
+      # Enable plugins
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - ccm_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+    driver: local
+
+networks:
+  ccm_net:
+    external: true
