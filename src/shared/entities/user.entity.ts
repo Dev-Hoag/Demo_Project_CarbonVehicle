@@ -30,7 +30,6 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'last_login_at' })
   lastLoginAt: Date | null;
 
- 
   @Column({ type: 'tinyint', width: 1, default: 0, name: 'is_verified' })
   isVerified: boolean;
 
@@ -45,12 +44,12 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true, name: 'reset_token_expires' })
   resetTokenExpires: Date | null;
-  // 👇 THÊM CÁC FIELDS NÀY
+
   @Column({ type: 'timestamp', nullable: true })
   lockedAt: Date;
 
   @Column({ nullable: true })
-  lockedBy: number; // Admin ID
+  lockedBy: number;
 
   @Column({ type: 'text', nullable: true })
   lockReason: string;
@@ -65,7 +64,7 @@ export class User {
   suspendReason: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  deletedAt: Date; // Soft delete
+  deletedAt: Date;
 
   @Column({ nullable: true })
   deletedBy: number;

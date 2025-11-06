@@ -1,5 +1,3 @@
-// src/shared/entities/user-action-log.entity.ts
-
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -27,7 +25,7 @@ export class UserActionLog {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' }) // ✅ FIX: Đổi từ string sang int
+  @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
@@ -43,11 +41,11 @@ export class UserActionLog {
   @Column({ type: 'text', nullable: true })
   reason: string;
 
-  @Column({ type: 'int', nullable: true }) // ✅ FIX: Đổi từ string sang int
+  @Column({ type: 'int', nullable: true })
   performedBy: number;
 
-  @Column({ type: 'text', nullable: true }) // ✅ FIX: Đổi từ json sang text
-  metadata: string; // Store as JSON string
+  @Column({ type: 'text', nullable: true })
+  metadata: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -32,7 +32,6 @@ export class UpdateProfileDto {
   @IsOptional()
   bio?: string;
 
-  // EV Owner
   @ApiPropertyOptional({ example: 'VinFast VF8' })
   @IsString()
   @IsOptional()
@@ -48,7 +47,6 @@ export class UpdateProfileDto {
   @IsOptional()
   vehiclePlate?: string;
 
-  // Buyer
   @ApiPropertyOptional({ example: 'Green Energy Corp' })
   @IsString()
   @IsOptional()
@@ -59,7 +57,6 @@ export class UpdateProfileDto {
   @IsOptional()
   taxCode?: string;
 
-  // CVA
   @ApiPropertyOptional({ example: 'CVA-2024-001' })
   @IsString()
   @IsOptional()

@@ -1,5 +1,3 @@
-// src/shared/dtos/internal-user.dto.ts
-
 import {
   IsEnum,
   IsInt,
@@ -58,7 +56,6 @@ export class BatchGetUsersDto {
   userIds!: number[];
 }
 
-/** POST /internal/users/validate */
 export class ValidateUserDto {
   @ApiProperty({ example: 1 })
   @Type(() => Number)
@@ -71,7 +68,6 @@ export class ValidateUserDto {
   requireKyc?: boolean;
 }
 
-/** POST /internal/users/:id/unlock */
 export class UnlockUserDto {
   @ApiProperty({ description: 'Admin ID performing the action', example: 1 })
   @Type(() => Number)
@@ -88,7 +84,6 @@ export class UnlockUserDto {
   notes?: string;
 }
 
-/** POST /internal/users/:id/activate */
 export class ActivateUserDto {
   @ApiProperty({ example: 1 })
   @Type(() => Number)
@@ -101,7 +96,6 @@ export class ActivateUserDto {
   notes?: string;
 }
 
-/** DELETE /internal/users/:id */
 export class SoftDeleteUserDto {
   @ApiProperty({ example: 1 })
   @Type(() => Number)

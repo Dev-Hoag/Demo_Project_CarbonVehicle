@@ -32,7 +32,6 @@ export class UserProfile {
   @Column({ type: 'text', nullable: true })
   bio: string;
 
-  // EV Owner fields
   @Column({ nullable: true, name: 'vehicle_type' })
   vehicleType: string;
 
@@ -42,14 +41,12 @@ export class UserProfile {
   @Column({ nullable: true, name: 'vehicle_plate' })
   vehiclePlate: string;
 
-  // Buyer fields
   @Column({ nullable: true, name: 'company_name' })
   companyName: string;
 
   @Column({ nullable: true, name: 'tax_code' })
   taxCode: string;
 
-  // CVA fields
   @Column({ nullable: true, name: 'certification_number' })
   certificationNumber: string;
 

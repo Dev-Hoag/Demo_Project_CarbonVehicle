@@ -42,7 +42,6 @@ export class RefreshTokenDto {
   refreshToken: string;
 }
 
-// Thêm mới
 export class ForgotPasswordDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
