@@ -5,7 +5,7 @@ import { AuditLog } from '../../shared/entities/audit-log.entity';
 
 // Khai báo input rõ ràng để hỗ trợ adminUserId
 type CreateAuditLogInput = {
-  adminUserId?: number;              // <-- hỗ trợ truyền id admin
+  adminUserId?: number;              
   actionName: string;
   resourceType: string;
   resourceId?: string | null;
@@ -34,25 +34,25 @@ export class AuditLogService {
         newValue: input.newValue ?? null,
         ipAddress: input.ipAddress ?? null,
         traceId: input.traceId ?? null,
-        // ✅ gán relation thay vì adminUserId
+       
         adminUser: input.adminUserId ? ({ id: input.adminUserId } as any) : null,
-        // ❌ KHÔNG set createdAt, @CreateDateColumn sẽ tự fill
+        
       } as any);
       return await this.auditLogRepository.save(auditLog);
     } catch (error) {
       console.error('Audit log error', error);
-      // tuỳ ý: throw lại hoặc nuốt lỗi
-      // throw error;
+      
+    
     }
   }
 
   async findAll(page: number = 1, limit: number = 10, filters?: any) {
     const qb = this.auditLogRepository
       .createQueryBuilder('log')
-      .leftJoin('log.adminUser', 'admin'); // ✅ join quan hệ
+      .leftJoin('log.adminUser', 'admin'); 
 
     if (filters?.adminId) {
-      // ✅ filter theo quan hệ
+     
       qb.andWhere('admin.id = :adminId', { adminId: filters.adminId });
       // Hoặc dùng cột DB: qb.andWhere('log.admin_user_id = :adminId', { adminId: filters.adminId });
     }

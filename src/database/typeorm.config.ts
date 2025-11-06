@@ -17,7 +17,7 @@ import { AdminConfig } from '../shared/entities/admin-config.entity';
 export const typeOrmConfig = (): TypeOrmModuleOptions => {
   return {
     type: 'mysql',
-    // ⬇️ MẶC ĐỊNH ĐÚNG KHI CHẠY TRONG DOCKER
+  
     host: process.env.DB_HOST ?? 'mysql',
     port: parseInt(process.env.DB_PORT ?? '3306'),
     username: process.env.DB_USERNAME ?? 'root',
@@ -38,8 +38,8 @@ export const typeOrmConfig = (): TypeOrmModuleOptions => {
       MetricDaily,
       AdminConfig,
     ],
-    // ⬇️ Bật qua biến môi trường để tạo bảng 1 lần rồi tắt
-    synchronize: process.env.DB_SYNCHRONIZE === 'true',
+ 
+    synchronize: process.env.DB_SYNCHRONIZE === 'false',
     logging: process.env.NODE_ENV === 'development',
   };
 };
