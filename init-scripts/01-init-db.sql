@@ -130,6 +130,36 @@ SET
 WHERE id = 'verif-004';
 
 
+-- Seed sample data for verification_events (linked to existing records)
+INSERT INTO verification_events (
+    id,
+    verification_id,
+    event_type,
+    payload,
+    published,
+    created_at,
+    published_at
+) VALUES
+(
+    'event-003',
+    'verif-003',
+    'APPROVED',
+    JSON_OBJECT('verification_id', 'verif-003', 'status', 'APPROVED'),
+    FALSE,
+    NOW(),
+    NULL
+),
+(
+    'event-004',
+    'verif-004',
+    'REJECTED',
+    JSON_OBJECT('verification_id', 'verif-004', 'status', 'REJECTED'),
+    FALSE,
+    NOW(),
+    NULL
+)
+ON DUPLICATE KEY UPDATE id = id;
+
 -- ============================================
 -- Views (Optional - để query dễ hơn)
 -- ============================================
