@@ -1,35 +1,63 @@
 version: '3.8'
 
 services:
-  # wallet-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: ccm_wallet_service
-  #   ports:
-  #     - "3008:3008"
-  #   environment:
-  #     NODE_ENV: development
-  #     PORT: 3008
-  #     DB_HOST: wallet_db
-  #     DB_PORT: 3306
-  #     DB_USERNAME: root
-  #     DB_PASSWORD: root
-  #     DB_DATABASE: wallet_service_db
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USERNAME: ccm_admin
-  #     RABBITMQ_PASSWORD: ccm_password_2024
-  #     RABBITMQ_VHOST: ccm_vhost
-  #     USER_SERVICE_URL: http://user-service:3001
-  #     PAYMENT_SERVICE_URL: http://payment-service:3007
-  #     TRANSACTION_SERVICE_URL: http://transaction-service:3006
-  #   depends_on:
-  #     - wallet_db
-  #     - rabbitmq
-  #   networks:
-  #     - ccm_net
-  #   restart: unless-stopped
+  wallet-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wallet-service:latest
+    container_name: ccm_wallet_service
+    ports:
+      - "3008:3008"
+    environment:
+      NODE_ENV: production
+      PORT: 3008
+      
+      # Database Configuration
+      DB_HOST: wallet_db
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: wallet_service_db
+      
+      # JWT Configuration (must match User Service)
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRES_IN: 7d
+      
+      # Internal API Key (for inter-service communication)
+      INTERNAL_API_KEY: ccm-internal-secret-2024
+      
+      # RabbitMQ Configuration
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ccm_admin
+      RABBITMQ_PASSWORD: ccm_password_2024
+      RABBITMQ_VHOST: ccm_vhost
+      RABBITMQ_EXCHANGE: ccm.events
+      
+      # Other Services URLs (for internal communication)
+      USER_SERVICE_URL: http://user_service_app:3001
+      PAYMENT_SERVICE_URL: http://payment_service:3007
+      TRANSACTION_SERVICE_URL: http://transaction_service:3006
+      
+      # Wallet Business Logic Configuration
+      WITHDRAWAL_FEE_PERCENTAGE: 0.5
+      RESERVE_EXPIRATION_MINUTES: 30
+      MIN_WITHDRAWAL_AMOUNT: 50000
+      MAX_WITHDRAWAL_AMOUNT: 100000000
+      MIN_DEPOSIT_AMOUNT: 10000
+    depends_on:
+      wallet_db:
+        condition: service_healthy
+    networks:
+      - ccm_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3008/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
 
   wallet_db:
     image: mysql:8.0
@@ -46,6 +74,12 @@ services:
     networks:
       - ccm_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   adminer:
     image: adminer:latest
