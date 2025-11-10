@@ -14,6 +14,8 @@ import { Wallet } from './wallet.entity';
 
 @Entity('wallet_transactions')
 @Index(['walletId', 'createdAt'])
+// Idempotency guard: tránh ghi trùng giao dịch cho cùng (wallet, reference, type)
+@Index(['walletId', 'referenceType', 'referenceId', 'type'], { unique: true })
 export class WalletTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;

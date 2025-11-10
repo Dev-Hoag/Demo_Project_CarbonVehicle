@@ -10,24 +10,38 @@ export class TransactionsService {
   constructor(
     @InjectRepository(WalletTransaction)
     private readonly transactionRepo: Repository<WalletTransaction>,
+    @InjectRepository(Wallet)
+    private readonly walletRepo: Repository<Wallet>,
   ) {}
 
   async getTransactions(userId: string, page = 1, limit = 20) {
-    // TODO: Get wallet by userId first
+    // Chuẩn hóa tham số
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+
+    // Lấy wallet theo userId; nếu chưa có, trả danh sách rỗng
+    const wallet = await this.walletRepo.findOne({ where: { userId } });
+    if (!wallet) {
+      return {
+        data: [],
+        pagination: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 },
+      };
+    }
+
     const [transactions, total] = await this.transactionRepo.findAndCount({
-      // where: { wallet: { userId } },
+      where: { walletId: wallet.id },
       order: { createdAt: 'DESC' },
-      take: limit,
-      skip: (page - 1) * limit,
+      take: limitNum,
+      skip: (pageNum - 1) * limitNum,
     });
 
     return {
       data: transactions,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limitNum),
       },
     };
   }
