@@ -4,8 +4,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wallet, WalletTransaction } from '../../shared/entities';
+import { WalletAuditLog } from '../../shared/entities/wallet-audit.entity';
 import { WalletStatus, TransactionType, TransactionStatus } from '../../shared/enums';
 import { CreateDepositDto } from '../../shared/dtos/wallet.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class WalletsService {
@@ -13,7 +16,10 @@ export class WalletsService {
     @InjectRepository(Wallet)
     private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(WalletTransaction)
-    private readonly transactionRepo: Repository<WalletTransaction>,
+  private readonly transactionRepo: Repository<WalletTransaction>,
+  @InjectRepository(WalletAuditLog)
+  private readonly auditRepo: Repository<WalletAuditLog>,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   async getOrCreateWallet(userId: string): Promise<Wallet> {
@@ -66,14 +72,29 @@ export class WalletsService {
 
   async initiateDeposit(userId: string, dto: CreateDepositDto) {
     const wallet = await this.getOrCreateWallet(userId);
+    // Tạo paymentRequestId để làm correlation với Payment_Service
+    const paymentRequestId = randomUUID();
+    const idempotencyKey = `deposit:${userId}:${dto.amount}:${paymentRequestId}`;
 
-    // TODO: Call Payment Service to create payment
-    // For now, return mock response
+    // Phát event yêu cầu thanh toán (event-driven). Payment_Service sẽ xử lý và sau đó phát payment.completed
+    await this.amqp.publish('ccm.events', 'payment.requested', {
+      userId,
+      amount: dto.amount,
+      paymentRequestId,
+      paymentMethod: dto.paymentMethod || 'UNKNOWN',
+      returnUrl: dto.returnUrl || null,
+      idempotencyKey,
+      reason: 'Deposit initiated',
+      timestamp: new Date().toISOString(),
+    });
+
+    // Trả về thông tin để client tiếp tục thanh toán (tùy Payment_Service cung cấp URL hoặc QR sau)
     return {
-      message: 'Deposit initiated. Please complete payment via Payment Service.',
+      message: 'Deposit requested. Continue with Payment Service to complete.',
       wallet,
       amount: dto.amount,
-      paymentUrl: 'https://payment-gateway.example.com/pay/mock-payment-id',
+      paymentRequestId,
+      // paymentUrl sẽ do Payment_Service cung cấp ở luồng khác (webhook/event hoặc query tiếp theo)
     };
   }
 
@@ -107,10 +128,19 @@ export class WalletsService {
     });
 
     wallet.balance = Number(wallet.balance) + amount;
-    
     await this.walletRepo.save(wallet);
     await this.transactionRepo.save(transaction);
-
+    await this.auditRepo.save(this.auditRepo.create({
+      walletId: wallet.id,
+      userId: wallet.userId,
+      delta: amount,
+      balanceBefore: transaction.balanceBefore,
+      balanceAfter: transaction.balanceAfter,
+      sourceType: 'deposit',
+      sourceId: referenceId,
+      transactionId: transaction.id,
+      description,
+    }));
     return { wallet, transaction };
   }
 
@@ -134,10 +164,19 @@ export class WalletsService {
     });
 
     wallet.balance = Number(wallet.balance) - amount;
-    
     await this.walletRepo.save(wallet);
     await this.transactionRepo.save(transaction);
-
+    await this.auditRepo.save(this.auditRepo.create({
+      walletId: wallet.id,
+      userId: wallet.userId,
+      delta: -amount,
+      balanceBefore: transaction.balanceBefore,
+      balanceAfter: transaction.balanceAfter,
+      sourceType: 'withdrawal',
+      sourceId: referenceId,
+      transactionId: transaction.id,
+      description,
+    }));
     return { wallet, transaction };
   }
 }

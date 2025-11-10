@@ -12,6 +12,11 @@ export class TransactionEventConsumer {
     exchange: 'ccm.events',
     routingKey: 'transaction.created',
     queue: 'wallet.transaction.created',
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: 'ccm.events',
+      deadLetterRoutingKey: 'wallet.transaction.created.dlq',
+    },
   })
   async handleTransactionCreated(msg: any) {
     try {
@@ -48,6 +53,11 @@ export class TransactionEventConsumer {
     exchange: 'ccm.events',
     routingKey: 'transaction.completed',
     queue: 'wallet.transaction.completed',
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: 'ccm.events',
+      deadLetterRoutingKey: 'wallet.transaction.completed.dlq',
+    },
   })
   async handleTransactionCompleted(msg: any) {
     try {
@@ -78,6 +88,11 @@ export class TransactionEventConsumer {
     exchange: 'ccm.events',
     routingKey: 'transaction.cancelled',
     queue: 'wallet.transaction.cancelled',
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: 'ccm.events',
+      deadLetterRoutingKey: 'wallet.transaction.cancelled.dlq',
+    },
   })
   async handleTransactionCancelled(msg: any) {
     try {

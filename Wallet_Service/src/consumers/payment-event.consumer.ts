@@ -12,6 +12,11 @@ export class PaymentEventConsumer {
     exchange: 'ccm.events',
     routingKey: 'payment.completed',
     queue: 'wallet.payment.completed',
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: 'ccm.events',
+      deadLetterRoutingKey: 'wallet.payment.completed.dlq',
+    },
   })
   async handlePaymentCompleted(msg: any) {
     try {

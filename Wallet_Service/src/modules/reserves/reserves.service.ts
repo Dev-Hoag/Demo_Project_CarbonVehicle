@@ -16,6 +16,41 @@ export class ReservesService {
     @InjectRepository(WalletTransaction)
     private readonly transactionRepo: Repository<WalletTransaction>,
   ) {}
+  
+  async getMetrics() {
+    // Tổng locked từ bảng wallets
+    const lockedRow = await this.walletRepo
+      .createQueryBuilder('w')
+      .select('COALESCE(SUM(w.locked_balance), 0)', 'locked')
+      .getRawOne<{ locked: string }>();
+
+    // Tổng reserves ACTIVE
+    const activeRow = await this.reserveRepo
+      .createQueryBuilder('r')
+      .select('COALESCE(SUM(r.amount), 0)', 'active')
+      .where('r.status = :status', { status: ReserveStatus.ACTIVE })
+      .getRawOne<{ active: string }>();
+
+    // Reserves sẽ hết hạn trong 15 phút
+    const in15 = new Date(Date.now() + 15 * 60 * 1000);
+    const expiringCount = await this.reserveRepo
+      .createQueryBuilder('r')
+      .where('r.status = :status', { status: ReserveStatus.ACTIVE })
+      .andWhere('r.expires_at <= :in15', { in15 })
+      .getCount();
+
+    const locked = Number(lockedRow?.locked || 0);
+    const active = Number(activeRow?.active || 0);
+    const drift = Math.abs(locked - active);
+
+    return {
+      lockedBalanceTotal: locked,
+      activeReservesTotal: active,
+      reserveDrift: drift,
+      expiringReserves15m: expiringCount,
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   async reserveFunds(
     userId: string,
@@ -223,11 +258,11 @@ export class ReservesService {
       description: `Payment received from transaction ${transactionId}`,
     });
 
-    await this.reserveRepo.save(buyerReserve);
-    await this.walletRepo.save(buyerWallet);
-    await this.walletRepo.save(sellerWallet);
-    await this.transactionRepo.save(buyerTransaction);
-    await this.transactionRepo.save(sellerTransaction);
+  await this.reserveRepo.save(buyerReserve);
+  await this.walletRepo.save(buyerWallet);
+  await this.walletRepo.save(sellerWallet);
+  await this.transactionRepo.save(buyerTransaction);
+  await this.transactionRepo.save(sellerTransaction);
 
     return { buyerWallet, sellerWallet, reserve: buyerReserve };
   }

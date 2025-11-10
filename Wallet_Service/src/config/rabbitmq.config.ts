@@ -12,6 +12,20 @@ export const getRabbitMQConfig = () => {
         },
       },
     ],
+    // Khai báo queues mặc định (main + DLQ) để service có thể sử dụng policy TTL/retry
+    queues: [
+      // Main queues
+      { name: 'wallet.transaction.created', options: { durable: true } },
+      { name: 'wallet.transaction.completed', options: { durable: true } },
+      { name: 'wallet.transaction.cancelled', options: { durable: true } },
+      { name: 'wallet.payment.completed', options: { durable: true } },
+      // Dead Letter Queues
+      { name: 'wallet.transaction.created.dlq', options: { durable: true } },
+      { name: 'wallet.transaction.completed.dlq', options: { durable: true } },
+      { name: 'wallet.transaction.cancelled.dlq', options: { durable: true } },
+      { name: 'wallet.payment.completed.dlq', options: { durable: true } },
+    ],
+    // Các binding DLQ sẽ được thiết lập bởi admin script / infra (không auto-bind ở đây để tránh vòng lặp)
     connectionInitOptions: {
       wait: true,
       timeout: 10000,

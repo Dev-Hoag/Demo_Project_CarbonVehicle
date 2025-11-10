@@ -53,10 +53,13 @@ export class InternalController {
   @Post('refund')
   @ApiOperation({ summary: '[Internal] Refund payment' })
   async refundPayment(@Body() dto: RefundPaymentDto) {
+    // Phân biệt refund của settle (reverse) và refund payment nạp dư
+    // Giả sử paymentId trỏ đến giao dịch DEPOSIT hoặc SETTLE_IN trước đó.
+    // TODO: tra cứu giao dịch gốc và xác định loại refund chính xác.
     return this.walletsService.addBalance(
       dto.userId,
       dto.amount,
-      dto.paymentId,
+      `refund:${dto.paymentId}`,
       dto.reason || 'Payment refunded',
     );
   }
@@ -71,5 +74,11 @@ export class InternalController {
       lockedBalance: wallet.lockedBalance,
       availableBalance: wallet.availableBalance,
     };
+  }
+
+  @Get('metrics/summary')
+  @ApiOperation({ summary: '[Internal] Wallet metrics summary' })
+  async getMetricsSummary() {
+    return this.reservesService.getMetrics();
   }
 }
