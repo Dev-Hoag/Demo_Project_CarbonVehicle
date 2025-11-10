@@ -1,9 +1,10 @@
 // src/modules/internal/internal.controller.ts
 
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { ReservesService } from '../reserves/reserves.service';
 import { WalletsService } from '../wallets/wallets.service';
+import { InternalApiGuard } from '../../shared/guards/internal-api.guard';
 import {
   ReserveFundsDto,
   ReleaseFundsDto,
@@ -13,6 +14,7 @@ import {
 
 @ApiTags('internal-wallet')
 @ApiSecurity('internal-api-key')
+@UseGuards(InternalApiGuard)
 @Controller('internal/wallets')
 export class InternalController {
   constructor(

@@ -4,33 +4,32 @@ import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WalletsService } from './wallets.service';
 import { CreateDepositDto } from '../../shared/dtos/wallet.dto';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 
 @ApiTags('wallets')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('api/wallets')
-// @UseGuards(JwtAuthGuard) // TODO: Implement after User Service integration
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get wallet balance' })
-  async getWallet() {
-    // TODO: Get userId from JWT token
-    const userId = 'mock-user-id';
-    return this.walletsService.getOrCreateWallet(userId);
+  async getWallet(@CurrentUser() user: any) {
+    return this.walletsService.getOrCreateWallet(user.id);
   }
 
   @Get('summary')
   @ApiOperation({ summary: 'Get wallet summary' })
-  async getWalletSummary() {
-    const userId = 'mock-user-id';
-    return this.walletsService.getWalletSummary(userId);
+  async getWalletSummary(@CurrentUser() user: any) {
+    return this.walletsService.getWalletSummary(user.id);
   }
 
   @Post('deposit')
   @ApiOperation({ summary: 'Initiate deposit' })
-  async initiateDeposit(@Body() dto: CreateDepositDto) {
-    const userId = 'mock-user-id';
-    return this.walletsService.initiateDeposit(userId, dto);
+  async initiateDeposit(@Body() dto: CreateDepositDto, @CurrentUser() user: any) {
+    return this.walletsService.initiateDeposit(user.id, dto);
   }
 
   @Get('limits')

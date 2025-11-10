@@ -1,10 +1,14 @@
 // src/modules/transactions/transactions.controller.ts
 
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 
 @ApiTags('transactions')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('api/wallets/transactions')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
@@ -16,8 +20,8 @@ export class TransactionsController {
   async getTransactions(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
+    @CurrentUser() user: any,
   ) {
-    const userId = 'mock-user-id'; // TODO: Get from JWT
-    return this.transactionsService.getTransactions(userId, page, limit);
+    return this.transactionsService.getTransactions(user.id, page, limit);
   }
 }

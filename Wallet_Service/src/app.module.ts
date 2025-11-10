@@ -4,7 +4,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
 import { getDatabaseConfig } from './config/database.config';
+import { JwtStrategy } from './shared/strategies/jwt.strategy';
 
 // Modules
 import { WalletsModule } from './modules/wallets/wallets.module';
@@ -17,6 +20,7 @@ import { InternalModule } from './modules/internal/internal.module';
 // Controllers & Services
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TransactionEventConsumer } from './consumers/transaction-event.consumer';
 
 @Module({
   imports: [
@@ -37,6 +41,17 @@ import { AppService } from './app.service';
     // Schedule Module (for cron jobs - expire reserves)
     ScheduleModule.forRoot(),
 
+    // Passport & JWT Module
+    PassportModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key-change-in-production',
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
+    }),
+
     // Feature Modules
     WalletsModule,
     TransactionsModule,
@@ -46,6 +61,6 @@ import { AppService } from './app.service';
     InternalModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, JwtStrategy, TransactionEventConsumer],
 })
 export class AppModule {}
