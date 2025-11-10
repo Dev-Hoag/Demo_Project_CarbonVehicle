@@ -17,16 +17,30 @@ export class TransactionEventConsumer {
     try {
       this.logger.log(`Received transaction.created event: ${JSON.stringify(msg)}`);
       // msg: { userId, transactionId, amount, expirationMinutes }
-      await this.reservesService.reserveFunds(
+      const { reserve } = await this.reservesService.reserveFunds(
         msg.userId,
         msg.transactionId,
         msg.amount,
         msg.expirationMinutes || 60,
       );
-      this.logger.log(`Successfully reserved funds for transaction ${msg.transactionId}`);
+      if (reserve && reserve.status === 'ACTIVE') {
+        this.logger.log(`Successfully reserved funds for transaction ${msg.transactionId}`);
+      } else {
+        this.logger.log(`Reserve already exists for transaction ${msg.transactionId}, idempotent ack.`);
+      }
     } catch (error) {
       this.logger.error(`Error processing transaction.created: ${error.message}`, error.stack);
-      throw error; // Retry for errors
+      if (error.message.includes('Insufficient balance')) {
+        // Business rejection -> ack, do not retry
+        this.logger.warn(`Insufficient balance for transaction ${msg.transactionId}, acknowledging.`);
+        return;
+      }
+      if (error.message.includes('Wallet not found')) {
+        this.logger.warn(`Wallet not found for user ${msg.userId}, acknowledging.`);
+        return;
+      }
+      // Other errors -> requeue
+      throw error;
     }
   }
 
@@ -48,7 +62,15 @@ export class TransactionEventConsumer {
       this.logger.log(`Successfully settled funds for transaction ${msg.transactionId}`);
     } catch (error) {
       this.logger.error(`Error processing transaction.completed: ${error.message}`, error.stack);
-      throw error; // Retry for errors
+      if (
+        error.message.includes('Buyer reserve not found') ||
+        error.message.includes('Already processed') ||
+        error.message.includes('Insufficient locked funds')
+      ) {
+        this.logger.warn(`Idempotent settle for transaction ${msg.transactionId}, acknowledging.`);
+        return; // ack
+      }
+      throw error; // requeue other errors
     }
   }
 

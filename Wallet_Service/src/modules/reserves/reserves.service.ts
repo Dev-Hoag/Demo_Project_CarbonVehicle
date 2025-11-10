@@ -23,6 +23,13 @@ export class ReservesService {
     amount: number,
     expirationMinutes = 30,
   ) {
+    // Idempotency: if a reserve already exists for this transaction, return it
+    const existing = await this.reserveRepo.findOne({ where: { transactionId } });
+    if (existing) {
+      // If already ACTIVE we just return without relocking.
+      // If already SETTLED or RELEASED we do not create a new one.
+      return { reserve: existing, wallet: await this.walletRepo.findOne({ where: { id: existing.walletId } }) };
+    }
     const wallet = await this.walletRepo.findOne({ where: { userId } });
     if (!wallet) {
       throw new BadRequestException('Wallet not found');
@@ -60,9 +67,9 @@ export class ReservesService {
       description: `Funds reserved for transaction ${transactionId}`,
     });
 
-    await this.reserveRepo.save(reserve);
-    await this.walletRepo.save(wallet);
-    await this.transactionRepo.save(transaction);
+  await this.reserveRepo.save(reserve);
+  await this.walletRepo.save(wallet);
+  await this.transactionRepo.save(transaction);
 
     return { reserve, wallet };
   }
@@ -109,14 +116,30 @@ export class ReservesService {
     sellerId: string,
     amount: number,
   ) {
-    // Release buyer's reserved funds and deduct
-    const buyerReserve = await this.reserveRepo.findOne({
-      where: { transactionId, status: ReserveStatus.ACTIVE },
-    });
-
+    // Attempt to find an active reserve, if not found check with short retries for ordering issues
+    let buyerReserve = await this.reserveRepo.findOne({ where: { transactionId } });
+    if (!buyerReserve) {
+      // Soft wait for reserve creation in case events arrive out-of-order
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        buyerReserve = await this.reserveRepo.findOne({ where: { transactionId } });
+        if (buyerReserve) break;
+      }
+    }
     if (!buyerReserve) {
       throw new BadRequestException('Buyer reserve not found');
     }
+    if (buyerReserve.status === ReserveStatus.SETTLED) {
+      const buyerWalletPrev = await this.walletRepo.findOne({ where: { id: buyerReserve.walletId } });
+      return { buyerWallet: buyerWalletPrev, sellerWallet: null, reserve: buyerReserve };
+    }
+    if (buyerReserve.status !== ReserveStatus.ACTIVE) {
+      throw new BadRequestException('Reserve not in ACTIVE state');
+    }
+
+    // Source-of-truth for settlement amount should be the reserved amount, not the incoming event amount.
+    // This prevents mismatches if the event carried a stale or mutated amount.
+    const settleAmount = Number(buyerReserve.amount);
 
     const buyerWallet = await this.walletRepo.findOne({ where: { id: buyerReserve.walletId } });
     
@@ -124,9 +147,31 @@ export class ReservesService {
       throw new BadRequestException('Buyer wallet not found');
     }
 
-    // Check if buyer has enough locked funds
-    if (Number(buyerWallet.lockedBalance) < amount) {
-      throw new BadRequestException('Insufficient locked funds');
+    // Check if buyer has enough locked funds (with small retry + reconciliation)
+    if (Number(buyerWallet.lockedBalance) < settleAmount) {
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        const refreshed = await this.walletRepo.findOne({ where: { id: buyerWallet.id } });
+        buyerWallet.lockedBalance = refreshed?.lockedBalance ?? buyerWallet.lockedBalance;
+        if (Number(buyerWallet.lockedBalance) >= settleAmount) break;
+      }
+      if (Number(buyerWallet.lockedBalance) < settleAmount) {
+        // Reconcile from reserves as source of truth
+        const totalActiveLocked = await this.reserveRepo
+          .createQueryBuilder('r')
+          .select('COALESCE(SUM(r.amount), 0)', 'sum')
+          .where('r.wallet_id = :wid', { wid: buyerWallet.id })
+          .andWhere('r.status = :status', { status: ReserveStatus.ACTIVE })
+          .getRawOne<{ sum: string }>();
+        const lockedFromReserves = Number(totalActiveLocked?.sum || 0);
+        if (lockedFromReserves > Number(buyerWallet.lockedBalance)) {
+          buyerWallet.lockedBalance = lockedFromReserves;
+          await this.walletRepo.save(buyerWallet);
+        }
+        if (Number(buyerWallet.lockedBalance) < settleAmount) {
+          throw new BadRequestException('Insufficient locked funds');
+        }
+      }
     }
 
     // Get or create seller wallet
@@ -143,11 +188,11 @@ export class ReservesService {
     }
 
     // Deduct from buyer (unlock + deduct)
-    buyerWallet.lockedBalance = Number(buyerWallet.lockedBalance) - amount;
-    buyerWallet.balance = Number(buyerWallet.balance) - amount;
+  buyerWallet.lockedBalance = Number(buyerWallet.lockedBalance) - settleAmount;
+  buyerWallet.balance = Number(buyerWallet.balance) - settleAmount;
 
     // Add to seller
-    sellerWallet.balance = Number(sellerWallet.balance) + amount;
+  sellerWallet.balance = Number(sellerWallet.balance) + settleAmount;
 
     // Update reserve status
     buyerReserve.status = ReserveStatus.SETTLED;
@@ -157,8 +202,8 @@ export class ReservesService {
     const buyerTransaction = this.transactionRepo.create({
       walletId: buyerWallet.id,
       type: TransactionType.SETTLE_OUT,
-      amount: -amount,
-      balanceBefore: Number(buyerWallet.balance) + amount,
+      amount: -settleAmount,
+      balanceBefore: Number(buyerWallet.balance) + settleAmount,
       balanceAfter: buyerWallet.balance,
       status: TransactionStatus.COMPLETED,
       referenceType: 'transaction',
@@ -169,8 +214,8 @@ export class ReservesService {
     const sellerTransaction = this.transactionRepo.create({
       walletId: sellerWallet.id,
       type: TransactionType.SETTLE_IN,
-      amount: amount,
-      balanceBefore: Number(sellerWallet.balance) - amount,
+      amount: settleAmount,
+      balanceBefore: Number(sellerWallet.balance) - settleAmount,
       balanceAfter: sellerWallet.balance,
       status: TransactionStatus.COMPLETED,
       referenceType: 'transaction',

@@ -80,6 +80,20 @@ export class WalletsService {
   async addBalance(userId: string, amount: number, referenceId: string, description: string) {
     const wallet = await this.getOrCreateWallet(userId);
 
+    // Idempotency: avoid duplicate deposit entries for the same payment reference
+    const existing = await this.transactionRepo.findOne({
+      where: {
+        walletId: wallet.id,
+        referenceType: 'payment',
+        referenceId,
+        type: TransactionType.DEPOSIT,
+        status: TransactionStatus.COMPLETED,
+      },
+    });
+    if (existing) {
+      return { wallet, transaction: existing };
+    }
+
     const transaction = this.transactionRepo.create({
       walletId: wallet.id,
       type: TransactionType.DEPOSIT,

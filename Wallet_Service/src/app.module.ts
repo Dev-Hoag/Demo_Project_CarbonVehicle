@@ -22,8 +22,11 @@ import { AdminModule } from './modules/admin/admin.module';
 // Controllers & Services
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TransactionEventConsumer } from './consumers/transaction-event.consumer';
+// Consumers are now provided via ConsumersModule to ensure proper DI order
+// import { TransactionEventConsumer } from './consumers/transaction-event.consumer';
+// import { PaymentEventConsumer } from './consumers/payment-event.consumer';
 import { ReserveCleanupService } from './services/reserve-cleanup.service';
+import { ConsumersModule } from './modules/consumers/consumers.module';
 
 @Module({
   imports: [
@@ -66,8 +69,13 @@ import { ReserveCleanupService } from './services/reserve-cleanup.service';
     EventsModule,
     InternalModule,
     AdminModule,
+    ConsumersModule, // central module for RabbitMQ consumers
   ],
   controllers: [AppController],
-  providers: [AppService, JwtStrategy, TransactionEventConsumer, ReserveCleanupService],
+  providers: [
+    AppService,
+    JwtStrategy,
+    ReserveCleanupService,
+  ],
 })
 export class AppModule {}
