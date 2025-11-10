@@ -17,6 +17,7 @@ import { ReservesModule } from './modules/reserves/reserves.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
 import { EventsModule } from './modules/events/events.module';
 import { InternalModule } from './modules/internal/internal.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 // Controllers & Services
 import { AppController } from './app.controller';
@@ -64,6 +65,7 @@ import { ReserveCleanupService } from './services/reserve-cleanup.service';
     WithdrawalsModule,
     EventsModule,
     InternalModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy, TransactionEventConsumer, ReserveCleanupService],
