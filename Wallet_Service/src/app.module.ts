@@ -8,6 +8,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { getDatabaseConfig } from './config/database.config';
 import { JwtStrategy } from './shared/strategies/jwt.strategy';
+import { Reserve } from './shared/entities/reserve.entity';
 
 // Modules
 import { WalletsModule } from './modules/wallets/wallets.module';
@@ -21,6 +22,7 @@ import { InternalModule } from './modules/internal/internal.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TransactionEventConsumer } from './consumers/transaction-event.consumer';
+import { ReserveCleanupService } from './services/reserve-cleanup.service';
 
 @Module({
   imports: [
@@ -37,6 +39,9 @@ import { TransactionEventConsumer } from './consumers/transaction-event.consumer
         getDatabaseConfig(configService),
       inject: [ConfigService],
     }),
+    
+    // Import Reserve entity for ReserveCleanupService
+    TypeOrmModule.forFeature([Reserve]),
 
     // Schedule Module (for cron jobs - expire reserves)
     ScheduleModule.forRoot(),
@@ -61,6 +66,6 @@ import { TransactionEventConsumer } from './consumers/transaction-event.consumer
     InternalModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtStrategy, TransactionEventConsumer],
+  providers: [AppService, JwtStrategy, TransactionEventConsumer, ReserveCleanupService],
 })
 export class AppModule {}
