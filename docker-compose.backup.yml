@@ -9,49 +9,56 @@ services:
       MYSQL_DATABASE: user_service_db
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --default-time-zone=+07:00
     ports:
-      - '3308:3306'                # MySQL nghe trong container 3306, host map 3308
+      - '3308:3306'                 # host:container (kết nối từ HOST dùng 3308)
     volumes:
       - user_service_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      ccm_net:
+        aliases:
+          - mysql                   # đảm bảo hostname 'mysql' luôn resolve được
+    restart: unless-stopped
 
   adminer:
     image: adminer
     container_name: user_service_adminer
-    restart: "no"
-    ports:
-      - '8081:8080'
     environment:
       ADMINER_DEFAULT_SERVER: mysql
+    ports:
+      - '8081:8080'
+    networks:
+      - ccm_net
+    restart: "no"
 
   user-service:
-    image: user-service:dev           # hoặc build tại chỗ: build: { context: ., dockerfile: Dockerfile }
+    image: user-service:dev
     container_name: user_service_app
     depends_on:
       mysql:
-        condition: service_healthy    # đợi DB sẵn sàng
+        condition: service_healthy
     env_file:
-      - .env                          # chứa JWT, SENDGRID, DB_...
+      - .env                        # DB_HOST=mysql, DB_PORT=3306, ...
     environment:
-      # Nếu không dùng env_file, đặt tay các biến sau:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASS: root
-      DB_NAME: user_service_db
-      # PORT app đang listen trong code (phải khớp EXPOSE):
-      PORT: 3001
-      # URL công khai để tạo link verify trong email (tunnel/ngrok hoặc domain):
       APP_URL: http://localhost:3001
+      APP_PORT: 3001
     ports:
       - '3001:3001'
+    networks:
+      - ccm_net
     restart: unless-stopped
-    # Nếu cần chạy migration trước khi start:
-    # command: sh -c "npm run typeorm:migrate && node dist/main"
 
 volumes:
   user_service_data:
+
+networks:
+  ccm_net:
+    external: true

@@ -268,4 +268,21 @@ export class AuthService {
     },
   };
 }
+
+/**
+ * Verify user password (for internal API calls from other services)
+ */
+async verifyPassword(userId: number, password: string): Promise<{ valid: boolean }> {
+  try {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      return { valid: false };
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    return { valid: isPasswordValid };
+  } catch (error) {
+    return { valid: false };
+  }
+}
 }

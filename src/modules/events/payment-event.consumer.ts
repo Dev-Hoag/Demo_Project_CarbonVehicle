@@ -6,8 +6,28 @@ import { Repository } from 'typeorm';
 
 /**
  * Consumer lắng nghe payment events từ RabbitMQ
- * Demo: Idempotency, Event-driven architecture
+ * Hiện tại Payment Service publish message dạng phẳng:
+ * {
+ *   paymentCode: string;
+ *   amount: number;
+ *   userId?: string;
+ *   timestamp?: string;
+ * }
+ * (không có id, aggregateId, payload, metadata). Vì vậy mapping được điều chỉnh lại cho đúng.
  */
+interface PaymentCompletedMessage {
+  paymentCode: string;
+  amount: number;
+  userId?: string;
+  timestamp?: string;
+}
+
+interface PaymentFailedMessage {
+  paymentCode: string;
+  reason?: string;
+  userId?: string;
+  timestamp?: string;
+}
 @Injectable()
 export class PaymentEventConsumer {
   private readonly logger = new Logger(PaymentEventConsumer.name);
@@ -33,43 +53,40 @@ export class PaymentEventConsumer {
       deadLetterRoutingKey: 'payment.completed.dead',
     },
   })
-  async handlePaymentCompleted(event: any) {
+  async handlePaymentCompleted(msg: PaymentCompletedMessage) {
     try {
-      this.logger.log(`Received payment.completed event: ${event.id}`);
-      this.logger.log(`Event data: ${JSON.stringify(event, null, 2)}`);
+      if (!msg || !msg.paymentCode) {
+        this.logger.error('Received malformed payment.completed message (missing paymentCode)');
+        return; // không throw để tránh retry vô nghĩa
+      }
 
-      // Idempotency check
-      if (this.processedEvents.has(event.id)) {
-        this.logger.warn(`Event ${event.id} already processed, skipping...`);
+      const eventKey = msg.paymentCode; // dùng paymentCode làm idempotency key
+      this.logger.log(`Received payment.completed message: ${eventKey}`);
+      this.logger.log(`Message data: ${JSON.stringify(msg, null, 2)}`);
+
+      if (this.processedEvents.has(eventKey)) {
+        this.logger.warn(`Message ${eventKey} already processed, skipping...`);
         return;
       }
 
-      const { aggregateId, payload, metadata } = event;
-      
-      this.logger.log(`Processing payment: ${aggregateId}`);
-      this.logger.log(`User ID: ${payload.userId}`);
-      this.logger.log(`Amount: ${payload.amount}`);
-      this.logger.log(`Transaction ID: ${payload.transactionId}`);
+      this.logger.log(`Processing paymentCode=${msg.paymentCode} amount=${msg.amount} userId=${msg.userId}`);
 
-      // TODO: Update user transaction history
+      // TODO: Persist user transaction history here
       // await this.transactionHistoryRepo.save({
-      //   userId: payload.userId,
-      //   paymentCode: aggregateId,
-      //   transactionId: payload.transactionId,
-      //   amount: payload.amount,
+      //   userId: msg.userId,
+      //   paymentCode: msg.paymentCode,
+      //   amount: msg.amount,
       //   status: 'COMPLETED',
-      //   eventId: event.id,
+      //   completedAt: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+      //   eventKey,
       // });
 
-      // Mark as processed
-      this.processedEvents.add(event.id);
-
-      this.logger.log(`✅ Successfully processed payment.completed: ${aggregateId}`);
+      this.processedEvents.add(eventKey);
+      this.logger.log(`✅ Successfully processed payment.completed: ${eventKey}`);
     } catch (error) {
       this.logger.error(`Error processing payment.completed: ${error.message}`);
       this.logger.error(error.stack);
-      // Nếu throw error, message sẽ retry hoặc vào DLQ
-      throw error;
+      throw error; // cho retry / DLQ nếu thật sự là lỗi xử lý
     }
   }
 
@@ -87,31 +104,31 @@ export class PaymentEventConsumer {
       deadLetterRoutingKey: 'payment.failed.dead',
     },
   })
-  async handlePaymentFailed(event: any) {
+  async handlePaymentFailed(msg: PaymentFailedMessage) {
     try {
-      this.logger.log(`Received payment.failed event: ${event.id}`);
-      this.logger.log(`Event data: ${JSON.stringify(event, null, 2)}`);
-
-      // Idempotency check
-      if (this.processedEvents.has(event.id)) {
-        this.logger.warn(`Event ${event.id} already processed, skipping...`);
+      if (!msg || !msg.paymentCode) {
+        this.logger.error('Received malformed payment.failed message (missing paymentCode)');
         return;
       }
 
-      const { aggregateId, payload } = event;
-      
-      this.logger.warn(`Payment failed: ${aggregateId}`);
-      this.logger.warn(`Reason: ${payload.reason || 'Unknown'}`);
+      const eventKey = `failed:${msg.paymentCode}`;
+      this.logger.log(`Received payment.failed message: ${msg.paymentCode}`);
+      this.logger.log(`Message data: ${JSON.stringify(msg, null, 2)}`);
 
-      // TODO: Update user notification or transaction history
+      if (this.processedEvents.has(eventKey)) {
+        this.logger.warn(`Message ${eventKey} already processed, skipping...`);
+        return;
+      }
 
-      // Mark as processed
-      this.processedEvents.add(event.id);
+      this.logger.warn(`Payment failed: ${msg.paymentCode} reason=${msg.reason || 'Unknown'}`);
 
-      this.logger.log(`✅ Successfully processed payment.failed: ${aggregateId}`);
+      // TODO: Persist failure notification/history
+
+      this.processedEvents.add(eventKey);
+      this.logger.log(`✅ Successfully processed payment.failed: ${msg.paymentCode}`);
     } catch (error) {
       this.logger.error(`Error processing payment.failed: ${error.message}`);
-      throw error;
+      throw error; // cho retry nếu là lỗi xử lý
     }
   }
 
@@ -126,8 +143,9 @@ export class PaymentEventConsumer {
       durable: true,
     },
   })
-  async handlePaymentInitiated(event: any) {
-    this.logger.log(`📝 Payment initiated: ${event.aggregateId}`);
-    // Optional: Track payment initiation for analytics
+  async handlePaymentInitiated(msg: any) {
+    // Với message dạng phẳng có thể chỉ cần paymentCode
+    const code = msg?.paymentCode || msg?.aggregateId || 'unknown';
+    this.logger.log(`📝 Payment initiated: ${code}`);
   }
 }

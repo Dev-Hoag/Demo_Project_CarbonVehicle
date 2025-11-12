@@ -58,3 +58,13 @@ export class ResetPasswordDto {
   @MinLength(8)
   password: string;
 }
+
+export class VerifyPasswordDto {
+  @ApiProperty({ example: 34, description: 'User ID' })
+  @IsOptional()
+  userId?: number;
+
+  @ApiProperty({ example: 'password123', description: 'Password to verify' })
+  @IsString()
+  password: string;
+}

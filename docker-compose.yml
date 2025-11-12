@@ -40,7 +40,10 @@ services:
     restart: "no"
 
   user-service:
-    image: user-service:dev
+    # image: user-service:dev
+    build:
+      context: ..
+      dockerfile: User_Service/Dockerfile
     container_name: user_service_app
     depends_on:
       mysql:

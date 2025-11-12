@@ -1,10 +1,10 @@
 import {
-  Controller, Post, Get, Body, UseGuards, Query, Res, BadRequestException,
+  Controller, Post, Get, Body, UseGuards, Query, Res, BadRequestException, UnauthorizedException, Headers,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from '../../shared/dtos/auth.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, VerifyPasswordDto } from '../../shared/dtos/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
@@ -91,5 +91,21 @@ export class AuthController {
       throw new BadRequestException('Passwords do not match');
     }
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('verify-password')
+  @ApiOperation({ summary: 'Verify user password (Internal API)' })
+  @ApiHeader({ name: 'x-internal-api-key', required: true })
+  @ApiResponse({ status: 200, description: 'Password verification result' })
+  async verifyPassword(
+    @Headers('x-internal-api-key') apiKey: string,
+    @Body() body: VerifyPasswordDto,
+  ) {
+    const expectedApiKey = process.env.INTERNAL_API_KEY || 'ccm-internal-secret-2024';
+    if (apiKey !== expectedApiKey) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    return this.authService.verifyPassword(body.userId, body.password);
   }
 }
