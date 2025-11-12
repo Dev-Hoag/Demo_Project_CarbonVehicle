@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -365,6 +365,71 @@ export class PaymentService {
     });
 
     await this.eventRepository.save(event);
+  }
+
+  /**
+   * Get payment history for a user
+   */
+  async getPaymentHistory(userId: number, page: number = 1, limit: number = 50) {
+    const [payments, total] = await this.paymentRepository.findAndCount({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    return {
+      payments: payments.map(p => ({
+        id: Number(p.id),
+        userId: Number(p.userId),
+        amount: Number(p.amount),
+        currency: p.currency,
+        status: p.status,
+        paymentMethod: p.gateway,
+        transactionId: p.transactionId,
+        description: p.orderInfo,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Get payment by ID
+   * Optionally filter by userId for security (user can only see their own payments)
+   */
+  async getPaymentById(paymentId: number, userId?: number) {
+    const where: any = { id: paymentId };
+    if (userId) {
+      where.userId = userId;
+    }
+
+    const payment = await this.paymentRepository.findOne({ where });
+    
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+    }
+
+    return {
+      id: Number(payment.id),
+      userId: Number(payment.userId),
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      status: payment.status,
+      paymentMethod: payment.gateway,
+      transactionId: payment.transactionId,
+      description: payment.orderInfo,
+      paymentCode: payment.paymentCode,
+      gatewayResponseCode: payment.gatewayResponseCode,
+      gatewayResponseMsg: payment.gatewayResponseMsg,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt,
+      completedAt: payment.completedAt,
+      expiredAt: payment.expiredAt,
+    };
   }
 
   /**

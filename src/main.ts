@@ -8,11 +8,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // Enable CORS
-  app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*'),
-    credentials: true,
-  });
+  // CORS is handled by nginx gateway, so we don't enable it here
+  // to avoid duplicate Access-Control-Allow-Origin headers
 
   // Global validation pipe
   app.useGlobalPipes(

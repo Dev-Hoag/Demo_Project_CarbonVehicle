@@ -33,10 +33,10 @@ services:
       - default
 
   payment-service:
-    image: payment-service:dev
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    # image: payment-service:dev
+    build:
+      context: ..
+      dockerfile: Payment_Service/Dockerfile
     depends_on:
       mysql:
         condition: service_healthy

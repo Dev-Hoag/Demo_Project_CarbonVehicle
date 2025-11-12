@@ -79,8 +79,32 @@ async initiatePayment(@Body() dto: CreatePaymentDto, @Req() req: Request): Promi
   })
   @ApiResponse({ status: 200, description: 'Payment history' })
   async getPaymentHistory(@Req() req: Request) {
-    // TODO: Implement get by userId from JWT
-    // const userId = req.user.id;
-    return { message: 'Coming soon' };
+    const userId = req.headers['x-user-id'] as string;
+    if (!userId) {
+      return { payments: [], total: 0, page: 1, limit: 50 };
+    }
+    return this.paymentService.getPaymentHistory(parseInt(userId));
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Lấy chi tiết thanh toán',
+    description: 'Lấy thông tin chi tiết của một payment theo ID',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Payment ID',
+    example: 1,
+  })
+  @ApiResponse({ status: 200, description: 'Payment details' })
+  @ApiResponse({ status: 404, description: 'Payment not found' })
+  async getPaymentById(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    const userId = req.headers['x-user-id'] as string;
+    return this.paymentService.getPaymentById(parseInt(id), userId ? parseInt(userId) : undefined);
   }
 }
