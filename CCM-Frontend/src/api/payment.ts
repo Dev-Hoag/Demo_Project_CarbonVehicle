@@ -5,7 +5,7 @@ export interface Payment {
   userId: number;
   amount: number;
   currency: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
   paymentMethod: string;
   transactionId?: string;
   description?: string;

@@ -13,6 +13,16 @@ import {
   WalletReportDto,
   ReportQueryDto,
 } from './dto/financial-report.dto';
+import {
+  WalletListQueryDto,
+  WalletDetailDto,
+  WalletListResponseDto,
+} from './dto/wallet-list.dto';
+import {
+  TransactionListQueryDto,
+  TransactionDetailDto,
+  TransactionListResponseDto,
+} from './dto/transaction-list.dto';
 import { WalletStatus, TransactionType, WithdrawalStatus } from '../../shared/enums';
 
 @Injectable()
@@ -235,4 +245,204 @@ export class AdminService {
         return '%Y-%m-%d';
     }
   }
+
+  /**
+   * 🆕 Danh sách wallets với filter, pagination, sort
+   */
+  async getWalletList(query: WalletListQueryDto): Promise<WalletListResponseDto> {
+    const { search, status, minBalance, maxBalance, page, limit, sortBy, sortOrder } = query;
+
+    const qb = this.walletRepository.createQueryBuilder('wallet');
+
+    // Search by userId or email (cần join với user service hoặc cache data)
+    if (search) {
+      qb.andWhere('wallet.user_id LIKE :search', { search: `%${search}%` });
+    }
+
+    // Filter by status
+    if (status) {
+      qb.andWhere('wallet.status = :status', { status });
+    }
+
+    // Filter by balance range
+    if (minBalance !== undefined) {
+      qb.andWhere('wallet.balance >= :minBalance', { minBalance });
+    }
+    if (maxBalance !== undefined) {
+      qb.andWhere('wallet.balance <= :maxBalance', { maxBalance });
+    }
+
+    // Count total
+    const total = await qb.getCount();
+
+    // Apply pagination and sorting
+    qb.orderBy(`wallet.${sortBy}`, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const wallets = await qb.getMany();
+
+    // Enhance with transaction stats
+    const items: WalletDetailDto[] = await Promise.all(
+      wallets.map(async (wallet) => {
+        const txStats = await this.transactionRepository
+          .createQueryBuilder('tx')
+          .select('COUNT(tx.id)', 'total')
+          .addSelect('SUM(CASE WHEN tx.type = :deposit THEN tx.amount ELSE 0 END)', 'deposited')
+          .addSelect('SUM(CASE WHEN tx.type = :withdrawal THEN tx.amount ELSE 0 END)', 'withdrawn')
+          .where('tx.wallet_id = :walletId', { walletId: wallet.id })
+          .setParameter('deposit', TransactionType.DEPOSIT)
+          .setParameter('withdrawal', TransactionType.WITHDRAWAL)
+          .getRawOne();
+
+        const lastTx = await this.transactionRepository.findOne({
+          where: { walletId: wallet.id },
+          order: { createdAt: 'DESC' },
+        });
+
+        return {
+          id: wallet.id,
+          userId: wallet.userId,
+          balance: wallet.balance,
+          lockedBalance: wallet.lockedBalance,
+          availableBalance: wallet.balance - wallet.lockedBalance,
+          status: wallet.status,
+          createdAt: wallet.createdAt,
+          updatedAt: wallet.updatedAt,
+          totalTransactions: parseInt(txStats.total || '0'),
+          totalDeposited: parseFloat(txStats.deposited || '0'),
+          totalWithdrawn: parseFloat(txStats.withdrawn || '0'),
+          lastTransaction: lastTx ? {
+            id: lastTx.id,
+            type: lastTx.type,
+            amount: lastTx.amount,
+            createdAt: lastTx.createdAt,
+          } : undefined,
+        };
+      }),
+    );
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * 🆕 Chi tiết 1 wallet cụ thể
+   */
+  async getWalletDetail(userId: string): Promise<WalletDetailDto> {
+    const wallet = await this.walletRepository.findOne({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    const txStats = await this.transactionRepository
+      .createQueryBuilder('tx')
+      .select('COUNT(tx.id)', 'total')
+      .addSelect('SUM(CASE WHEN tx.type = :deposit THEN tx.amount ELSE 0 END)', 'deposited')
+      .addSelect('SUM(CASE WHEN tx.type = :withdrawal THEN tx.amount ELSE 0 END)', 'withdrawn')
+      .where('tx.wallet_id = :walletId', { walletId: wallet.id })
+      .setParameter('deposit', TransactionType.DEPOSIT)
+      .setParameter('withdrawal', TransactionType.WITHDRAWAL)
+      .getRawOne();
+
+    const lastTx = await this.transactionRepository.findOne({
+      where: { walletId: wallet.id },
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      id: wallet.id,
+      userId: wallet.userId,
+      balance: wallet.balance,
+      lockedBalance: wallet.lockedBalance,
+      availableBalance: wallet.balance - wallet.lockedBalance,
+      status: wallet.status,
+      createdAt: wallet.createdAt,
+      updatedAt: wallet.updatedAt,
+      totalTransactions: parseInt(txStats.total || '0'),
+      totalDeposited: parseFloat(txStats.deposited || '0'),
+      totalWithdrawn: parseFloat(txStats.withdrawn || '0'),
+      lastTransaction: lastTx ? {
+        id: lastTx.id,
+        type: lastTx.type,
+        amount: lastTx.amount,
+        createdAt: lastTx.createdAt,
+      } : undefined,
+    };
+  }
+
+  /**
+   * 🆕 Danh sách transactions với filter và pagination
+   */
+  async getTransactionList(query: TransactionListQueryDto): Promise<TransactionListResponseDto> {
+    const { userId, type, startDate, endDate, minAmount, maxAmount, page, limit } = query;
+
+    const qb = this.transactionRepository
+      .createQueryBuilder('tx')
+      .leftJoinAndSelect('tx.wallet', 'wallet');
+
+    // Filter by userId
+    if (userId) {
+      qb.andWhere('wallet.user_id = :userId', { userId });
+    }
+
+    // Filter by type
+    if (type) {
+      qb.andWhere('tx.type = :type', { type });
+    }
+
+    // Filter by date range
+    if (startDate) {
+      qb.andWhere('tx.created_at >= :startDate', { startDate });
+    }
+    if (endDate) {
+      qb.andWhere('tx.created_at <= :endDate', { endDate });
+    }
+
+    // Filter by amount range
+    if (minAmount !== undefined) {
+      qb.andWhere('tx.amount >= :minAmount', { minAmount });
+    }
+    if (maxAmount !== undefined) {
+      qb.andWhere('tx.amount <= :maxAmount', { maxAmount });
+    }
+
+    // Count total
+    const total = await qb.getCount();
+
+    // Apply pagination
+    qb.orderBy('tx.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const transactions = await qb.getMany();
+
+    const items: TransactionDetailDto[] = transactions.map(tx => ({
+      id: tx.id,
+      walletId: tx.walletId,
+      userId: tx.wallet?.userId || 'N/A',
+      type: tx.type,
+      amount: tx.amount,
+      balanceBefore: tx.balanceBefore,
+      balanceAfter: tx.balanceAfter,
+      description: tx.description,
+      referenceId: tx.referenceId,
+      metadata: tx.metadata,
+      createdAt: tx.createdAt,
+    }));
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
+

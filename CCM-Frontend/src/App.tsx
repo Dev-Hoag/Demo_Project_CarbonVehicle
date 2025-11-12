@@ -24,6 +24,8 @@ import ProfilePage from './pages/Profile';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import { AdminReportsPage } from './pages/AdminReports';
+import { AdminWalletsPage } from './pages/AdminWallets';
+import { AdminTransactionsPage } from './pages/AdminTransactions';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -63,6 +65,8 @@ function App() {
             {/* Admin routes (no layout) */}
             <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
+            <Route path="/admin/wallets" element={<AdminWalletsPage />} />
+            <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
 
             {/* Protected routes */}
             <Route element={

@@ -14,7 +14,6 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Chip,
   Tabs,
   Tab,
   TextField,
@@ -51,8 +50,7 @@ export const AdminReportsPage: React.FC = () => {
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
   
   // Wallet Report
-  const [walletReport, setWalletReport] = useState<WalletReport[]>([]);
-  const [walletTotal, setWalletTotal] = useState(0);
+  const [walletReport, setWalletReport] = useState<WalletReport | null>(null);
 
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
 
@@ -98,8 +96,7 @@ export const AdminReportsPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await adminReportsApi.getWalletReport({ limit: 50 });
-      setWalletReport(data.wallets);
-      setWalletTotal(data.total);
+      setWalletReport(data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load wallet report');
     } finally {
@@ -111,7 +108,7 @@ export const AdminReportsPage: React.FC = () => {
     setActiveTab(newValue);
     if (newValue === 1 && transactionReport.length === 0) {
       fetchTransactionReport();
-    } else if (newValue === 2 && walletReport.length === 0) {
+    } else if (newValue === 2 && !walletReport) {
       fetchWalletReport();
     }
   };
@@ -142,6 +139,20 @@ export const AdminReportsPage: React.FC = () => {
             sx={{ mr: 1 }}
           >
             Withdrawals
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => navigate('/admin/wallets')}
+            sx={{ mr: 1 }}
+          >
+            All Wallets
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => navigate('/admin/transactions')}
+            sx={{ mr: 1 }}
+          >
+            All Transactions
           </Button>
           <IconButton color="inherit" onClick={handleLogout} title="Logout">
             <Logout />
@@ -174,10 +185,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Total Balance</Typography>
                   </Box>
                   <Typography variant="h4" fontWeight={600}>
-                    {financialReport.totalBalance.toLocaleString('vi-VN')} VND
+                    {(financialReport.totalBalance || 0).toLocaleString('vi-VN')} VND
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8, mt: 1, display: 'block' }}>
-                    Locked: {financialReport.totalLocked.toLocaleString('vi-VN')} VND
+                    Locked: {(financialReport.totalLockedBalance || 0).toLocaleString('vi-VN')} VND
                   </Typography>
                 </CardContent>
               </Card>
@@ -192,10 +203,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Total Deposited</Typography>
                   </Box>
                   <Typography variant="h4" fontWeight={600}>
-                    {financialReport.totalDeposited.toLocaleString('vi-VN')} VND
+                    {(financialReport.depositAmount || 0).toLocaleString('vi-VN')} VND
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8, mt: 1, display: 'block' }}>
-                    Active Wallets: {financialReport.activeWallets}
+                    Active Wallets: {financialReport.activeWallets || 0}
                   </Typography>
                 </CardContent>
               </Card>
@@ -210,10 +221,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Total Withdrawn</Typography>
                   </Box>
                   <Typography variant="h4" fontWeight={600}>
-                    {financialReport.totalWithdrawn.toLocaleString('vi-VN')} VND
+                    {financialReport.withdrawalAmount.toLocaleString('vi-VN')} VND
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8, mt: 1, display: 'block' }}>
-                    Fees Collected: {financialReport.totalFees.toLocaleString('vi-VN')} VND
+                    Completed: {financialReport.completedWithdrawals} transactions
                   </Typography>
                 </CardContent>
               </Card>
@@ -228,7 +239,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Pending Withdrawals</Typography>
                   </Box>
                   <Typography variant="h5" fontWeight={600} color="warning.main">
-                    {financialReport.pendingWithdrawals.toLocaleString('vi-VN')} VND
+                    {financialReport.pendingWithdrawalAmount.toLocaleString('vi-VN')} VND
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {financialReport.pendingWithdrawals} requests
                   </Typography>
                 </CardContent>
               </Card>
@@ -256,12 +270,12 @@ export const AdminReportsPage: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     System Health
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Last updated: {new Date(financialReport.timestamp).toLocaleString('vi-VN')}
-                  </Typography>
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      Net Flow: {(financialReport.totalDeposited - financialReport.totalWithdrawn).toLocaleString('vi-VN')} VND
+                      Total Transactions: {financialReport.totalTransactions.toLocaleString('vi-VN')}
+                    </Typography>
+                    <Typography variant="body2">
+                      Net Flow: {(financialReport.depositAmount - financialReport.withdrawalAmount).toLocaleString('vi-VN')} VND
                     </Typography>
                   </Box>
                 </CardContent>
@@ -319,9 +333,9 @@ export const AdminReportsPage: React.FC = () => {
                   <TableCell>Date</TableCell>
                   <TableCell align="right">Deposits</TableCell>
                   <TableCell align="right">Withdrawals</TableCell>
-                  <TableCell align="right">Transfers</TableCell>
-                  <TableCell align="right">Total Amount</TableCell>
-                  <TableCell align="right">Count</TableCell>
+                  <TableCell align="right">Reserves</TableCell>
+                  <TableCell align="right">Releases</TableCell>
+                  <TableCell align="right">Total Transactions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -338,28 +352,30 @@ export const AdminReportsPage: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  transactionReport.map((row, index) => (
+                  transactionReport && transactionReport.map((row, index) => (
                     <TableRow key={index}>
                       <TableCell>{row.date}</TableCell>
                       <TableCell align="right">
                         <Typography color="success.main">
-                          {row.deposits.toLocaleString('vi-VN')} VND
+                          {row.depositAmount.toLocaleString('vi-VN')} VND ({row.deposits})
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography color="error.main">
-                          {row.withdrawals.toLocaleString('vi-VN')} VND
+                          {row.withdrawalAmount.toLocaleString('vi-VN')} VND ({row.withdrawals})
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        {row.transfers.toLocaleString('vi-VN')} VND
+                        {row.reserveAmount.toLocaleString('vi-VN')} VND ({row.reserves})
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.releaseAmount.toLocaleString('vi-VN')} VND ({row.releases})
                       </TableCell>
                       <TableCell align="right">
                         <Typography fontWeight={600}>
-                          {row.totalAmount.toLocaleString('vi-VN')} VND
+                          {row.totalTransactions}
                         </Typography>
                       </TableCell>
-                      <TableCell align="right">{row.count}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -370,80 +386,105 @@ export const AdminReportsPage: React.FC = () => {
       )}
 
       {/* Wallet Report Tab */}
-      {activeTab === 2 && (
+      {activeTab === 2 && walletReport && (
         <Box>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h6">
-                Total Wallets: {walletTotal}
-              </Typography>
-            </CardContent>
-          </Card>
+          {/* Summary Cards */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle2" color="text.secondary">Total Wallets</Typography>
+                  <Typography variant="h4" fontWeight={600}>
+                    {walletReport.totalWallets}
+                  </Typography>
+                  <Typography variant="caption" color="success.main">
+                    Active: {walletReport.activeWallets}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle2" color="text.secondary">Total Balance</Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {walletReport.totalBalance.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle2" color="text.secondary">Locked Balance</Typography>
+                  <Typography variant="h5" fontWeight={600} color="warning.main">
+                    {walletReport.totalLockedBalance.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle2" color="text.secondary">Average Balance</Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {walletReport.averageBalance.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User ID</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell align="right">Balance</TableCell>
-                  <TableCell align="right">Locked</TableCell>
-                  <TableCell align="right">Total Deposited</TableCell>
-                  <TableCell align="right">Total Withdrawn</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Activity</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
+          {/* Top Wallets Table */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Top Wallets</Typography>
+            </CardContent>
+            <TableContainer>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
+                    <TableCell>User ID</TableCell>
+                    <TableCell align="right">Balance</TableCell>
+                    <TableCell align="right">Locked Balance</TableCell>
+                    <TableCell align="right">Transaction Count</TableCell>
                   </TableRow>
-                ) : walletReport.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      No wallets found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  walletReport.map((wallet) => (
-                    <TableRow key={wallet.userId}>
-                      <TableCell>{wallet.userId}</TableCell>
-                      <TableCell>{wallet.email || '-'}</TableCell>
-                      <TableCell align="right">
-                        {wallet.balance.toLocaleString('vi-VN')} VND
-                      </TableCell>
-                      <TableCell align="right">
-                        {wallet.lockedBalance.toLocaleString('vi-VN')} VND
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography color="success.main">
-                          {wallet.totalDeposited.toLocaleString('vi-VN')} VND
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography color="error.main">
-                          {wallet.totalWithdrawn.toLocaleString('vi-VN')} VND
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={wallet.status}
-                          color={wallet.status === 'ACTIVE' ? 'success' : 'default'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(wallet.lastActivity).toLocaleDateString('vi-VN')}
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ) : !walletReport.topWallets || walletReport.topWallets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        No wallets found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    walletReport.topWallets.map((wallet) => (
+                      <TableRow key={wallet.userId}>
+                        <TableCell>{wallet.userId}</TableCell>
+                        <TableCell align="right">
+                          <Typography fontWeight={600}>
+                            {wallet.balance.toLocaleString('vi-VN')} VND
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography color="warning.main">
+                            {wallet.lockedBalance.toLocaleString('vi-VN')} VND
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">{wallet.transactionCount}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
         </Box>
       )}
       </Box>

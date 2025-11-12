@@ -10,34 +10,59 @@ const getAuthHeaders = () => {
 };
 
 export interface FinancialReport {
+  [x: string]: string | number | Date;
   totalBalance: number;
-  totalLocked: number;
-  totalDeposited: number;
-  totalWithdrawn: number;
-  totalFees: number;
-  pendingWithdrawals: number;
+  totalLockedBalance: number;
+  totalAvailableBalance: number;
+  totalWallets: number;
   activeWallets: number;
-  timestamp: string;
+  
+  totalTransactions: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalReserves: number;
+  totalReleases: number;
+  
+  depositAmount: number;
+  withdrawalAmount: number;
+  reserveAmount: number;
+  releaseAmount: number;
+  
+  pendingWithdrawals: number;
+  pendingWithdrawalAmount: number;
+  completedWithdrawals: number;
+  completedWithdrawalAmount: number;
 }
 
 export interface TransactionReport {
   date: string;
+  totalTransactions: number;
   deposits: number;
   withdrawals: number;
-  transfers: number;
-  totalAmount: number;
-  count: number;
+  reserves: number;
+  releases: number;
+  refunds: number;
+  depositAmount: number;
+  withdrawalAmount: number;
+  reserveAmount: number;
+  releaseAmount: number;
+  refundAmount: number;
 }
 
 export interface WalletReport {
-  userId: string;
-  email?: string;
-  balance: number;
-  lockedBalance: number;
-  totalDeposited: number;
-  totalWithdrawn: number;
-  status: string;
-  lastActivity: string;
+  totalWallets: number;
+  activeWallets: number;
+  suspendedWallets: number;
+  closedWallets: number;
+  totalBalance: number;
+  totalLockedBalance: number;
+  averageBalance: number;
+  topWallets: Array<{
+    userId: string;
+    balance: number;
+    lockedBalance: number;
+    transactionCount: number;
+  }>;
 }
 
 export interface TransactionReportParams {
@@ -73,12 +98,7 @@ export const adminReportsApi = {
   },
 
   // Get wallet report
-  getWalletReport: async (params?: WalletReportParams): Promise<{
-    wallets: WalletReport[];
-    total: number;
-    page: number;
-    limit: number;
-  }> => {
+  getWalletReport: async (params?: WalletReportParams): Promise<WalletReport> => {
     const response = await axios.get(`${API_URL}/api/admin/reports/wallets`, {
       headers: getAuthHeaders(),
       params,
