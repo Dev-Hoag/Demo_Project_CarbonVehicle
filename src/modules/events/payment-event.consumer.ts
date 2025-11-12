@@ -3,9 +3,24 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaymentCompletedEvent, PaymentFailedEvent } from '@ccm/events';
 import { ManagedTransaction } from '../../shared/entities/managed-transaction.entity';
 import { TransactionStatus } from '../../shared/enums/admin.enums';
+
+// Payment Service hiện publish message dạng phẳng (không có id/payload wrapper)
+// Ví dụ: { paymentCode, amount, userId, timestamp }
+interface PaymentCompletedMessage {
+  paymentCode: string;
+  amount: number;
+  userId?: string;
+  timestamp?: string;
+}
+
+interface PaymentFailedMessage {
+  paymentCode: string;
+  reason?: string;
+  userId?: string;
+  timestamp?: string;
+}
 
 @Injectable()
 export class PaymentEventConsumer {
@@ -26,72 +41,57 @@ export class PaymentEventConsumer {
       deadLetterExchange: 'ccm.events.dlx',
     },
   })
-  async handlePaymentCompleted(event: PaymentCompletedEvent): Promise<void> {
-    const eventId = event.id;
-    
-    // Idempotency check
-    if (this.processedEvents.has(eventId)) {
-      this.logger.warn(`[payment.completed] Event already processed: ${eventId}`);
+  async handlePaymentCompleted(msg: PaymentCompletedMessage): Promise<void> {
+    this.logger.log(`[payment.completed] Raw message received: ${JSON.stringify(msg)}`);
+    if (!msg || !msg.paymentCode) {
+      this.logger.error('[payment.completed] Malformed message (missing paymentCode)');
+      return;
+    }
+    const eventKey = `completed:${msg.paymentCode}`;
+
+    if (this.processedEvents.has(eventKey)) {
+      this.logger.warn(`[payment.completed] Already processed: ${eventKey}`);
       return;
     }
 
     try {
-      this.logger.log(`[payment.completed] Processing event: ${eventId}, Payment: ${event.payload.paymentCode}`);
+      this.logger.log(`[payment.completed] Processing paymentCode=${msg.paymentCode} amount=${msg.amount}`);
 
-      // Find transaction by external ID (payment code)
       const transaction = await this.transactionRepo.findOne({
-        where: { externalTransactionId: event.payload.paymentCode },
+        where: { externalTransactionId: msg.paymentCode },
       });
 
       if (transaction) {
-        // Update transaction status and amount
         await this.transactionRepo.update(
           { id: transaction.id },
           {
             status: TransactionStatus.COMPLETED,
-            amount: event.payload.amount,
-            completedAt: new Date(event.timestamp),
+            amount: msg.amount,
+            completedAt: msg.timestamp ? new Date(msg.timestamp) : new Date(),
             syncedAt: new Date(),
           },
         );
-
-        this.logger.log(
-          `✅ Updated managed_transaction: ${transaction.externalTransactionId} → COMPLETED (${event.payload.amount} VND)`,
-        );
+        this.logger.log(`✅ Updated managed_transaction: ${transaction.externalTransactionId} → COMPLETED (${msg.amount} VND)`);
       } else {
-        // Create new transaction record if not exists
         const newTransaction = this.transactionRepo.create({
-          externalTransactionId: event.payload.paymentCode,
+          externalTransactionId: msg.paymentCode,
           status: TransactionStatus.COMPLETED,
-          amount: event.payload.amount,
-          completedAt: new Date(event.timestamp),
+          amount: msg.amount,
+            completedAt: msg.timestamp ? new Date(msg.timestamp) : new Date(),
           syncedAt: new Date(),
-          // Note: sellerId, buyerId will be null for now
-          // Can be enriched later from user events
         });
-
         await this.transactionRepo.save(newTransaction);
-
-        this.logger.log(
-          `✅ Created new managed_transaction: ${event.payload.paymentCode} (${event.payload.amount} VND)`,
-        );
+        this.logger.log(`✅ Created new managed_transaction: ${msg.paymentCode} (${msg.amount} VND)`);
       }
 
-      // Mark as processed
-      this.processedEvents.add(eventId);
-
-      // Cleanup old processed events (keep last 1000)
+      this.processedEvents.add(eventKey);
       if (this.processedEvents.size > 1000) {
         const toDelete = Array.from(this.processedEvents).slice(0, 100);
         toDelete.forEach(id => this.processedEvents.delete(id));
       }
-
     } catch (error) {
-      this.logger.error(
-        `❌ Failed to process payment.completed: ${eventId}`,
-        error.stack,
-      );
-      throw error; // Trigger retry/DLQ
+      this.logger.error(`❌ Failed to process payment.completed: ${msg.paymentCode}`, error.stack);
+      throw error;
     }
   }
 
@@ -104,68 +104,52 @@ export class PaymentEventConsumer {
       deadLetterExchange: 'ccm.events.dlx',
     },
   })
-  async handlePaymentFailed(event: PaymentFailedEvent): Promise<void> {
-    const eventId = event.id;
-
-    // Idempotency check
-    if (this.processedEvents.has(eventId)) {
-      this.logger.warn(`[payment.failed] Event already processed: ${eventId}`);
+  async handlePaymentFailed(msg: PaymentFailedMessage): Promise<void> {
+    if (!msg || !msg.paymentCode) {
+      this.logger.error('[payment.failed] Malformed message (missing paymentCode)');
+      return;
+    }
+    const eventKey = `failed:${msg.paymentCode}`;
+    if (this.processedEvents.has(eventKey)) {
+      this.logger.warn(`[payment.failed] Already processed: ${eventKey}`);
       return;
     }
 
     try {
-      this.logger.log(`[payment.failed] Processing event: ${eventId}, Payment: ${event.payload.paymentCode}`);
-
-      // Find transaction by external ID
+      this.logger.log(`[payment.failed] Processing paymentCode=${msg.paymentCode} reason=${msg.reason || 'Unknown'}`);
       const transaction = await this.transactionRepo.findOne({
-        where: { externalTransactionId: event.payload.paymentCode },
+        where: { externalTransactionId: msg.paymentCode },
       });
 
       if (transaction) {
-        // Update transaction status
         await this.transactionRepo.update(
           { id: transaction.id },
           {
             status: TransactionStatus.CANCELLED,
-            disputeReason: event.payload.reason || 'Payment failed',
+            disputeReason: msg.reason || 'Payment failed',
             syncedAt: new Date(),
           },
         );
-
-        this.logger.log(
-          `✅ Updated managed_transaction: ${transaction.externalTransactionId} → CANCELLED (Reason: ${event.payload.reason})`,
-        );
+        this.logger.log(`✅ Updated managed_transaction: ${transaction.externalTransactionId} → CANCELLED (Reason: ${msg.reason || 'Payment failed'})`);
       } else {
-        // Create new transaction record as cancelled
         const newTransaction = this.transactionRepo.create({
-          externalTransactionId: event.payload.paymentCode,
+          externalTransactionId: msg.paymentCode,
           status: TransactionStatus.CANCELLED,
-          disputeReason: event.payload.reason || 'Payment failed',
+          disputeReason: msg.reason || 'Payment failed',
           syncedAt: new Date(),
         });
-
         await this.transactionRepo.save(newTransaction);
-
-        this.logger.log(
-          `✅ Created new managed_transaction: ${event.payload.paymentCode} → CANCELLED`,
-        );
+        this.logger.log(`✅ Created new managed_transaction: ${msg.paymentCode} → CANCELLED`);
       }
 
-      // Mark as processed
-      this.processedEvents.add(eventId);
-
-      // Cleanup
+      this.processedEvents.add(eventKey);
       if (this.processedEvents.size > 1000) {
         const toDelete = Array.from(this.processedEvents).slice(0, 100);
         toDelete.forEach(id => this.processedEvents.delete(id));
       }
-
     } catch (error) {
-      this.logger.error(
-        `❌ Failed to process payment.failed: ${eventId}`,
-        error.stack,
-      );
-      throw error; // Trigger retry/DLQ
+      this.logger.error(`❌ Failed to process payment.failed: ${msg.paymentCode}`, error.stack);
+      throw error;
     }
   }
 }

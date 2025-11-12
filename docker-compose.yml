@@ -35,6 +35,9 @@ services:
     restart: unless-stopped
 
   admin-service:
+    build:
+      context: ..
+      dockerfile: Admin_Service/Dockerfile
     image: admin-service:dev
     container_name: admin_service_app
     env_file:

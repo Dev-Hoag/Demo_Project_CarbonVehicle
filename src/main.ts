@@ -80,33 +80,28 @@ async function bootstrap() {
   // ---- Cookies ----
   app.use(cookieParser());
 
-  // ---- CORS (whitelist + cookie) ----
-  // Set qua ENV, ví dụ:
-  // CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+  // ---- CORS is handled by nginx gateway ----
+  // Disabled to avoid duplicate Access-Control-Allow-Origin headers
+  // Nginx is configured to handle CORS properly with origin whitelisting
+  
+  /*
   const allowlist = new Set(parseOrigins(process.env.CORS_ORIGINS));
-
   app.enableCors({
     origin: (origin, cb) => {
-      // Cho phép tool không gửi Origin (curl/Postman/SSR)
       if (!origin) return cb(null, true);
-
-      // Trong prod: chỉ allow khi nằm trong allowlist
       if (isProd) {
         if (allowlist.has(origin)) return cb(null, true);
-        // Nếu bạn test Swagger ngay trên cùng host:port
         if (origin === `http://localhost:${PORT}` || origin === `http://127.0.0.1:${PORT}`) {
           return cb(null, true);
         }
         return cb(new Error('Not allowed by CORS'));
       }
-
-      // Dev: allow nếu nằm trong allowlist hoặc là localhost/127.* bất kỳ port
       if (allowlist.has(origin) || isLocalhostOrigin(origin)) {
         return cb(null, true);
       }
       return cb(new Error('Not allowed by CORS'));
     },
-    credentials: true, // BẮT BUỘC nếu dùng cookie/withCredentials từ FE
+    credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
@@ -118,6 +113,7 @@ async function bootstrap() {
     exposedHeaders: ['Content-Disposition'],
     optionsSuccessStatus: 204,
   });
+  */
 
   // ---- Helmet ----
   app.use(

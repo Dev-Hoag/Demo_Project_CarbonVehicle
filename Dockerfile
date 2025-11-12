@@ -45,4 +45,4 @@ COPY --from=builder /app/admin-service/node_modules ./node_modules
 COPY --from=builder /app/admin-service/dist ./dist
 
 EXPOSE 3000
-CMD ["node", "dist/admin-service/src/main"]
+CMD ["node", "dist/main"]
