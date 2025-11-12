@@ -54,6 +54,31 @@ export class CreateWithdrawalDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ description: 'User password for confirmation', example: 'password123' })
+  @IsString()
+  password: string;
+}
+
+export class TransferFundsDto {
+  @ApiProperty({ description: 'Recipient user ID', example: 35 })
+  @IsNumber()
+  @Min(1)
+  toUserId: number;
+
+  @ApiProperty({ description: 'Amount to transfer', example: 100000 })
+  @IsNumber()
+  @Min(1000, { message: 'Minimum transfer is 1,000 VND' })
+  amount: number;
+
+  @ApiPropertyOptional({ description: 'Transfer description', example: 'Payment for service' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ description: 'User password for confirmation', example: 'password123' })
+  @IsString()
+  password: string;
 }
 
 export class ReserveFundsDto {

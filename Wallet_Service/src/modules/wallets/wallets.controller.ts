@@ -3,7 +3,7 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WalletsService } from './wallets.service';
-import { CreateDepositDto } from '../../shared/dtos/wallet.dto';
+import { CreateDepositDto, TransferFundsDto } from '../../shared/dtos/wallet.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 
@@ -41,5 +41,11 @@ export class WalletsController {
       dailyLimit: 100000000,
       fee: 0.5,
     };
+  }
+
+  @Post('transfer')
+  @ApiOperation({ summary: 'Transfer funds to another user' })
+  async transferFunds(@Body() dto: TransferFundsDto, @CurrentUser() user: any) {
+    return this.walletsService.transferFunds(user.id, dto);
   }
 }

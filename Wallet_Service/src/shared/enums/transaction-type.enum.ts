@@ -3,6 +3,7 @@
 export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   WITHDRAWAL = 'WITHDRAWAL',
+  TRANSFER = 'TRANSFER',      // P2P transfer
   RESERVE = 'RESERVE',
   RELEASE = 'RELEASE',
   SETTLE_IN = 'SETTLE_IN',    // Money in (seller receives)

@@ -2,12 +2,12 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import axios from 'axios';
 import { Wallet, WalletTransaction } from '../../shared/entities';
 import { WalletAuditLog } from '../../shared/entities/wallet-audit.entity';
 import { WalletStatus, TransactionType, TransactionStatus } from '../../shared/enums';
-import { CreateDepositDto } from '../../shared/dtos/wallet.dto';
+import { CreateDepositDto, TransferFundsDto } from '../../shared/dtos/wallet.dto';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { randomUUID } from 'crypto';
 
@@ -21,6 +21,7 @@ export class WalletsService {
     @InjectRepository(WalletAuditLog)
     private readonly auditRepo: Repository<WalletAuditLog>,
     private readonly amqp: AmqpConnection,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getOrCreateWallet(userId: string): Promise<Wallet> {
@@ -139,27 +140,31 @@ export class WalletsService {
       return { wallet, transaction: existing };
     }
 
+    // Ensure balance is a number (TypeORM decimal can return string)
+    const currentBalance = Number(wallet.balance) || 0;
+    const newBalance = currentBalance + Number(amount);
+
     const transaction = this.transactionRepo.create({
       walletId: wallet.id,
       type: TransactionType.DEPOSIT,
-      amount,
-      balanceBefore: wallet.balance,
-      balanceAfter: Number(wallet.balance) + amount,
+      amount: Number(amount),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
       status: TransactionStatus.COMPLETED,
       referenceType: 'payment',
       referenceId,
       description,
     });
 
-    wallet.balance = Number(wallet.balance) + amount;
+    wallet.balance = newBalance as any; // Cast to avoid type error
     await this.walletRepo.save(wallet);
     await this.transactionRepo.save(transaction);
     await this.auditRepo.save(this.auditRepo.create({
       walletId: wallet.id,
       userId: wallet.userId,
-      delta: amount,
-      balanceBefore: transaction.balanceBefore,
-      balanceAfter: transaction.balanceAfter,
+      delta: Number(amount),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
       sourceType: 'deposit',
       sourceId: referenceId,
       transactionId: transaction.id,
@@ -202,5 +207,163 @@ export class WalletsService {
       description,
     }));
     return { wallet, transaction };
+  }
+
+  private async verifyUserPassword(userId: string, password: string): Promise<void> {
+    try {
+      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user_service_app:3001';
+      const response = await axios.post(`${userServiceUrl}/api/auth/verify-password`, {
+        userId: parseInt(userId),
+        password,
+      }, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY || 'ccm-internal-secret-2024',
+        },
+      });
+
+      if (!response.data.valid) {
+        throw new Error('Invalid password');
+      }
+    } catch (error) {
+      if (error.response?.status === 401 || error.message === 'Invalid password') {
+        throw new Error('Invalid password. Please try again.');
+      }
+      throw new Error('Failed to verify password. Please try again.');
+    }
+  }
+
+  async transferFunds(fromUserId: string, dto: TransferFundsDto) {
+    // Verify password first
+    await this.verifyUserPassword(fromUserId, dto.password);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Get sender wallet
+      const senderWallet = await queryRunner.manager.findOne(Wallet, {
+        where: { userId: fromUserId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!senderWallet) {
+        throw new NotFoundException('Sender wallet not found');
+      }
+
+      // Check sender balance
+      const senderBalance = Number(senderWallet.balance) || 0;
+      if (senderBalance < dto.amount) {
+        throw new Error('Insufficient balance');
+      }
+
+      // Get or create recipient wallet
+      let recipientWallet = await queryRunner.manager.findOne(Wallet, {
+        where: { userId: dto.toUserId.toString() },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!recipientWallet) {
+        // Create recipient wallet if not exists
+        recipientWallet = queryRunner.manager.create(Wallet, {
+          userId: dto.toUserId.toString(),
+          balance: 0,
+          lockedBalance: 0,
+          currency: 'VND',
+          status: WalletStatus.ACTIVE,
+        });
+        await queryRunner.manager.save(recipientWallet);
+      }
+
+      const recipientBalance = Number(recipientWallet.balance) || 0;
+      const transferId = randomUUID();
+
+      // Deduct from sender
+      const senderNewBalance = senderBalance - dto.amount;
+      senderWallet.balance = senderNewBalance as any;
+      await queryRunner.manager.save(senderWallet);
+
+      // Create sender transaction
+      const senderTransaction = queryRunner.manager.create(WalletTransaction, {
+        walletId: senderWallet.id,
+        type: TransactionType.TRANSFER,
+        amount: dto.amount,
+        balanceBefore: senderBalance,
+        balanceAfter: senderNewBalance,
+        status: TransactionStatus.COMPLETED,
+        referenceType: 'transfer',
+        referenceId: transferId,
+        description: dto.description || `Transfer to user ${dto.toUserId}`,
+      });
+      await queryRunner.manager.save(senderTransaction);
+
+      // Add to recipient
+      const recipientNewBalance = recipientBalance + dto.amount;
+      recipientWallet.balance = recipientNewBalance as any;
+      await queryRunner.manager.save(recipientWallet);
+
+      // Create recipient transaction
+      const recipientTransaction = queryRunner.manager.create(WalletTransaction, {
+        walletId: recipientWallet.id,
+        type: TransactionType.DEPOSIT,
+        amount: dto.amount,
+        balanceBefore: recipientBalance,
+        balanceAfter: recipientNewBalance,
+        status: TransactionStatus.COMPLETED,
+        referenceType: 'transfer',
+        referenceId: transferId,
+        description: dto.description || `Transfer from user ${fromUserId}`,
+      });
+      await queryRunner.manager.save(recipientTransaction);
+
+      // Create audit logs
+      await queryRunner.manager.save(WalletAuditLog, {
+        walletId: senderWallet.id,
+        userId: senderWallet.userId,
+        delta: -dto.amount,
+        balanceBefore: senderBalance,
+        balanceAfter: senderNewBalance,
+        sourceType: 'transfer',
+        sourceId: transferId,
+        transactionId: senderTransaction.id,
+        description: `Transfer to user ${dto.toUserId}`,
+      });
+
+      await queryRunner.manager.save(WalletAuditLog, {
+        walletId: recipientWallet.id,
+        userId: recipientWallet.userId,
+        delta: dto.amount,
+        balanceBefore: recipientBalance,
+        balanceAfter: recipientNewBalance,
+        sourceType: 'transfer',
+        sourceId: transferId,
+        transactionId: recipientTransaction.id,
+        description: `Transfer from user ${fromUserId}`,
+      });
+
+      await queryRunner.commitTransaction();
+
+      // Publish transfer event
+      await this.amqp.publish('ccm.events', 'transfer.completed', {
+        transferId,
+        fromUserId,
+        toUserId: dto.toUserId,
+        amount: dto.amount,
+        description: dto.description,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        message: 'Transfer completed successfully',
+        transferId,
+        senderTransaction,
+        recipientTransaction,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

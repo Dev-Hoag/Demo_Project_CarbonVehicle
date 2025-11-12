@@ -21,14 +21,20 @@ export class PaymentEventConsumer {
   async handlePaymentCompleted(msg: any) {
     try {
       this.logger.log(`Received payment.completed event: ${JSON.stringify(msg)}`);
-      // msg: { userId, amount, paymentId, reason }
-      await this.walletsService.addBalance(
-        msg.userId,
-        msg.amount,
-        msg.paymentId,
-        msg.reason || 'Payment completed',
-      );
-      this.logger.log(`Applied payment ${msg.paymentId} to wallet ${msg.userId}`);
+      
+      // Extract data from event payload (BaseEvent structure)
+      const userId = String(msg.payload?.userId || msg.userId);
+      const amount = Number(msg.payload?.amount || msg.amount);
+      const paymentId = msg.payload?.paymentCode || msg.payload?.transactionId || msg.paymentId;
+      const description = msg.payload?.orderInfo || msg.reason || 'Payment completed';
+
+      if (!userId || !amount || !paymentId) {
+        this.logger.error(`Invalid payment event data: ${JSON.stringify(msg)}`);
+        return; // ACK invalid messages
+      }
+
+      await this.walletsService.addBalance(userId, amount, paymentId, description);
+      this.logger.log(`Applied payment ${paymentId} (${amount} VND) to wallet ${userId}`);
     } catch (error) {
       // Business/idempotent errors should be ACKed
       if (typeof error?.message === 'string' && error.message.includes('duplicate')) {

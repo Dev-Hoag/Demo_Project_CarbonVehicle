@@ -39,9 +39,28 @@ export interface DepositResponse {
   qrCode?: string;
 }
 
+export interface WalletSummary {
+  wallet: Wallet;
+  summary: {
+    totalDeposited: number;
+    totalWithdrawn: number;
+    availableBalance: number;
+    lockedBalance: number;
+  };
+}
+
+export interface WithdrawalLimits {
+  minWithdrawal: number;
+  maxWithdrawal: number;
+  dailyLimit: number;
+  fee: number;
+}
+
 export interface WithdrawalData {
   amount: number;
-  bankAccount: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankName: string;
   description?: string;
 }
 
@@ -58,6 +77,18 @@ export const walletApi = {
     return response.data;
   },
 
+  // Get wallet summary (balance + stats)
+  getSummary: async (): Promise<WalletSummary> => {
+    const response = await apiClient.get('/api/wallets/summary');
+    return response.data;
+  },
+
+  // Get withdrawal limits
+  getWithdrawalLimits: async (): Promise<WithdrawalLimits> => {
+    const response = await apiClient.get('/api/wallets/limits');
+    return response.data;
+  },
+
   // Get wallet transactions
   getTransactions: async (params?: {
     page?: number;
@@ -65,10 +96,13 @@ export const walletApi = {
     type?: string;
     status?: string;
   }): Promise<{
-    transactions: WalletTransaction[];
-    total: number;
-    page: number;
-    limit: number;
+    data: WalletTransaction[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
   }> => {
     const response = await apiClient.get('/api/wallets/transactions', { params });
     return response.data;
@@ -89,6 +123,12 @@ export const walletApi = {
   // Withdraw money from wallet
   withdraw: async (data: WithdrawalData): Promise<WalletTransaction> => {
     const response = await apiClient.post('/api/wallets/withdraw', data);
+    return response.data;
+  },
+
+  // Get user's withdrawal requests
+  getWithdrawals: async (): Promise<any[]> => {
+    const response = await apiClient.get('/api/wallets/withdraw');
     return response.data;
   },
 
