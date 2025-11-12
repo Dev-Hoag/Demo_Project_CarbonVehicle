@@ -1,45 +1,37 @@
-version: '3.8'
-
-services:
+﻿services:
   wallet-service:
     build:
       context: .
       dockerfile: Dockerfile
-    image: wallet-service:latest
     container_name: ccm_wallet_service
     ports:
       - "3008:3008"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3008
-      
-      # Database Configuration
-      DB_HOST: wallet_db
+      HOST: 0.0.0.0
+      DB_HOST: wallet_mysql
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
       DB_DATABASE: wallet_service_db
-      
-      # JWT Configuration (must match User Service)
-      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
-      JWT_EXPIRES_IN: 7d
-      
-      # Internal API Key (for inter-service communication)
-      INTERNAL_API_KEY: ccm-internal-secret-2024
-      
-      # RabbitMQ Configuration
+      JWT_SECRET: Huyhoang24042005
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: wallet_jwt_refresh_secret_key_change_in_production
+      JWT_REFRESH_EXPIRES_IN: 7d
+      INTERNAL_API_KEY: internal_wallet_secret_key_change_in_production
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ccm_admin
       RABBITMQ_PASSWORD: ccm_password_2024
       RABBITMQ_VHOST: ccm_vhost
       RABBITMQ_EXCHANGE: ccm.events
-      
+
       # Other Services URLs (for internal communication)
       USER_SERVICE_URL: http://user_service_app:3001
-      PAYMENT_SERVICE_URL: http://payment_service:3007
+      PAYMENT_SERVICE_URL: http://payment_service-payment-service-1:3002
       TRANSACTION_SERVICE_URL: http://transaction_service:3006
-      
+
       # Wallet Business Logic Configuration
       WITHDRAWAL_FEE_PERCENTAGE: 0.5
       RESERVE_EXPIRATION_MINUTES: 30
@@ -47,56 +39,68 @@ services:
       MAX_WITHDRAWAL_AMOUNT: 100000000
       MIN_DEPOSIT_AMOUNT: 10000
     depends_on:
-      wallet_db:
+      wallet_mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - ccm_net
+    volumes:
+      - ./uploads:/app/uploads
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3008/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 40s
 
-  wallet_db:
+  wallet_mysql:
     image: mysql:8.0
-    container_name: ccm_wallet_db
+    container_name: ccm_wallet_mysql
     ports:
       - "3316:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wallet_service_db
-      MYSQL_CHARACTER_SET_SERVER: utf8mb4
-      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      MYSQL_USER: wallet_user
+      MYSQL_PASSWORD: wallet_password
     volumes:
-      - wallet_db_data:/var/lib/mysql
+      - wallet_mysql_data:/var/lib/mysql
+      - ./seed-wallet.sql:/docker-entrypoint-initdb.d/seed-wallet.sql:ro
     networks:
       - ccm_net
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 5
       start_period: 30s
+    restart: unless-stopped
 
-  adminer:
-    image: adminer:latest
-    container_name: ccm_wallet_adminer
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ccm_rabbitmq
+    hostname: rabbitmq
     ports:
-      - "8083:8080"
+      - "5672:5672"
+      - "15672:15672"
     environment:
-      ADMINER_DEFAULT_SERVER: wallet_db
-      ADMINER_DESIGN: pepa-linha
+      RABBITMQ_DEFAULT_USER: ccm_admin
+      RABBITMQ_DEFAULT_PASS: ccm_password_2024
+      RABBITMQ_DEFAULT_VHOST: ccm_vhost
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     networks:
       - ccm_net
-    depends_on:
-      - wallet_db
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
 volumes:
-  wallet_db_data:
+  wallet_mysql_data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 networks:

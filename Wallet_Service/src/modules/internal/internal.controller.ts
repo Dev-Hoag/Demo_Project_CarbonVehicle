@@ -10,6 +10,7 @@ import {
   ReleaseFundsDto,
   SettleFundsDto,
   RefundPaymentDto,
+  CreateDepositDto,
 } from '../../shared/dtos/wallet.dto';
 
 @ApiTags('internal-wallet')
@@ -80,5 +81,11 @@ export class InternalController {
   @ApiOperation({ summary: '[Internal] Wallet metrics summary' })
   async getMetricsSummary() {
     return this.reservesService.getMetrics();
+  }
+
+  @Post('deposit')
+  @ApiOperation({ summary: '[Internal] Initiate deposit (for testing)' })
+  async initiateDeposit(@Body() dto: CreateDepositDto & { userId: string }) {
+    return this.walletsService.initiateDeposit(dto.userId, dto);
   }
 }

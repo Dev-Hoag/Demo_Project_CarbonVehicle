@@ -14,7 +14,7 @@ export class PaymentEventConsumer {
     queue: 'wallet.payment.completed',
     queueOptions: {
       durable: true,
-      deadLetterExchange: 'ccm.events',
+      deadLetterExchange: 'ccm.events.dlx',
       deadLetterRoutingKey: 'wallet.payment.completed.dlq',
     },
   })

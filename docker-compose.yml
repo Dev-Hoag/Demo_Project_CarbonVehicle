@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   # ==================== MESSAGE BROKER ====================
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: ccm_rabbitmq
-    hostname: rabbitmq
+    hostname: ccm_rabbitmq
     ports:
       - "5672:5672"    # AMQP protocol
       - "15672:15672"  # Management UI
@@ -31,7 +29,7 @@ services:
 
 volumes:
   rabbitmq_data:
-    driver: local
+    external: true
 
 networks:
   ccm_net:

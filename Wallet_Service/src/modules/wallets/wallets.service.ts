@@ -3,6 +3,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import axios from 'axios';
 import { Wallet, WalletTransaction } from '../../shared/entities';
 import { WalletAuditLog } from '../../shared/entities/wallet-audit.entity';
 import { WalletStatus, TransactionType, TransactionStatus } from '../../shared/enums';
@@ -16,9 +17,9 @@ export class WalletsService {
     @InjectRepository(Wallet)
     private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(WalletTransaction)
-  private readonly transactionRepo: Repository<WalletTransaction>,
-  @InjectRepository(WalletAuditLog)
-  private readonly auditRepo: Repository<WalletAuditLog>,
+    private readonly transactionRepo: Repository<WalletTransaction>,
+    @InjectRepository(WalletAuditLog)
+    private readonly auditRepo: Repository<WalletAuditLog>,
     private readonly amqp: AmqpConnection,
   ) {}
 
@@ -76,26 +77,49 @@ export class WalletsService {
     const paymentRequestId = randomUUID();
     const idempotencyKey = `deposit:${userId}:${dto.amount}:${paymentRequestId}`;
 
-    // Phát event yêu cầu thanh toán (event-driven). Payment_Service sẽ xử lý và sau đó phát payment.completed
-    await this.amqp.publish('ccm.events', 'payment.requested', {
-      userId,
-      amount: dto.amount,
-      paymentRequestId,
-      paymentMethod: dto.paymentMethod || 'UNKNOWN',
-      returnUrl: dto.returnUrl || null,
-      idempotencyKey,
-      reason: 'Deposit initiated',
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      // Gọi Payment_Service API để tạo payment
+      const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://payment_service:3002';
+      const paymentResponse = await axios.post(`${paymentServiceUrl}/api/payments/initiate`, {
+        transactionId: paymentRequestId, // Use paymentRequestId as transactionId
+        userId: parseInt(userId), // Convert to number
+        gateway: (dto.paymentMethod || 'VNPAY').toUpperCase(),
+        amount: dto.amount,
+        orderInfo: `Deposit ${dto.amount} VND for user ${userId}`,
+        returnUrl: dto.returnUrl || 'http://localhost:3008/api/wallets/deposit/callback',
+      }, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY || 'ccm-internal-secret-2024',
+          'Content-Type': 'application/json',
+        },
+      });
 
-    // Trả về thông tin để client tiếp tục thanh toán (tùy Payment_Service cung cấp URL hoặc QR sau)
-    return {
-      message: 'Deposit requested. Continue with Payment Service to complete.',
-      wallet,
-      amount: dto.amount,
-      paymentRequestId,
-      // paymentUrl sẽ do Payment_Service cung cấp ở luồng khác (webhook/event hoặc query tiếp theo)
-    };
+      // Phát event yêu cầu thanh toán (event-driven). Payment_Service sẽ xử lý và sau đó phát payment.completed
+      await this.amqp.publish('ccm.events', 'payment.requested', {
+        userId,
+        amount: dto.amount,
+        paymentRequestId,
+        paymentCode: paymentResponse.data.paymentCode,
+        paymentMethod: dto.paymentMethod || 'VNPAY',
+        returnUrl: dto.returnUrl || null,
+        idempotencyKey,
+        reason: 'Deposit initiated',
+        timestamp: new Date().toISOString(),
+      });
+
+      // Trả về thông tin để client tiếp tục thanh toán
+      return {
+        message: 'Deposit initiated successfully. Complete payment to add funds to wallet.',
+        wallet,
+        amount: dto.amount,
+        paymentRequestId,
+        paymentCode: paymentResponse.data.paymentCode,
+        paymentUrl: paymentResponse.data.paymentUrl,
+        qrCode: paymentResponse.data.qrCode,
+      };
+    } catch (error) {
+      throw new Error(`Failed to initiate deposit: ${error.response?.data?.message || error.message}`);
+    }
   }
 
   async addBalance(userId: string, amount: number, referenceId: string, description: string) {

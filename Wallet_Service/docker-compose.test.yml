@@ -1,0 +1,108 @@
+﻿services:
+  wallet-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ccm_wallet_service
+    ports:
+      - "3008:3008"
+    environment:
+      NODE_ENV: development
+      PORT: 3008
+      HOST: 0.0.0.0
+      DB_HOST: wallet_mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: wallet_service_db
+      JWT_SECRET: wallet_jwt_secret_key_change_in_production
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: wallet_jwt_refresh_secret_key_change_in_production
+      JWT_REFRESH_EXPIRES_IN: 7d
+      INTERNAL_API_KEY: internal_wallet_secret_key_change_in_production
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ccm_admin
+      RABBITMQ_PASSWORD: ccm_password_2024
+      RABBITMQ_VHOST: ccm_vhost
+      RABBITMQ_EXCHANGE: ccm.events
+
+      # Other Services URLs (for internal communication)
+      USER_SERVICE_URL: http://user_service_app:3001
+      PAYMENT_SERVICE_URL: http://payment-service:3002
+      TRANSACTION_SERVICE_URL: http://transaction_service:3006
+
+      # Wallet Business Logic Configuration
+      WITHDRAWAL_FEE_PERCENTAGE: 0.5
+      RESERVE_EXPIRATION_MINUTES: 30
+      MIN_WITHDRAWAL_AMOUNT: 50000
+      MAX_WITHDRAWAL_AMOUNT: 100000000
+      MIN_DEPOSIT_AMOUNT: 10000
+    depends_on:
+      wallet_mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ccm_net
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+  wallet_mysql:
+    image: mysql:8.0
+    container_name: ccm_wallet_mysql
+    ports:
+      - "3316:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wallet_service_db
+      MYSQL_USER: wallet_user
+      MYSQL_PASSWORD: wallet_password
+    volumes:
+      - wallet_mysql_data:/var/lib/mysql
+      - ./seed-wallet.sql:/docker-entrypoint-initdb.d/seed-wallet.sql:ro
+    networks:
+      - ccm_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ccm_rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ccm_admin
+      RABBITMQ_DEFAULT_PASS: ccm_password_2024
+      RABBITMQ_DEFAULT_VHOST: ccm_vhost
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - ccm_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  wallet_mysql_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  ccm_net:
+    external: true

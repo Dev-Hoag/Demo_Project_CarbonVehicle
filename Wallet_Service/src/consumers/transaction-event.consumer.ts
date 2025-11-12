@@ -14,7 +14,7 @@ export class TransactionEventConsumer {
     queue: 'wallet.transaction.created',
     queueOptions: {
       durable: true,
-      deadLetterExchange: 'ccm.events',
+      deadLetterExchange: 'ccm.events.dlx',
       deadLetterRoutingKey: 'wallet.transaction.created.dlq',
     },
   })
@@ -55,7 +55,7 @@ export class TransactionEventConsumer {
     queue: 'wallet.transaction.completed',
     queueOptions: {
       durable: true,
-      deadLetterExchange: 'ccm.events',
+      deadLetterExchange: 'ccm.events.dlx',
       deadLetterRoutingKey: 'wallet.transaction.completed.dlq',
     },
   })
@@ -90,7 +90,7 @@ export class TransactionEventConsumer {
     queue: 'wallet.transaction.cancelled',
     queueOptions: {
       durable: true,
-      deadLetterExchange: 'ccm.events',
+      deadLetterExchange: 'ccm.events.dlx',
       deadLetterRoutingKey: 'wallet.transaction.cancelled.dlq',
     },
   })

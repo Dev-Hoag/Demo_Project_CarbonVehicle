@@ -14,11 +14,6 @@ export const getRabbitMQConfig = () => {
     ],
     // Khai báo queues mặc định (main + DLQ) để service có thể sử dụng policy TTL/retry
     queues: [
-      // Main queues
-      { name: 'wallet.transaction.created', options: { durable: true } },
-      { name: 'wallet.transaction.completed', options: { durable: true } },
-      { name: 'wallet.transaction.cancelled', options: { durable: true } },
-      { name: 'wallet.payment.completed', options: { durable: true } },
       // Dead Letter Queues
       { name: 'wallet.transaction.created.dlq', options: { durable: true } },
       { name: 'wallet.transaction.completed.dlq', options: { durable: true } },

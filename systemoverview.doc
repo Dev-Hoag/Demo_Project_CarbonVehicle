@@ -1,0 +1,2806 @@
+.1 Bối cảnh
+
+Trong bối cảnh biến đổi khí hậu ngày càng trở thành vấn đề cấp bách toàn cầu, các quốc gia đang cam kết mạnh mẽ để đạt mục tiêu phát thải ròng bằng không (Net-Zero), qua đó thúc đẩy sự chuyển dịch từ phương tiện sử dụng nhiên liệu hóa thạch sang phương tiện thân thiện với môi trường, đặc biệt là xe điện (EV). Việc sử dụng xe điện không chỉ góp phần giảm ô nhiễm không khí mà còn mang lại hiệu quả giảm phát thải khí CO₂ rõ rệt. Tuy nhiên, giá trị môi trường này hiện vẫn chưa được tối ưu hóa ở cấp độ cá nhân. Chủ sở hữu xe điện – những người trực tiếp tạo ra lợi ích môi trường – lại thiếu cơ chế để chuyển hóa lượng CO₂ giảm phát thải thành lợi ích tài chính cụ thể. Bên cạnh đó, quy trình truyền thống để đo lường, xác minh và phát hành tín chỉ carbon thường phức tạp, tốn kém và không phù hợp với các nguồn cung nhỏ lẻ như cá nhân.
+
+1.2 Vấn đề đặt ra
+
+Thiếu cơ chể kinh tê: Chủ sở hữu EV hiện chưa có cách để chuyển hoá lợi ịch môi trường (giảm CO₂) thành lợi ích tài chính cụ thể.
+
+Quy trình phức tạp: Đo lương, xác minh và phát hành tín chỉ carbon truyền thống tốn kém, phức tạp, không phù hợp cho các nguồn cung nhỏ lẻ.
+
+1.3 Giải pháp đề xuất
+
+Đồ án "Carbon Credit Marketplace for EV Owners – Nền tảng giao dịch tín chỉ carbon cho chủ sở hữu xe điện" được thực hiện nhằm phát triển một nền tảng số tập trung/phi tập trung cho phép các cá nhân sở hữu EV có thể dễ dàng thương mại hóa lượng CO₂ đã giảm phát thải. Hệ thống cung cấp giao diện và chức năng riêng biệt cho bốn nhóm người dùng chính: chủ sở hữu EV, người mua tín chỉ (doanh nghiệp), tổ chức kiểm toán carbon (CVA), và quản trị viên hệ thống.
+
+1.4 Cách thức hoạt động của hệ thống
+
+Nền tảng sẽ tự động thu thập và phân tích dữ liệu hành trình của xe điện, tính toán lượng CO₂ giảm phát thải, gửi tới tổ chức xác minh để được cấp tín chỉ carbon. Sau đó, tín chỉ được ghi nhận vào ví carbon của người dùng và có thể niêm yết để bán dưới dạng giá cố định hoặc đấu giá. Người mua tín chỉ có thể tìm kiếm, thanh toán và nhận chứng nhận tín chỉ phục vụ cho báo cáo trung hòa phát thải. Công nghệ hỗ trợ như AI được tích hợp nhằm gợi ý giá bán hợp lý dựa trên dữ liệu thị trường; trong khi blockchain hoặc cơ chế lưu vết sẽ đảm bảo minh bạch, chống gian lận và truy xuất giao dịch. Đồ án sử dụng các công nghệ hiện đại như React.js và Java Spring Boot để xây dựng giao diện người dùng và backend API, cùng với cơ sở dữ liệu quan hệ để quản lý dữ liệu người dùng, tín chỉ và giao dịch. Kết quả của đồ án là một hệ thống nền tảng có tính ứng dụng cao trong lĩnh vực tài chính xanh, góp phần thúc đẩy kinh tế tuần hoàn carbon, khuyến khích sử dụng xe điện và hỗ trợ các doanh nghiệp tuân thủ cam kết Net-Zero một cách linh hoạt và minh bạch.
+
+1.5 Cấu trúc báo cáo
+
+Ngoài các phần mở đầu, kết luận, danh mục tài liệu tham khảo và phụ lục, báo cáo được tổ chức thành bốn chương chính nhằm đảm bảo tính logic và khoa học trong quá trình trình bày.
+
+Chương 1: Chương đầu tiên này tập trung vào việc giới thiệu tổng quan về đề tài, trong đó làm rõ bối cảnh nghiên cứu cũng như lý do lựa chọn đề tài. Phần này đồng thời xác định các mục tiêu mà hệ thống cần đạt được, phạm vi nghiên cứu cụ thể, và cuối cùng là giới thiệu cấu trúc chi tiết của toàn bộ báo cáo. Qua đó, người đọc có thể nắm được định hướng tổng thể của đề tài ngay từ đầu.
+
+Chương 2: Chương này sẽ tập trung vào phân tích và thiết kế hệ thống. Trước hết, chương này tiến hành khảo sát các quy trình nghiệp vụ thực tế, từ đó phân tích và xác định những yêu cầu cả về chức năng lẫn phi chức năng mà hệ thống cần đáp ứng. Trên cơ sở các yêu cầu đó, nội dung tiếp theo trình bày quá trình thiết kế, bao gồm thiết kế kiến trúc tổng thể, thiết kế cơ sở dữ liệu thông qua sơ đồ thực thể – liên kết (ERD), cũng như thiết kế các trường hợp sử dụng (Use Case) nhằm mô tả cụ thể mối quan hệ giữa người dùng và hệ thống.
+
+Chương 3: Chương này trình bày quá trình cài đặt và triển khai hệ thống. Nội dung đi sâu vào việc mô tả các công nghệ, ngôn ngữ lập trình và công cụ được lựa chọn để phát triển ứng dụng. Đồng thời, chương này cung cấp minh họa về kết quả cài đặt các chức năng chính thông qua hình ảnh giao diện ứng dụng và giải thích chi tiết các luồng xử lý quan trọng, giúp người đọc hiểu rõ cách thức hệ thống vận hành trong thực tế.
+
+Chương 4: Chương này trình bày các ngôn ngữ có trong dự án như HTML ,CSS, …,vv Một số hình ảnh về giao diện của dự án và những video demo liên quan đến dự án , ngoài ra còn nêu những ưu và nhược điểm của dự án.
+
+Chương 5: Chương này sẽ trình bày hướng phát triển và đưa ra các kết luận liên quan đến dự án. Cụ thể như thành quả và ý nghĩa xây dưng và phát triển dự án,…
+
+CHƯƠNG 2: PHÂN TÍCH HỆ THỐNG
+
+2.1 Thực trạng & quy trình nghiệp vụ
+
+2.1.1 Thực trạng
+
+Hiện nay, việc triển khai các giải pháp giảm phát thải khí nhà kính đang là xu hướng tất yếu trên toàn cầu. Tại Việt Nam, các doanh nghiệp và cá nhân sở hữu xe điện (EV Owner) đang đóng góp tích cực vào mục tiêu giảm phát thải CO₂ thông qua việc sử dụng phương tiện thân thiện với môi trường. Tuy nhiên, quá trình ghi nhận, quy đổi và giao dịch tín chỉ carbon phát sinh từ việc sử dụng xe điện vẫn còn nhiều hạn chế:
+
+Thiếu nền tảng tập trung: Dữ liệu giảm phát thải của chủ xe điện chưa được thu thập, xác minh và quy đổi một cách thống nhất.
+
+Quy trình xác minh thủ công: Việc xác minh dữ liệu phát thải và phát hành tín chỉ carbon chủ yếu dựa trên báo cáo rời rạc, dễ sai lệch hoặc chậm trễ.
+
+Khó khăn trong giao dịch: Chủ sở hữu tín chỉ và người mua chưa có môi trường giao dịch minh bạch, an toàn và có thể thanh toán trực tuyến.
+
+Thiếu kết nối giữa các bên: EV Owner, tổ chức xác minh (CVA), và người mua tín chỉ (Buyer) hoạt động rời rạc, không có cơ chế kết nối trực tiếp.
+
+Chính vì vậy, cần xây dựng một nền tảng giao dịch tín chỉ carbon số hóa, cho phép kết nối dữ liệu, xác minh, quy đổi, giao dịch và thanh toán trực tuyến, giúp thúc đẩy thị trường carbon phát triển minh bạch, hiệu quả và bền vững.
+
+2.1.2 Quy trình nghiệp vụ hiện tại
+
+Dựa trên khảo sát và phân tích nhu cầu của các bên liên quan, quy trình nghiệp vụ của hệ thống Carbon Credit Marketplace for EV Owners được đề xuất gồm 5 giai đoạn chính, thể hiện mối quan hệ giữa EV Owner – CVA – Buyer – Admin như sau:
+
+Bước 1: Đăng ký và đăng nhập hệ thống
+
+Người dùng (EV Owner, Buyer, CVA, Admin) khởi tạo tài khoản và đăng nhập hệ thống.
+
+Hệ thống xác thực quyền truy cập và hiển thị giao diện chức năng phù hợp với từng vai trò.
+
+Bước 2: Ghi nhận và xác minh dữ liệu hành trình
+
+EV Owner kết nối xe điện hoặc tải lên dữ liệu hành trình (giả lập).
+
+Hệ thống tính toán lượng CO₂ giảm phát thải dựa trên quãng đường di chuyển và loại xe.
+
+Dữ liệu được gửi đến CVA (Carbon Verification & Audit) để kiểm tra và xác minh.
+
+Sau khi được duyệt, hệ thống phát hành tín chỉ carbon và ghi vào ví điện tử của EV Owner.
+
+Bước 3: Niêm yết và giao dịch tín chỉ
+
+EV Owner có thể niêm yết tín chỉ carbon để bán với giá cố định hoặc hình thức đấu giá.
+
+Buyer truy cập hệ thống để tìm kiếm, lọc và mua tín chỉ carbon theo nhu cầu.
+
+Khi giao dịch diễn ra, hệ thống ghi nhận, cập nhật ví carbon và thông báo kết quả cho các bên liên quan.
+
+Bước 4: Thanh toán và cấp chứng nhận
+
+Buyer thực hiện thanh toán trực tuyến qua ví điện tử hoặc ngân hàng.
+
+Sau khi giao dịch hoàn tất, hệ thống tự động phát hành chứng nhận tín chỉ carbon (Certificate) cho Buyer.
+
+EV Owner có thể rút tiền về tài khoản sau khi hoàn tất giao dịch.
+
+Bước 5: Báo cáo và quản trị
+
+EV Owner và Buyer có thể xem báo cáo thống kê cá nhân về CO₂ giảm phát thải, doanh thu và lịch sử giao dịch.
+
+CVA xuất báo cáo xác minh và cấp phát tín chỉ carbon định kỳ.
+
+Admin quản lý toàn bộ hệ thống, bao gồm người dùng, giao dịch, dòng tiền và báo cáo tổng hợp.
+
+2.1.3 Tóm tắt quy trình nghiệp vụ
+
+EV Owner → nhập dữ liệu hành trình → hệ thống tính CO₂ giảm phát thải.
+
+CVA → xác minh dữ liệu → phát hành tín chỉ carbon.
+
+EV Owner → niêm yết tín chỉ carbon → Buyer tìm kiếm và mua.
+
+Hệ thống → xử lý thanh toán → cấp chứng nhận tín chỉ.
+
+Admin → quản trị và tổng hợp báo cáo toàn hệ thống.
+
+2.2 Phân tích yêu cầu người dùng
+
+2.2.1 Chủ sở hữu xe điện (EV Owner)
+
+Kết nối và đồng bộ dữ liệu hành trình từ xe điện (hoặc file giả lập).
+
+Tính toán lượng CO₂ giảm phát thải → quy đổi sang tín chỉ carbon.
+
+Quản lý ví carbon (xem số dư, lịch sử).
+
+Niêm yết tín chỉ carbon để bán (giá cố định hoặc đấu giá).
+
+Quản lý giao dịch (theo dõi, hủy, hoàn tất).
+
+Thanh toán và rút tiền sau khi bán tín chỉ.
+
+Xem báo cáo cá nhân (CO₂ giảm, doanh thu).
+
+Nhận gợi ý giá bán từ AI dựa trên dữ liệu thị trường.
+
+2.2.2 Người mua tín chỉ carbon (Carbon Credit Buyer)
+
+Tìm kiếm và lọc tín chỉ carbon (theo giá, số lượng, khu vực, thời gian).
+
+Mua tín chỉ trực tiếp hoặc tham gia đấu giá.
+
+Thanh toán online (ví điện tử, ngân hàng, ...).
+
+Nhận chứng nhận tín chỉ (certificate).
+
+Quản lý lịch sử mua tín chỉ.
+
+2.2.3 Tổ chức kiểm toán & xác minh carbon (CVA)
+
+Kiểm tra dữ liệu phát thải và hồ sơ tín chỉ.
+
+Duyệt hoặc từ chối yêu cầu phát hành tín chỉ.
+
+Cấp tín chỉ carbon hợp lệ và ghi vào ví EV Owner.
+
+Xuất báo cáo phát hành tín chỉ carbon.
+
+2.2.4 Quản trị hệ thống (Admin)
+
+Quản lý người dùng (EV Owner, Buyer, CVA).
+
+Quản lý giao dịch (theo dõi, xác nhận, xử lý tranh chấp).
+
+Quản lý ví điện tử và dòng tiền.
+
+Quản lý niêm yết tín chỉ và các giao dịch liên quan.
+
+Tạo báo cáo tổng hợp giao dịch và hoạt động nền tảng.
+
+2.3 Yêu cầu chức năng
+
+Để đáp ứng các yêu cầu đã xác định từ người dùng, hệ thống Carbon Credit Marketplace for EV Owners được thiết kế với một tập hợp các chức năng rõ ràng và chặt chẽ. Các chức năng này được tổ chức và cấu trúc thành những module nghiệp vụ chính, tương ứng với quy trình vận hành cốt lõi của nền tảng giao dịch tín chỉ carbon, bao gồm:
+
+CN-1: Quản lý Người dùng & Phiên làm việc
+
+CN-1.1: Xác thực người dùng
+Hệ thống cho phép người dùng (EV Owner, Buyer, CVA, Admin) đăng ký và đăng nhập bằng thông tin cá nhân. Dựa trên vai trò, hệ thống cấp quyền truy cập tới các chức năng tương ứng.
+
+CN-1.2: Giao diện chính & điều hướng
+Cung cấp không gian làm việc tập trung với các menu điều hướng theo quyền hạn, giúp người dùng truy cập nhanh tới các module nghiệp vụ chính của hệ thống.
+
+CN-2: Quản lý Dữ liệu Hành trình & Phát thải
+
+CN-2.1: Kết nối và đồng bộ dữ liệu hành trình
+Hệ thống cho phép chủ xe điện (EV Owner) kết nối và đồng bộ dữ liệu di chuyển từ xe điện hoặc nhập dữ liệu từ tệp mô phỏng.
+
+CN-2.2: Tính toán CO₂ giảm phát thải và quy đổi tín chỉ
+Từ dữ liệu hành trình, hệ thống tự động tính lượng CO₂ giảm phát thải và quy đổi thành tín chỉ carbon tương ứng.
+
+CN-2.3: Kiểm tra và xác minh dữ liệu phát thải
+Tổ chức kiểm toán và xác minh (CVA) xem xét dữ liệu, xác nhận tính chính xác trước khi phát hành tín chỉ carbon cho EV Owner.
+
+CN-3: Quản lý Tín chỉ Carbon
+
+CN-3.1: Cấp phát tín chỉ carbon
+Sau khi dữ liệu được xác minh, CVA phát hành tín chỉ carbon và ghi nhận vào ví carbon của EV Owner.
+
+CN-3.2: Quản lý ví carbon
+EV Owner có thể theo dõi số dư, tín chỉ đã nhận hoặc đã bán trên nền tảng.
+
+CN-3.3: Nhận chứng nhận tín chỉ carbon
+Người mua (Buyer) nhận chứng nhận điện tử (certificate) cho tín chỉ đã mua, phục vụ công tác báo cáo giảm phát thải.
+
+CN-4: Giao dịch và Thanh toán Tín chỉ
+
+CN-4.1: Niêm yết tín chỉ carbon
+EV Owner có thể đăng bán tín chỉ theo giá cố định hoặc hình thức đấu giá.
+
+CN-4.2: Tìm kiếm và mua tín chỉ
+Buyer có thể tìm kiếm, lọc tín chỉ theo tiêu chí (giá, khu vực, số lượng) và mua trực tiếp hoặc tham gia đấu giá.
+
+CN-4.3: Quản lý giao dịch
+Hệ thống hỗ trợ EV Owner, Buyer và Admin theo dõi, xác nhận, hủy hoặc xử lý tranh chấp các giao dịch.
+
+CN-4.4: Thanh toán và rút tiền
+Hỗ trợ thanh toán online qua ví điện tử hoặc ngân hàng và cho phép EV Owner rút tiền sau khi bán tín chỉ thành công.
+
+CN-5: Phân tích Dữ liệu & Báo cáo
+
+CN-5.1: AI gợi ý giá tín chỉ
+Hệ thống sử dụng thuật toán AI để phân tích dữ liệu thị trường và đề xuất mức giá bán hợp lý cho EV Owner.
+
+CN-5.2: Báo cáo cá nhân
+Cung cấp thống kê cho EV Owner và Buyer về lượng CO₂ giảm phát thải, doanh thu, lịch sử mua bán.
+
+CN-5.3: Báo cáo tổng hợp & phát hành
+CVA và Admin có thể xuất báo cáo định kỳ về lượng tín chỉ phát hành, giao dịch, doanh thu và tổng lượng CO₂ giảm phát thải.
+
+CN-6: Quản trị Hệ thống
+
+CN-6.1: Quản lý người dùng
+Admin quản lý danh sách tài khoản EV Owner, Buyer và CVA, bao gồm việc cấp quyền, khóa hoặc xóa tài khoản.
+
+CN-6.2: Quản lý ví điện tử & dòng tiền
+Giám sát các giao dịch thanh toán, nạp và rút tiền nhằm đảm bảo tính minh bạch tài chính.
+
+CN-6.3: Quản lý niêm yết tín chỉ
+Admin kiểm tra, phê duyệt hoặc tạm ngừng các niêm yết tín chỉ không hợp lệ để đảm bảo tính tuân thủ.
+                                                 TỔNG QUAN ĐỀ TÀI
+
+CHƯƠNG 1: MỞ ĐẦU
+
+1.1 Bối cảnh
+
+Trong bối cảnh biến đổi khí hậu ngày càng trở thành vấn đề cấp bách toàn cầu, các quốc gia đang cam kết mạnh mẽ để đạt mục tiêu phát thải ròng bằng không (Net-Zero), qua đó thúc đẩy sự chuyển dịch từ phương tiện sử dụng nhiên liệu hóa thạch sang phương tiện thân thiện với môi trường, đặc biệt là xe điện (EV). Việc sử dụng xe điện không chỉ góp phần giảm ô nhiễm không khí mà còn mang lại hiệu quả giảm phát thải khí CO₂ rõ rệt. Tuy nhiên, giá trị môi trường này hiện vẫn chưa được tối ưu hóa ở cấp độ cá nhân. Chủ sở hữu xe điện – những người trực tiếp tạo ra lợi ích môi trường – lại thiếu cơ chế để chuyển hóa lượng CO₂ giảm phát thải thành lợi ích tài chính cụ thể. Bên cạnh đó, quy trình truyền thống để đo lường, xác minh và phát hành tín chỉ carbon thường phức tạp, tốn kém và không phù hợp với các nguồn cung nhỏ lẻ như cá nhân.
+
+1.2 Vấn đề đặt ra
+
+Thiếu cơ chể kinh tê: Chủ sở hữu EV hiện chưa có cách để chuyển hoá lợi ịch môi trường (giảm CO₂) thành lợi ích tài chính cụ thể.
+
+Quy trình phức tạp: Đo lương, xác minh và phát hành tín chỉ carbon truyền thống tốn kém, phức tạp, không phù hợp cho các nguồn cung nhỏ lẻ.
+
+1.3 Giải pháp đề xuất
+
+Đồ án "Carbon Credit Marketplace for EV Owners – Nền tảng giao dịch tín chỉ carbon cho chủ sở hữu xe điện" được thực hiện nhằm phát triển một nền tảng số tập trung/phi tập trung cho phép các cá nhân sở hữu EV có thể dễ dàng thương mại hóa lượng CO₂ đã giảm phát thải. Hệ thống cung cấp giao diện và chức năng riêng biệt cho bốn nhóm người dùng chính: chủ sở hữu EV, người mua tín chỉ (doanh nghiệp), tổ chức kiểm toán carbon (CVA), và quản trị viên hệ thống.
+
+1.4 Cách thức hoạt động của hệ thống
+
+Nền tảng sẽ tự động thu thập và phân tích dữ liệu hành trình của xe điện, tính toán lượng CO₂ giảm phát thải, gửi tới tổ chức xác minh để được cấp tín chỉ carbon. Sau đó, tín chỉ được ghi nhận vào ví carbon của người dùng và có thể niêm yết để bán dưới dạng giá cố định hoặc đấu giá. Người mua tín chỉ có thể tìm kiếm, thanh toán và nhận chứng nhận tín chỉ phục vụ cho báo cáo trung hòa phát thải. Công nghệ hỗ trợ như AI được tích hợp nhằm gợi ý giá bán hợp lý dựa trên dữ liệu thị trường; trong khi blockchain hoặc cơ chế lưu vết sẽ đảm bảo minh bạch, chống gian lận và truy xuất giao dịch. Đồ án sử dụng các công nghệ hiện đại như React.js và Java Spring Boot để xây dựng giao diện người dùng và backend API, cùng với cơ sở dữ liệu quan hệ để quản lý dữ liệu người dùng, tín chỉ và giao dịch. Kết quả của đồ án là một hệ thống nền tảng có tính ứng dụng cao trong lĩnh vực tài chính xanh, góp phần thúc đẩy kinh tế tuần hoàn carbon, khuyến khích sử dụng xe điện và hỗ trợ các doanh nghiệp tuân thủ cam kết Net-Zero một cách linh hoạt và minh bạch.
+
+1.5 Cấu trúc báo cáo
+
+Ngoài các phần mở đầu, kết luận, danh mục tài liệu tham khảo và phụ lục, báo cáo được tổ chức thành bốn chương chính nhằm đảm bảo tính logic và khoa học trong quá trình trình bày.
+
+Chương 1: Chương đầu tiên này tập trung vào việc giới thiệu tổng quan về đề tài, trong đó làm rõ bối cảnh nghiên cứu cũng như lý do lựa chọn đề tài. Phần này đồng thời xác định các mục tiêu mà hệ thống cần đạt được, phạm vi nghiên cứu cụ thể, và cuối cùng là giới thiệu cấu trúc chi tiết của toàn bộ báo cáo. Qua đó, người đọc có thể nắm được định hướng tổng thể của đề tài ngay từ đầu.
+
+Chương 2: Chương này sẽ tập trung vào phân tích và thiết kế hệ thống. Trước hết, chương này tiến hành khảo sát các quy trình nghiệp vụ thực tế, từ đó phân tích và xác định những yêu cầu cả về chức năng lẫn phi chức năng mà hệ thống cần đáp ứng. Trên cơ sở các yêu cầu đó, nội dung tiếp theo trình bày quá trình thiết kế, bao gồm thiết kế kiến trúc tổng thể, thiết kế cơ sở dữ liệu thông qua sơ đồ thực thể – liên kết (ERD), cũng như thiết kế các trường hợp sử dụng (Use Case) nhằm mô tả cụ thể mối quan hệ giữa người dùng và hệ thống.
+
+Chương 3: Chương này trình bày quá trình cài đặt và triển khai hệ thống. Nội dung đi sâu vào việc mô tả các công nghệ, ngôn ngữ lập trình và công cụ được lựa chọn để phát triển ứng dụng. Đồng thời, chương này cung cấp minh họa về kết quả cài đặt các chức năng chính thông qua hình ảnh giao diện ứng dụng và giải thích chi tiết các luồng xử lý quan trọng, giúp người đọc hiểu rõ cách thức hệ thống vận hành trong thực tế.
+
+Chương 4: Chương này trình bày các ngôn ngữ có trong dự án như HTML ,CSS, …,vv Một số hình ảnh về giao diện của dự án và những video demo liên quan đến dự án , ngoài ra còn nêu những ưu và nhược điểm của dự án.
+
+Chương 5: Chương này sẽ trình bày hướng phát triển và đưa ra các kết luận liên quan đến dự án. Cụ thể như thành quả và ý nghĩa xây dưng và phát triển dự án,…
+
+CHƯƠNG 2: PHÂN TÍCH HỆ THỐNG
+
+2.1 Thực trạng & quy trình nghiệp vụ
+
+2.1.1 Thực trạng
+
+Hiện nay, việc triển khai các giải pháp giảm phát thải khí nhà kính đang là xu hướng tất yếu trên toàn cầu. Tại Việt Nam, các doanh nghiệp và cá nhân sở hữu xe điện (EV Owner) đang đóng góp tích cực vào mục tiêu giảm phát thải CO₂ thông qua việc sử dụng phương tiện thân thiện với môi trường. Tuy nhiên, quá trình ghi nhận, quy đổi và giao dịch tín chỉ carbon phát sinh từ việc sử dụng xe điện vẫn còn nhiều hạn chế:
+
+Thiếu nền tảng tập trung: Dữ liệu giảm phát thải của chủ xe điện chưa được thu thập, xác minh và quy đổi một cách thống nhất.
+
+Quy trình xác minh thủ công: Việc xác minh dữ liệu phát thải và phát hành tín chỉ carbon chủ yếu dựa trên báo cáo rời rạc, dễ sai lệch hoặc chậm trễ.
+
+Khó khăn trong giao dịch: Chủ sở hữu tín chỉ và người mua chưa có môi trường giao dịch minh bạch, an toàn và có thể thanh toán trực tuyến.
+
+Thiếu kết nối giữa các bên: EV Owner, tổ chức xác minh (CVA), và người mua tín chỉ (Buyer) hoạt động rời rạc, không có cơ chế kết nối trực tiếp.
+
+Chính vì vậy, cần xây dựng một nền tảng giao dịch tín chỉ carbon số hóa, cho phép kết nối dữ liệu, xác minh, quy đổi, giao dịch và thanh toán trực tuyến, giúp thúc đẩy thị trường carbon phát triển minh bạch, hiệu quả và bền vững.
+
+2.1.2 Quy trình nghiệp vụ hiện tại
+
+Dựa trên khảo sát và phân tích nhu cầu của các bên liên quan, quy trình nghiệp vụ của hệ thống Carbon Credit Marketplace for EV Owners được đề xuất gồm 5 giai đoạn chính, thể hiện mối quan hệ giữa EV Owner – CVA – Buyer – Admin như sau:
+
+Bước 1: Đăng ký và đăng nhập hệ thống
+
+Người dùng (EV Owner, Buyer, CVA, Admin) khởi tạo tài khoản và đăng nhập hệ thống.
+
+Hệ thống xác thực quyền truy cập và hiển thị giao diện chức năng phù hợp với từng vai trò.
+
+Bước 2: Ghi nhận và xác minh dữ liệu hành trình
+
+EV Owner kết nối xe điện hoặc tải lên dữ liệu hành trình (giả lập).
+
+Hệ thống tính toán lượng CO₂ giảm phát thải dựa trên quãng đường di chuyển và loại xe.
+
+Dữ liệu được gửi đến CVA (Carbon Verification & Audit) để kiểm tra và xác minh.
+
+Sau khi được duyệt, hệ thống phát hành tín chỉ carbon và ghi vào ví điện tử của EV Owner.
+
+Bước 3: Niêm yết và giao dịch tín chỉ
+
+EV Owner có thể niêm yết tín chỉ carbon để bán với giá cố định hoặc hình thức đấu giá.
+
+Buyer truy cập hệ thống để tìm kiếm, lọc và mua tín chỉ carbon theo nhu cầu.
+
+Khi giao dịch diễn ra, hệ thống ghi nhận, cập nhật ví carbon và thông báo kết quả cho các bên liên quan.
+
+Bước 4: Thanh toán và cấp chứng nhận
+
+Buyer thực hiện thanh toán trực tuyến qua ví điện tử hoặc ngân hàng.
+
+Sau khi giao dịch hoàn tất, hệ thống tự động phát hành chứng nhận tín chỉ carbon (Certificate) cho Buyer.
+
+EV Owner có thể rút tiền về tài khoản sau khi hoàn tất giao dịch.
+
+Bước 5: Báo cáo và quản trị
+
+EV Owner và Buyer có thể xem báo cáo thống kê cá nhân về CO₂ giảm phát thải, doanh thu và lịch sử giao dịch.
+
+CVA xuất báo cáo xác minh và cấp phát tín chỉ carbon định kỳ.
+
+Admin quản lý toàn bộ hệ thống, bao gồm người dùng, giao dịch, dòng tiền và báo cáo tổng hợp.
+
+2.1.3 Tóm tắt quy trình nghiệp vụ
+
+EV Owner → nhập dữ liệu hành trình → hệ thống tính CO₂ giảm phát thải.
+
+CVA → xác minh dữ liệu → phát hành tín chỉ carbon.
+
+EV Owner → niêm yết tín chỉ carbon → Buyer tìm kiếm và mua.
+
+Hệ thống → xử lý thanh toán → cấp chứng nhận tín chỉ.
+
+Admin → quản trị và tổng hợp báo cáo toàn hệ thống.
+
+2.2 Phân tích yêu cầu người dùng
+
+2.2.1 Chủ sở hữu xe điện (EV Owner)
+
+Kết nối và đồng bộ dữ liệu hành trình từ xe điện (hoặc file giả lập).
+
+Tính toán lượng CO₂ giảm phát thải → quy đổi sang tín chỉ carbon.
+
+Quản lý ví carbon (xem số dư, lịch sử).
+
+Niêm yết tín chỉ carbon để bán (giá cố định hoặc đấu giá).
+
+Quản lý giao dịch (theo dõi, hủy, hoàn tất).
+
+Thanh toán và rút tiền sau khi bán tín chỉ.
+
+Xem báo cáo cá nhân (CO₂ giảm, doanh thu).
+
+Nhận gợi ý giá bán từ AI dựa trên dữ liệu thị trường.
+
+2.2.2 Người mua tín chỉ carbon (Carbon Credit Buyer)
+
+Tìm kiếm và lọc tín chỉ carbon (theo giá, số lượng, khu vực, thời gian).
+
+Mua tín chỉ trực tiếp hoặc tham gia đấu giá.
+
+Thanh toán online (ví điện tử, ngân hàng, ...).
+
+Nhận chứng nhận tín chỉ (certificate).
+
+Quản lý lịch sử mua tín chỉ.
+
+2.2.3 Tổ chức kiểm toán & xác minh carbon (CVA)
+
+Kiểm tra dữ liệu phát thải và hồ sơ tín chỉ.
+
+Duyệt hoặc từ chối yêu cầu phát hành tín chỉ.
+
+Cấp tín chỉ carbon hợp lệ và ghi vào ví EV Owner.
+
+Xuất báo cáo phát hành tín chỉ carbon.
+
+2.2.4 Quản trị hệ thống (Admin)
+
+Quản lý người dùng (EV Owner, Buyer, CVA).
+
+Quản lý giao dịch (theo dõi, xác nhận, xử lý tranh chấp).
+
+Quản lý ví điện tử và dòng tiền.
+
+Quản lý niêm yết tín chỉ và các giao dịch liên quan.
+
+Tạo báo cáo tổng hợp giao dịch và hoạt động nền tảng.
+
+2.3 Yêu cầu chức năng
+
+Để đáp ứng các yêu cầu đã xác định từ người dùng, hệ thống Carbon Credit Marketplace for EV Owners được thiết kế với một tập hợp các chức năng rõ ràng và chặt chẽ. Các chức năng này được tổ chức và cấu trúc thành những module nghiệp vụ chính, tương ứng với quy trình vận hành cốt lõi của nền tảng giao dịch tín chỉ carbon, bao gồm:
+
+CN-1: Quản lý Người dùng & Phiên làm việc
+
+CN-1.1: Xác thực người dùng
+Hệ thống cho phép người dùng (EV Owner, Buyer, CVA, Admin) đăng ký và đăng nhập bằng thông tin cá nhân. Dựa trên vai trò, hệ thống cấp quyền truy cập tới các chức năng tương ứng.
+
+CN-1.2: Giao diện chính & điều hướng
+Cung cấp không gian làm việc tập trung với các menu điều hướng theo quyền hạn, giúp người dùng truy cập nhanh tới các module nghiệp vụ chính của hệ thống.
+
+CN-2: Quản lý Dữ liệu Hành trình & Phát thải
+
+CN-2.1: Kết nối và đồng bộ dữ liệu hành trình
+Hệ thống cho phép chủ xe điện (EV Owner) kết nối và đồng bộ dữ liệu di chuyển từ xe điện hoặc nhập dữ liệu từ tệp mô phỏng.
+
+CN-2.2: Tính toán CO₂ giảm phát thải và quy đổi tín chỉ
+Từ dữ liệu hành trình, hệ thống tự động tính lượng CO₂ giảm phát thải và quy đổi thành tín chỉ carbon tương ứng.
+
+CN-2.3: Kiểm tra và xác minh dữ liệu phát thải
+Tổ chức kiểm toán và xác minh (CVA) xem xét dữ liệu, xác nhận tính chính xác trước khi phát hành tín chỉ carbon cho EV Owner.
+
+CN-3: Quản lý Tín chỉ Carbon
+
+CN-3.1: Cấp phát tín chỉ carbon
+Sau khi dữ liệu được xác minh, CVA phát hành tín chỉ carbon và ghi nhận vào ví carbon của EV Owner.
+
+CN-3.2: Quản lý ví carbon
+EV Owner có thể theo dõi số dư, tín chỉ đã nhận hoặc đã bán trên nền tảng.
+
+CN-3.3: Nhận chứng nhận tín chỉ carbon
+Người mua (Buyer) nhận chứng nhận điện tử (certificate) cho tín chỉ đã mua, phục vụ công tác báo cáo giảm phát thải.
+
+CN-4: Giao dịch và Thanh toán Tín chỉ
+
+CN-4.1: Niêm yết tín chỉ carbon
+EV Owner có thể đăng bán tín chỉ theo giá cố định hoặc hình thức đấu giá.
+
+CN-4.2: Tìm kiếm và mua tín chỉ
+Buyer có thể tìm kiếm, lọc tín chỉ theo tiêu chí (giá, khu vực, số lượng) và mua trực tiếp hoặc tham gia đấu giá.
+
+CN-4.3: Quản lý giao dịch
+Hệ thống hỗ trợ EV Owner, Buyer và Admin theo dõi, xác nhận, hủy hoặc xử lý tranh chấp các giao dịch.
+
+CN-4.4: Thanh toán và rút tiền
+Hỗ trợ thanh toán online qua ví điện tử hoặc ngân hàng và cho phép EV Owner rút tiền sau khi bán tín chỉ thành công.
+
+CN-5: Phân tích Dữ liệu & Báo cáo
+
+CN-5.1: AI gợi ý giá tín chỉ
+Hệ thống sử dụng thuật toán AI để phân tích dữ liệu thị trường và đề xuất mức giá bán hợp lý cho EV Owner.
+
+CN-5.2: Báo cáo cá nhân
+Cung cấp thống kê cho EV Owner và Buyer về lượng CO₂ giảm phát thải, doanh thu, lịch sử mua bán.
+
+CN-5.3: Báo cáo tổng hợp & phát hành
+CVA và Admin có thể xuất báo cáo định kỳ về lượng tín chỉ phát hành, giao dịch, doanh thu và tổng lượng CO₂ giảm phát thải.
+
+CN-6: Quản trị Hệ thống
+
+CN-6.1: Quản lý người dùng
+Admin quản lý danh sách tài khoản EV Owner, Buyer và CVA, bao gồm việc cấp quyền, khóa hoặc xóa tài khoản.
+
+CN-6.2: Quản lý ví điện tử & dòng tiền
+Giám sát các giao dịch thanh toán, nạp và rút tiền nhằm đảm bảo tính minh bạch tài chính.
+
+CN-6.3: Quản lý niêm yết tín chỉ
+Admin kiểm tra, phê duyệt hoặc tạm ngừng các niêm yết tín chỉ không hợp lệ để đảm bảo tính tuân thủ.
+
+Nhóm chức năng
+
+Mã CN
+
+Tên chức năng
+
+Người dùng
+
+Mô tả ngắn gọn
+
+CN-1: Quản lý người dùng và phiên làm việc
+
+CN-1.1
+
+Đăng ký / Đăng nhận / Xác thực người dùng 
+
+EV Owner, Buyer, CVN, Admin
+
+Cho phép người đùng tạo tài khoản, đăng nhập và xác thực quyển truy cập theo vai trò.
+
+CN-1.2
+
+Giao diện chính & điều hướng
+
+EV Owner, Buyer, CVN, Admin
+
+Cung cấp không giang làm việc tập trung, hiển thị các menu chức năng tương ứng với quyền hạn.
+
+CN-2: Quẩn lý dữ liệu hành trình & phát triển
+
+CN-2.1
+
+Kết nối và đòng bộ dữ liệu hành trình
+
+EV Owner
+
+Kết nối với xe điện.
+
+CN-2.2
+
+Tính toán CO₂ giảm phát thải & Quy đổi tín chỉ
+
+EV Owner
+
+Tính lượng CO₂ tiết kiệm được và quy đổi sang tín chỉ carbon.
+
+CN-2.3
+
+Kiểm tra & xác minh dữ liệu phát thải
+
+CVA
+
+Xác minh tính chính xác của dữ liệu phát thải và yêu cầu phát hành tín chỉ.
+
+CN-3: Quản lý tín chỉ carbon
+
+CN-3.1
+
+Cấp phát tín chỉ carbon 
+
+CVA
+
+Duyệt yêu cầu và cấp tín chỉ carbon vào ví người sở hữu xe điện.
+
+CN-3.2
+
+Quản lý ví carbon
+
+EV Owner
+
+Theo dõi số dư, tín chỉ đã nhận và đã bán.
+
+CN-3.3
+
+Nhận chứng nhận tín chỉ carbon
+
+Buyer
+
+Nhận chứng nhận  cho tín chỉ đã mua để phục vụ báo cáo môi trường.
+
+CN-4: Giao dịch và thanh toán tín chỉ
+
+CN-4.1
+
+Niêm yết tín chỉ carbon
+
+EV Owner
+
+Đăng bán tín chỉ (giá cố định hoặc đấu giá).
+
+CN-4.2
+
+Tìm kiếm & mua tín chỉ
+
+Buyer
+
+Tìm kiếm lọc và mua tín chỉ carbon trực tiếp hoặc qua đấu giá.
+
+CN-4.3
+
+Quản lý giao dịch
+
+EV Owner, Buyer, Admin
+
+Theo dỏi, xác nhận, huỷ hoặc xử lý tranh chấp giao dịch.
+
+CN-4.4
+
+Thanh toán & rút tiền
+
+EV Owner, Buyer
+
+Hỗ trợ thanh toán trực tuyết và rút tiền sau khi giao dịch hoàn tất.
+
+CN-5: Hổ trợ và phân tích dữ liệu
+
+CN-5.1
+
+AI gợi ý giá tín chỉ 
+
+EV Owner
+
+Đề xuất giá bán tối ưu dựa trên dữ liệu thị trường và lịch sử giao dịch.
+
+CN-5.2
+
+Báo cáo cá nhân
+
+EV Owner
+
+Thống kê CO₂ giảm phát thải, doanh thu hoặc lịch sử mua tín chỉ.
+
+CN-5.3
+
+Báo cáo phát hành và tổng hợp
+
+CVA, Admin
+
+Xuất báo cáo tín chỉ đã cấp, tổng hợp doanh thu và lượng CO₂ giảm trên toàn nền tảng.
+
+CN-6: Quản trị hệ thống
+
+CN-6.1
+
+Quản lý người dùng 
+
+Admin
+
+Quản lý thông tin tài khoản của EV Owner, Buyer, CVA.
+
+
+
+CN-6.2
+
+Quản lý ví điện tử & dòng tiền 
+
+Admin
+
+Giám sát hoạt động nạp, rút và giao dịch thanh toán.
+
+
+
+CN-6.3
+
+Quản lý niêm yết tín chỉ
+
+Admin
+
+Kiểm tra, duyệt hoặc khoá các tín chỉ niêm yết không hợp lệ.
+
+2.4 Yêu cầu phi chức năng
+
+Hiệu năng: xử lý 1.000 giao dịch/phút
+
+Bảo mật: xác thực 2 lớp, mã hóa thông tin thanh toán
+
+Khả dụng: uptime ≥ 99%
+
+Giao diện: thân thiện, hỗ trợ dark mode
+
+2.5 Use Case Diagram & Context Diagram
+
+2.5.1 Use case CVA
+
+
+
+2.5.2 Use Case EV Owner
+
+                                                                     Use case - EV Owner
+
+2.5.3 Use case cho người dùng
+
+2.5.3.1 Use case giao dịch tín chỉ carbon :
+
+                                                       Use case giao dịch tín chỉ carbon
+
+2.5.3.2 : Use case activi giao dịch tín chỉ carbon 
+
+
+
+2.5.4 Use case cho Admin ( Quản Trị )
+
+2.5.4.1 Use-case tổng quan
+
+
+                                                           Use case - tổng quan  
+
+                               
+
+2.5.4.2 Use case Admin quản lý người dùng 
+
+                                     
+
+                       Use case -  quản lý người dùng
+
+2.5.4.3 Use case Admin Quản lý giao dịch 
+
+Use case - Quản lý giao dịch
+
+
+
+2.5.4.3 Use case Admin Quản ví & dòng tiền
+
+Use case Quản ví & dòng tiền
+
+      2.5.4.4 Use case Admin quản lí niêm yết
+
+   Use case - quản lí niêm yết
+
+
+
+      2.5.4.4 Use case Admin báo cáo 
+
+Use case  báo cáo
+
+
+
+CHƯƠNG 3: THIẾT KẾ HỆ THỐNG
+
+3.1 Kiến trúc tổng thể
+
+Ghi chú: 
+
+Sơ đồ kiến trúc 3 lớp (Frontend, backend, DB)
+
+Luồng xử lý tổng quát
+
+
+
+3.2 ERD & Database Design
+
+Ghi chú:
+
+ERD (Entity Relationship Diagram
+
+3.2.1 ERD
+
+ERD_CVA 
+
+Thực thể
+
+Chức năng chính
+
+ Thuộc tính tiêu biểu
+
+Quan hệ chính
+
+Verifier
+
+Lưu thông tin tổ chức/cá nhân kiểm toán carbon.
+
+verifier_id
+
+name
+
+organization
+
+email
+
+1 Verifier → n VerificationReport
+
+CarbonCreditRequest
+
+Quản lý yêu cầu phát hành tín chỉ carbon của EV Owner.
+
+request_id
+
+owner_id
+
+co2_reduced
+
+status
+
+1 Request ↔ 1 VerificationReport
+
+VerificationReport
+
+Lưu kết quả xác minh từ Verifier và liên kết đến yêu cầu.
+
+report_id
+
+verifier_id
+
+request_id
+
+result
+
+remarks
+
+Trung tâm liên kết với Verifier, Request, Credit, Log
+
+CarbonCredit
+
+Lưu thông tin tín chỉ carbon được phát hành sau khi duyệt.
+
+credit_id
+
+owner_id
+
+amount
+
+issue_date
+
+status
+
+1 Report ↔ 1 CarbonCredit
+
+VerificationReportLog
+
+Ghi nhật ký hành động trong quá trình xác minh.
+
+log_id
+
+report_id
+
+action
+
+timestamp
+
+n Log ← 1 VerificationReport
+
+3.2.2 Database Design
+
+Database Design_CVA
+
+BẢNG: VERIFIER
+
+Tên thuộc tính
+
+Kiểu dữ liệu
+
+Ràng buộc
+
+Mô tả
+
+verifier_id
+
+CHAR(36)
+
+PRIMARY KEY
+
+Mã định danh duy nhất của tổ chức kiểm toán (UUID).
+
+name
+
+VARCHAR(100)
+
+NOT NULL
+
+Tên người hoặc tổ chức kiểm toán.
+
+organization
+
+VARCHAR(100)
+
+NULL
+
+Tên tổ chức (nếu khác với tên cá nhân).
+
+email
+
+VARCHAR(100)
+
+UNIQUE, NOT NULL
+
+Email liên hệ duy nhất của tổ chức kiểm toán.
+
+BẢNG: CARBON_CREDIT_REQUEST
+
+Tên thuộc tính
+
+Kiểu dữ liệu
+
+Ràng buộc
+
+Mô tả
+
+request_id
+
+CHAR(36)
+
+PRIMARY KEY
+
+Mã yêu cầu phát hành tín chỉ carbon (UUID).
+
+owner_id
+
+CHAR(36)
+
+NOT NULL
+
+Mã chủ sở hữu xe điện gửi yêu cầu.
+
+co2_reduced
+
+FLOAT
+
+NOT NULL, CHECK (>=0)
+
+Lượng CO₂ đã giảm phát thải (kg hoặc tấn).
+
+submission_date
+
+DATE
+
+NOT NULL
+
+Ngày gửi yêu cầu phát hành tín chỉ.
+
+status
+
+ENUM('PENDING','APPROVED','REJECTED')
+
+DEFAULT 'PENDING'
+
+Trạng thái xử lý yêu cầu.
+
+BẢNG: VERIFICATION_REPORT
+
+Tên thuộc tính
+
+Kiểu dữ liệu
+
+Ràng buộc
+
+Mô tả
+
+report_id
+
+CHAR(36)
+
+PRIMARY KEY
+
+Mã báo cáo xác minh (UUID).
+
+request_id
+
+CHAR(36)
+
+UNIQUE, FK → carbon_credit_request(request_id)
+
+Liên kết đến yêu cầu phát hành.
+
+verifier_id
+
+CHAR(36)
+
+FK → verifier(verifier_id)
+
+Tổ chức kiểm toán chịu trách nhiệm xác minh.
+
+verification_date
+
+DATE
+
+NOT NULL
+
+Ngày hoàn tất quá trình xác minh.
+
+result
+
+ENUM('APPROVED','REJECTED')
+
+NOT NULL
+
+Kết quả xác minh.
+
+remarks
+
+TEXT
+
+NULL
+
+Ghi chú chi tiết của kiểm toán viên.
+
+BẢNG: CARBON_CREDIT
+
+Tên thuộc tính
+
+Kiểu dữ liệu
+
+Ràng buộc
+
+Mô tả
+
+credit_id
+
+CHAR(36)
+
+PRIMARY KEY
+
+Mã tín chỉ carbon (UUID).
+
+owner_id
+
+CHAR(36)
+
+NOT NULL
+
+Mã chủ sở hữu tín chỉ.
+
+amount
+
+FLOAT
+
+NOT NULL, CHECK (>0)
+
+Số lượng tín chỉ được phát hành.
+
+issue_date
+
+DATE
+
+NOT NULL
+
+Ngày phát hành tín chỉ.
+
+status
+
+ENUM('ACTIVE','EXPIRED')
+
+DEFAULT 'ACTIVE'
+
+Trạng thái hiện tại của tín chỉ.
+
+report_id
+
+CHAR(36)
+
+UNIQUE, FK → verification_report(report_id)
+
+Báo cáo xác minh làm cơ sở phát hành.
+
+BẢNG: VERIFICATION_REPORT_LOG
+
+Tên thuộc tính
+
+Kiểu dữ liệu
+
+Ràng buộc
+
+Mô tả
+
+log_id
+
+CHAR(36)
+
+PRIMARY KEY
+
+Mã bản ghi log (UUID).
+
+report_id
+
+CHAR(36)
+
+FK → verification_report(report_id)
+
+Mã báo cáo mà log này ghi nhận.
+
+action
+
+VARCHAR(100)
+
+NOT NULL
+
+Hành động được thực hiện (VD: approve, reject).
+
+timestamp
+
+DATETIME
+
+DEFAULT CURRENT_TIMESTAMP
+
+Thời điểm hành động được ghi lại.
+
+performed_by
+
+VARCHAR(100)
+
+NULL
+
+Người thực hiện hành động (verifier/admin).
+
+3.3 Thiết kế hướng đối tượng
+
+
+
+Tên lớp
+
+Thuộc tính chính
+
+Mô tả
+
+Ghi chú
+
+ 
+
+VerificationRequest
+
+requestId
+
+ownerId co2Reduced status
+
+Lớp biểu diễn yêu cầu phát hành tín chỉ carbon được gửi từ chủ xe EV.
+
+Liên kết với VerificationReport
+
+VerificationReport
+
+reportId
+
+verifierId
+
+result
+
+remarks
+
+Kết quả xác minh và thông tin người kiểm định.
+
+Gắn liền với CarbonCredit
+
+CarbonCredit
+
+creditId
+
+amount
+
+issueDate
+
+Thông tin tín chỉ carbon được phát hành.
+
+Ghi vào ví người dùng
+
+VerificationLog
+
+logId
+
+reportId
+
+action
+
+timestamp
+
+Lưu lại nhật ký các hành động xác minh.
+
+Dùng cho audit và traceability
+
+Verifier
+
+verifierId
+
+name
+
+organization
+
+email
+
+Đại diện cho tổ chức hoặc cá nhân có quyền xác minh dữ liệu phát thải và phê duyệt tín chỉ carbon.
+
+Một verifier có thể xác minh nhiều báo cáo.
+
+
+
+
+
+3.4 Thiết kế chức năng
+
+3.4.1
+
+Activity- Kiểm tra dữ liệu phát thải & hồ sơ tín chỉ
+
+
+
+3.4.2
+
+Activity-Duyệt hoặc từ chối yêu cầu phát hành tín chỉ carbon
+
+
+
+3.4.3
+
+Activity- Cấp tín chỉ và ghi vào ví carbon
+
+
+
+3.4.4
+
+                                               Activity - Đăng nhập và tính toán tín chỉ carbon
+
+3.4.5
+
+                                          Activity - Niêm yết carbon và kiểm tra tín chỉ trong ví carbon
+
+3.4.6
+
+                                                                  Activity - Quản lý giao dịch
+
+3.4.7
+
+                                                                 Activity - Thanh toán & tiền
+
+3.4.8
+
+                                                           Activity - Báo cáo cá nhân
+
+
+
+3.6 Flow màng hình
+
+Ghi chú:
+
+Flow màn hình (Screen Flow): sơ đồ các màn hình chính (EV Owner dashboard, Buyer marketplace, CVA verify panel, Admin console).
+
+
+
+CHƯƠNG 4: TRIỂN KHAI & ĐÁNH GIÁ
+
+4.1 Môi trường triển khai
+
+HTML, CSS, Javastrip, Nodejs
+
+4.2 Ảnh chụp giao diện & demo
+
+4.3 Đánh giá hệ thống
+
+Điểm mạnh
+
+Điểm yếu
+
+Hạn chế
+
+
+CHƯƠNG 5: KẾT LUẬN & HƯỚNG PHÁT TRIỂN
+
+5.1 Kết quả đạt được
+
+5.2 Ý nghĩa : 
+
+Giao dịch tín chỉ carbon không chỉ là một giải pháp hiệu quả để giảm thiểu tác động của biến đổi khí hậu mà còn mang ý nghĩa to lớn trong việc gắn kết các thành viên trong cộng đồng, từ doanh nghiệp, tổ chức đến cá nhân, hướng tới mục tiêu phát triển bền vững. Thông qua việc tham gia mua bán tín chỉ carbon, các bên không chỉ bù đắp lượng khí thải mà còn hỗ trợ các dự án xanh như trồng rừng, phát triển năng lượng tái tạo hay cải thiện công nghệ thân thiện với môi trường. Hoạt động này tạo ra một nền tảng hợp tác, thúc đẩy sự chia sẻ kiến thức và kinh nghiệm, từ đó khơi nguồn cảm hứng để phát triển và xây dựng nhiều đề tài sáng tạo hơn trong tương lai. Giao dịch tín chỉ carbon không chỉ là hành động vì môi trường mà còn là cầu nối để các thành viên cùng nhau học hỏi, đổi mới và kiến tạo một thế giới bền vững hơn.
+
+5.3 Hạn chế
+
+5.4 Hướng phát triển
+
+
+
+
+CHƯƠNG 1: MỞ ĐẦU
+
+1.1 Bối cảnh
+
+Trong bối cảnh biến đổi khí hậu ngày càng trở thành vấn đề cấp bách toàn cầu, các quốc gia đang cam kết mạnh mẽ để đạt mục tiêu phát thải ròng bằng không (Net-Zero), qua đó thúc đẩy sự chuyển dịch từ phương tiện sử dụng nhiên liệu hóa thạch sang phương tiện thân thiện với môi trường, đặc biệt là xe điện (EV). Việc sử dụng xe điện không chỉ góp phần giảm ô nhiễm không khí mà còn mang lại hiệu quả giảm phát thải khí CO₂ rõ rệt. Tuy nhiên, giá trị môi trường này hiện vẫn chưa được tối ưu hóa ở cấp độ cá nhân. Chủ sở hữu xe điện – những người trực tiếp tạo ra lợi ích môi trường – lại thiếu cơ chế để chuyển hóa lượng CO₂ giảm phát thải thành lợi ích tài chính cụ thể. Bên cạnh đó, quy trình truyền thống để đo lường, xác minh và phát hành tín chỉ carbon thường phức tạp, tốn kém và không phù hợp với các nguồn cung nhỏ lẻ như cá nhân.
+
+1.2 Vấn đề đặt ra
+
+Thiếu cơ chể kinh tê: Chủ sở hữu EV hiện chưa có cách để chuyển hoá lợi ịch môi trường (giảm CO₂) thành lợi ích tài chính cụ thể.
+
+Quy trình phức tạp: Đo lương, xác minh và phát hành tín chỉ carbon truyền thống tốn kém, phức tạp, không phù hợp cho các nguồn cung nhỏ lẻ.
+
+1.3 Giải pháp đề xuất
+
+Đồ án "Carbon Credit Marketplace for EV Owners – Nền tảng giao dịch tín chỉ carbon cho chủ sở hữu xe điện" được thực hiện nhằm phát triển một nền tảng số tập trung/phi tập trung cho phép các cá nhân sở hữu EV có thể dễ dàng thương mại hóa lượng CO₂ đã giảm phát thải. Hệ thống cung cấp giao diện và chức năng riêng biệt cho bốn nhóm người dùng chính: chủ sở hữu EV, người mua tín chỉ (doanh nghiệp), tổ chức kiểm toán carbon (CVA), và quản trị viên hệ thống.
+
+1.4 Cách thức hoạt động của hệ thống
+
+Nền tảng sẽ tự động thu thập và phân tích dữ liệu hành trình của xe điện, tính toán lượng CO₂ giảm phát thải, gửi tới tổ chức xác minh để được cấp tín chỉ carbon. Sau đó, tín chỉ được ghi nhận vào ví carbon của người dùng và có thể niêm yết để bán dưới dạng giá cố định hoặc đấu giá. Người mua tín chỉ có thể tìm kiếm, thanh toán và nhận chứng nhận tín chỉ phục vụ cho báo cáo trung hòa phát thải. Công nghệ hỗ trợ như AI được tích hợp nhằm gợi ý giá bán hợp lý dựa trên dữ liệu thị trường; trong khi blockchain hoặc cơ chế lưu vết sẽ đảm bảo minh bạch, chống gian lận và truy xuất giao dịch. Đồ án sử dụng các công nghệ hiện đại như React.js và Java Spring Boot để xây dựng giao diện người dùng và backend API, cùng với cơ sở dữ liệu quan hệ để quản lý dữ liệu người dùng, tín chỉ và giao dịch. Kết quả của đồ án là một hệ thống nền tảng có tính ứng dụng cao trong lĩnh vực tài chính xanh, góp phần thúc đẩy kinh tế tuần hoàn carbon, khuyến khích sử dụng xe điện và hỗ trợ các doanh nghiệp tuân thủ cam kết Net-Zero một cách linh hoạt và minh bạch.
+
+1.5 Cấu trúc báo cáo
+
+Ngoài các phần mở đầu, kết luận, danh mục tài liệu tham khảo và phụ lục, báo cáo được tổ chức thành bốn chương chính nhằm đảm bảo tính logic và khoa học trong quá trình trình bày.
+
+Chương 1: Chương đầu tiên này tập trung vào việc giới thiệu tổng quan về đề tài, trong đó làm rõ bối cảnh nghiên cứu cũng như lý do lựa chọn đề tài. Phần này đồng thời xác định các mục tiêu mà hệ thống cần đạt được, phạm vi nghiên cứu cụ thể, và cuối cùng là giới thiệu cấu trúc chi tiết của toàn bộ báo cáo. Qua đó, người đọc có thể nắm được định hướng tổng thể của đề tài ngay từ đầu.
+
+Chương 2: Chương này sẽ tập trung vào phân tích và thiết kế hệ thống. Trước hết, chương này tiến hành khảo sát các quy trình nghiệp vụ thực tế, từ đó phân tích và xác định những yêu cầu cả về chức năng lẫn phi chức năng mà hệ thống cần đáp ứng. Trên cơ sở các yêu cầu đó, nội dung tiếp theo trình bày quá trình thiết kế, bao gồm thiết kế kiến trúc tổng thể, thiết kế cơ sở dữ liệu thông qua sơ đồ thực thể – liên kết (ERD), cũng như thiết kế các trường hợp sử dụng (Use Case) nhằm mô tả cụ thể mối quan hệ giữa người dùng và hệ thống.
+
+Chương 3: Chương này trình bày quá trình cài đặt và triển khai hệ thống. Nội dung đi sâu vào việc mô tả các công nghệ, ngôn ngữ lập trình và công cụ được lựa chọn để phát triển ứng dụng. Đồng thời, chương này cung cấp minh họa về kết quả cài đặt các chức năng chính thông qua hình ảnh giao diện ứng dụng và giải thích chi tiết các luồng xử lý quan trọng, giúp người đọc hiểu rõ cách thức hệ thống vận hành trong thực tế.
+
+Chương 4: Chương này trình bày các ngôn ngữ có trong dự án như HTML ,CSS, …,vv Một số hình ảnh về giao diện của dự án và những video demo liên quan đến dự án , ngoài ra còn nêu những ưu và nhược điểm của dự án.
+
+Chương 5: Chương này sẽ trình bày hướng phát triển và đưa ra các kết luận liên quan đến dự án. Cụ thể như thành quả và ý nghĩa xây dưng và phát triển dự án,…
+
+CHƯƠNG 2: PHÂN TÍCH HỆ THỐNG
+
+2.1 Thực trạng & quy trình nghiệp vụ
+
+2.1.1 Thực trạng
+
+Hiện nay, việc triển khai các giải pháp giảm phát thải khí nhà kính đang là xu hướng tất yếu trên toàn cầu. Tại Việt Nam, các doanh nghiệp và cá nhân sở hữu xe điện (EV Owner) đang đóng góp tích cực vào mục tiêu giảm phát thải CO₂ thông qua việc sử dụng phương tiện thân thiện với môi trường. Tuy nhiên, quá trình ghi nhận, quy đổi và giao dịch tín chỉ carbon phát sinh từ việc sử dụng xe điện vẫn còn nhiều hạn chế:
+
+Thiếu nền tảng tập trung: Dữ liệu giảm phát thải của chủ xe điện chưa được thu thập, xác minh và quy đổi một cách thống nhất.
+
+Quy trình xác minh thủ công: Việc xác minh dữ liệu phát thải và phát hành tín chỉ carbon chủ yếu dựa trên báo cáo rời rạc, dễ sai lệch hoặc chậm trễ.
+
+Khó khăn trong giao dịch: Chủ sở hữu tín chỉ và người mua chưa có môi trường giao dịch minh bạch, an toàn và có thể thanh toán trực tuyến.
+
+Thiếu kết nối giữa các bên: EV Owner, tổ chức xác minh (CVA), và người mua tín chỉ (Buyer) hoạt động rời rạc, không có cơ chế kết nối trực tiếp.
+
+Chính vì vậy, cần xây dựng một nền tảng giao dịch tín chỉ carbon số hóa, cho phép kết nối dữ liệu, xác minh, quy đổi, giao dịch và thanh toán trực tuyến, giúp thúc đẩy thị trường carbon phát triển minh bạch, hiệu quả và bền vững.
+
+2.1.2 Quy trình nghiệp vụ hiện tại
+
+Dựa trên khảo sát và phân tích nhu cầu của các bên liên quan, quy trình nghiệp vụ của hệ thống Carbon Credit Marketplace for EV Owners được đề xuất gồm 5 giai đoạn chính, thể hiện mối quan hệ giữa EV Owner – CVA – Buyer – Admin như sau:
+
+Bước 1: Đăng ký và đăng nhập hệ thống
+
+Người dùng (EV Owner, Buyer, CVA, Admin) khởi tạo tài khoản và đăng nhập hệ thống.
+
+Hệ thống xác thực quyền truy cập và hiển thị giao diện chức năng phù hợp với từng vai trò.
+
+Bước 2: Ghi nhận và xác minh dữ liệu hành trình
+
+EV Owner kết nối xe điện hoặc tải lên dữ liệu hành trình (giả lập).
+
+Hệ thống tính toán lượng CO₂ giảm phát thải dựa trên quãng đường di chuyển và loại xe.
+
+Dữ liệu được gửi đến CVA (Carbon Verification & Audit) để kiểm tra và xác minh.
+
+Sau khi được duyệt, hệ thống phát hành tín chỉ carbon và ghi vào ví điện tử của EV Owner.
+
+Bước 3: Niêm yết và giao dịch tín chỉ
+
+EV Owner có thể niêm yết tín chỉ carbon để bán với giá cố định hoặc hình thức đấu giá.
+
+Buyer truy cập hệ thống để tìm kiếm, lọc và mua tín chỉ carbon theo nhu cầu.
+
+Khi giao dịch diễn ra, hệ thống ghi nhận, cập nhật ví carbon và thông báo kết quả cho các bên liên quan.
+
+Bước 4: Thanh toán và cấp chứng nhận
+
+Buyer thực hiện thanh toán trực tuyến qua ví điện tử hoặc ngân hàng.
+
+Sau khi giao dịch hoàn tất, hệ thống tự động phát hành chứng nhận tín chỉ carbon (Certificate) cho Buyer.
+
+EV Owner có thể rút tiền về tài khoản sau khi hoàn tất giao dịch.
+
+Bước 5: Báo cáo và quản trị
+
+EV Owner và Buyer có thể xem báo cáo thống kê cá nhân về CO₂ giảm phát thải, doanh thu và lịch sử giao dịch.
+
+CVA xuất báo cáo xác minh và cấp phát tín chỉ carbon định kỳ.
+
+Admin quản lý toàn bộ hệ thống, bao gồm người dùng, giao dịch, dòng tiền và báo cáo tổng hợp.
+
+2.1.3 Tóm tắt quy trình nghiệp vụ
+
+EV Owner → nhập dữ liệu hành trình → hệ thống tính CO₂ giảm phát thải.
+
+CVA → xác minh dữ liệu → phát hành tín chỉ carbon.
+
+EV Owner → niêm yết tín chỉ carbon → Buyer tìm kiếm và mua.
+
+Hệ thống → xử lý thanh toán → cấp chứng nhận tín chỉ.
+
+Admin → quản trị và tổng hợp báo cáo toàn hệ thống.
+
+2.2 Phân tích yêu cầu người dùng
+
+2.2.1 Chủ sở hữu xe điện (EV Owner)
+
+Kết nối và đồng bộ dữ liệu hành trình từ xe điện (hoặc file giả lập).
+
+Tính toán lượng CO₂ giảm phát thải → quy đổi sang tín chỉ carbon.
+
+Quản lý ví carbon (xem số dư, lịch sử).
+
+Niêm yết tín chỉ carbon để bán (giá cố định hoặc đấu giá).
+
+Quản lý giao dịch (theo dõi, hủy, hoàn tất).
+
+Thanh toán và rút tiền sau khi bán tín chỉ.
+
+Xem báo cáo cá nhân (CO₂ giảm, doanh thu).
+
+Nhận gợi ý giá bán từ AI dựa trên dữ liệu thị trường.
+
+2.2.2 Người mua tín chỉ carbon (Carbon Credit Buyer)
+
+Tìm kiếm và lọc tín chỉ carbon (theo giá, số lượng, khu vực, thời gian).
+
+Mua tín chỉ trực tiếp hoặc tham gia đấu giá.
+
+Thanh toán online (ví điện tử, ngân hàng, ...).
+
+Nhận chứng nhận tín chỉ (certificate).
+
+Quản lý lịch sử mua tín chỉ.
+
+2.2.3 Tổ chức kiểm toán & xác minh carbon (CVA)
+
+Kiểm tra dữ liệu phát thải và hồ sơ tín chỉ.
+
+Duyệt hoặc từ chối yêu cầu phát hành tín chỉ.
+
+Cấp tín chỉ carbon hợp lệ và ghi vào ví EV Owner.
+
+Xuất báo cáo phát hành tín chỉ carbon.
+
+2.2.4 Quản trị hệ thống (Admin)
+
+Quản lý người dùng (EV Owner, Buyer, CVA).
+
+Quản lý giao dịch (theo dõi, xác nhận, xử lý tranh chấp).
+
+Quản lý ví điện tử và dòng tiền.
+
+Quản lý niêm yết tín chỉ và các giao dịch liên quan.
+
+Tạo báo cáo tổng hợp giao dịch và hoạt động nền tảng.
+
+2.3 Yêu cầu chức năng
+
+Để đáp ứng các yêu cầu đã xác định từ người dùng, hệ thống Carbon Credit Marketplace for EV Owners được thiết kế với một tập hợp các chức năng rõ ràng và chặt chẽ. Các chức năng này được tổ chức và cấu trúc thành những module nghiệp vụ chính, tương ứng với quy trình vận hành cốt lõi của nền tảng giao dịch tín chỉ carbon, bao gồm:
+
+CN-1: Quản lý Người dùng & Phiên làm việc
+
+CN-1.1: Xác thực người dùng
+Hệ thống cho phép người dùng (EV Owner, Buyer, CVA, Admin) đăng ký và đăng nhập bằng thông tin cá nhân. Dựa trên vai trò, hệ thống cấp quyền truy cập tới các chức năng tương ứng.
+
+CN-1.2: Giao diện chính & điều hướng
+Cung cấp không gian làm việc tập trung với các menu điều hướng theo quyền hạn, giúp người dùng truy cập nhanh tới các module nghiệp vụ chính của hệ thống.
+
+CN-2: Quản lý Dữ liệu Hành trình & Phát thải
+
+CN-2.1: Kết nối và đồng bộ dữ liệu hành trình
+Hệ thống cho phép chủ xe điện (EV Owner) kết nối và đồng bộ dữ liệu di chuyển từ xe điện hoặc nhập dữ liệu từ tệp mô phỏng.
+
+CN-2.2: Tính toán CO₂ giảm phát thải và quy đổi tín chỉ
+Từ dữ liệu hành trình, hệ thống tự động tính lượng CO₂ giảm phát thải và quy đổi thành tín chỉ carbon tương ứng.
+
+CN-2.3: Kiểm tra và xác minh dữ liệu phát thải
+Tổ chức kiểm toán và xác minh (CVA) xem xét dữ liệu, xác nhận tính chính xác trước khi phát hành tín chỉ carbon cho EV Owner.
+
+CN-3: Quản lý Tín chỉ Carbon
+
+CN-3.1: Cấp phát tín chỉ carbon
+Sau khi dữ liệu được xác minh, CVA phát hành tín chỉ carbon và ghi nhận vào ví carbon của EV Owner.
+
+CN-3.2: Quản lý ví carbon
+EV Owner có thể theo dõi số dư, tín chỉ đã nhận hoặc đã bán trên nền tảng.
+
+CN-3.3: Nhận chứng nhận tín chỉ carbon
+Người mua (Buyer) nhận chứng nhận điện tử (certificate) cho tín chỉ đã mua, phục vụ công tác báo cáo giảm phát thải.
+
+CN-4: Giao dịch và Thanh toán Tín chỉ
+
+CN-4.1: Niêm yết tín chỉ carbon
+EV Owner có thể đăng bán tín chỉ theo giá cố định hoặc hình thức đấu giá.
+
+CN-4.2: Tìm kiếm và mua tín chỉ
+Buyer có thể tìm kiếm, lọc tín chỉ theo tiêu chí (giá, khu vực, số lượng) và mua trực tiếp hoặc tham gia đấu giá.
+
+CN-4.3: Quản lý giao dịch
+Hệ thống hỗ trợ EV Owner, Buyer và Admin theo dõi, xác nhận, hủy hoặc xử lý tranh chấp các giao dịch.
+
+CN-4.4: Thanh toán và rút tiền
+Hỗ trợ thanh toán online qua ví điện tử hoặc ngân hàng và cho phép EV Owner rút tiền sau khi bán tín chỉ thành công.
+
+CN-5: Phân tích Dữ liệu & Báo cáo
+
+CN-5.1: AI gợi ý giá tín chỉ
+Hệ thống sử dụng thuật toán AI để phân tích dữ liệu thị trường và đề xuất mức giá bán hợp lý cho EV Owner.
+
+CN-5.2: Báo cáo cá nhân
+Cung cấp thống kê cho EV Owner và Buyer về lượng CO₂ giảm phát thải, doanh thu, lịch sử mua bán.
+
+CN-5.3: Báo cáo tổng hợp & phát hành
+CVA và Admin có thể xuất báo cáo định kỳ về lượng tín chỉ phát hành, giao dịch, doanh thu và tổng lượng CO₂ giảm phát thải.
+
+CN-6: Quản trị Hệ thống
+
+CN-6.1: Quản lý người dùng
+Admin quản lý danh sách tài khoản EV Owner, Buyer và CVA, bao gồm việc cấp quyền, khóa hoặc xóa tài khoản.
+
+CN-6.2: Quản lý ví điện tử & dòng tiền
+Giám sát các giao dịch thanh toán, nạp và rút tiền nhằm đảm bảo tính minh bạch tài chính.
+
+CN-6.3: Quản lý niêm yết tín chỉ
+Admin kiểm tra, phê duyệt hoặc tạm ngừng các niêm yết tín chỉ không hợp lệ để đảm bảo tính tuân thủ.
+
+Nhóm chức năng
+
+Mã CN
+
+Tên chức năng
+
+Người dùng
+
+Mô tả ngắn gọn
+
+CN-1: Quản lý người dùng và phiên làm việc
+
+CN-1.1
+
+Đăng ký / Đăng nhận / Xác thực người dùng 
+
+EV Owner, Buyer, CVN, Admin
+
+Cho phép người đùng tạo tài khoản, đăng nhập và xác thực quyển truy cập theo vai trò.
+
+CN-1.2
+
+Giao diện chính & điều hướng
+
+EV Owner, Buyer, CVN, Admin
+
+Cung cấp không giang làm việc tập trung, hiển thị các menu chức năng tương ứng với quyền hạn.
+
+CN-2: Quẩn lý dữ liệu hành trình & phát triển
+
+CN-2.1
+
+Kết nối và đòng bộ dữ liệu hành trình
+
+EV Owner
+
+Kết nối với xe điện.
+
+CN-2.2
+
+Tính toán CO₂ giảm phát thải & Quy đổi tín chỉ
+
+EV Owner
+
+Tính lượng CO₂ tiết kiệm được và quy đổi sang tín chỉ carbon.
+
+CN-2.3
+
+Kiểm tra & xác minh dữ liệu phát thải
+
+CVA
+
+Xác minh tính chính xác của dữ liệu phát thải và yêu cầu phát hành tín chỉ.
+
+CN-3: Quản lý tín chỉ carbon
+
+CN-3.1
+
+Cấp phát tín chỉ carbon 
+
+CVA
+
+Duyệt yêu cầu và cấp tín chỉ carbon vào ví người sở hữu xe điện.
+
+CN-3.2
+
+Quản lý ví carbon
+
+EV Owner
+
+Theo dõi số dư, tín chỉ đã nhận và đã bán.
+
+CN-3.3
+
+Nhận chứng nhận tín chỉ carbon
+
+Buyer
+
+Nhận chứng nhận  cho tín chỉ đã mua để phục vụ báo cáo môi trường.
+
+CN-4: Giao dịch và thanh toán tín chỉ
+
+CN-4.1
+
+Niêm yết tín chỉ carbon
+
+EV Owner
+
+Đăng bán tín chỉ (giá cố định hoặc đấu giá).
+
+CN-4.2
+
+Tìm kiếm & mua tín chỉ
+
+Buyer
+
+Tìm kiếm lọc và mua tín chỉ carbon trực tiếp hoặc qua đấu giá.
+
+CN-4.3
+
+Quản lý giao dịch
+
+EV Owner, Buyer, Admin
+
+Theo dỏi, xác nhận, huỷ hoặc xử lý tranh chấp giao dịch.
+
+CN-4.4
+
+Thanh toán & rút tiền
+
+EV Owner, Buyer
+
+Hỗ trợ thanh toán trực tuyết và rút tiền sau khi giao dịch hoàn tất.
+
+CN-5: Hổ trợ và phân tích dữ liệu
+
+CN-5.1
+
+AI gợi ý giá tín chỉ 
+
+EV Owner
+
+Đề xuất giá bán tối ưu dựa trên dữ liệu thị trường và lịch sử giao dịch.
+
+CN-5.2
+
+Báo cáo cá nhân
+
+EV Owner
+
+Thống kê CO₂ giảm phát thải, doanh thu hoặc lịch sử mua tín chỉ.
+
+CN-5.3
+
+Báo cáo phát hành và tổng hợp
+
+CVA, Admin
+
+Xuất báo cáo tín chỉ đã cấp, tổng hợp doanh thu và lượng CO₂ giảm trên toàn nền tảng.
+
+CN-6: Quản trị hệ thống
+
+CN-6.1
+
+Quản lý người dùng 
+
+Admin
+
+Quản lý thông tin tài khoản của EV Owner, Buyer, CVA.
+
+
+
+CN-6.2
+
+Quản lý ví điện tử & dòng tiền 
+
+Admin
+
+Giám sát hoạt động nạp, rút và giao dịch thanh toán.
+
+
+
+CN-6.3
+
+Quản lý niêm yết tín chỉ
+
+Admin
+
+Kiểm tra, duyệt hoặc khoá các tín chỉ niêm yết không hợp lệ.
+
+                                
+## 🎯 System Overview
+
+**Project:** Carbon Credit Marketplace for EV Owners  
+**Architecture:** Microservices + Event-Driven  
+**Total Services:** 11 microservices  
+
+---
+
+## 📊 Service Inventory
+
+### **Core Services (7)**
+1. User Service
+2. Trip Service
+3. Verification Service (CVA)
+4. Credit Service
+5. Listing Service
+6. Transaction Service
+7. Wallet Service
+
+### **Supporting Services (4)**
+8. Payment Service
+9. Certificate Service
+10. Notification Service
+11. Admin Service
+
+---
+
+## 🏗️ Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          API GATEWAY                                │
+│         (Authentication, Rate Limiting, Routing)                    │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+        ┌───────────────────────┼───────────────────────────┐
+        │                       │                           │
+┌───────▼──────┐      ┌────────▼────────┐        ┌────────▼────────┐
+│ User Service │      │  Trip Service   │        │ Credit Service  │
+│   Port 3001  │      │   Port 3002     │        │   Port 3003     │
+└──────┬───────┘      └────────┬────────┘        └────────┬────────┘
+       │                       │                           │
+       │              ┌────────▼────────┐        ┌────────▼────────┐
+       │              │ Verification    │        │ Listing Service │
+       │              │  Service (CVA)  │        │   Port 3004     │
+       │              │   Port 3005     │        └────────┬────────┘
+       │              └────────┬────────┘                 │
+       │                       │                 ┌────────▼────────┐
+┌──────▼───────┐     ┌────────▼────────┐       │ Transaction     │
+│ Wallet       │     │ Payment Service │       │   Service       │
+│ Service      │     │   Port 3007     │       │   Port 3006     │
+│ Port 3008    │     └─────────────────┘       └────────┬────────┘
+└──────────────┘                                         │
+       │                                        ┌────────▼────────┐
+       │                                        │ Certificate     │
+       │                                        │   Service       │
+       │                                        │   Port 3009     │
+       │                                        └─────────────────┘
+       │              ┌─────────────────────────────────┐
+       └──────────────┤     Notification Service        │
+                      │         Port 3010               │
+                      └─────────────────────────────────┘
+                                   │
+                      ┌────────────▼────────────┐
+                      │    Admin Service        │
+                      │      Port 3000          │
+                      │  (Monitor & Control)    │
+                      └─────────────────────────┘
+```
+
+---
+
+## 📦 Service Details
+
+---
+
+### **1. User Service** 👤(Hoàng)
+**Port:** 3001  
+**Database:** user_service_db (MySQL)  
+**Status:** ✅ Implemented
+
+#### **Responsibilities:**
+- User registration & authentication (JWT)
+- Profile management (EV Owner, Buyer, CVA)
+- KYC verification (document upload & verification)
+- Role-based access control (RBAC)
+- Provide user data to other services (internal API)
+
+#### **Key Features:**
+- Multi-role support (EV Owner, Buyer, CVA)
+- JWT token authentication & refresh
+- KYC document management
+- User status management (Active, Pending, Suspended, Deleted)
+- Profile customization per user type
+
+#### **Database Tables:**
+```sql
+- users (id, email, password_hash, user_type, status, kyc_status)
+- user_profiles (user_id, full_name, phone, address, vehicle_info, company_info)
+- kyc_documents (user_id, document_type, file_url, status, verified_by)
+- user_sessions (user_id, refresh_token, expires_at)
+```
+
+#### **API Endpoints (15 endpoints):**
+**Authentication (5):**
+- POST   /api/auth/register
+- POST   /api/auth/login
+- POST   /api/auth/refresh
+- POST   /api/auth/logout
+- GET    /api/auth/me
+
+**Profile Management (3):**
+- GET    /api/users/profile
+- PUT    /api/users/profile
+- GET    /api/users/:id
+
+**KYC (4):**
+- POST   /api/kyc/upload
+- GET    /api/kyc/status
+- GET    /api/kyc/documents
+- DELETE /api/kyc/documents/:id
+
+**Internal API (3):**
+- GET    /internal/users/:id
+- GET    /internal/users/email/:email
+- POST   /internal/users/validate
+
+#### **Events Published:**
+- UserRegistered
+- KycApproved
+- KycRejected
+- UserSuspended
+
+#### **Events Consumed:**
+- None (Foundation service)
+
+---
+
+### **2. Trip Service** 🚗(Hiếu)
+**Port:** 3002  
+**Database:** trip_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Upload trip data from EV (CSV/JSON/API)
+- Calculate CO2 reduction based on distance & vehicle type
+- Store trip history
+- Provide trip analytics
+- Send trip data to Verification Service
+
+#### **Key Features:**
+- Support multiple data upload formats (CSV, JSON, API integration)
+- CO2 calculation engine (distance × emission factor)
+- Trip aggregation & analytics
+- Real-time data validation
+- Historical trip tracking
+
+#### **Database Tables:**
+```sql
+- trips (id, user_id, vehicle_id, start_time, end_time, distance_km, co2_reduced)
+- trip_raw_data (trip_id, gps_coordinates, speed_data, battery_usage)
+- emission_factors (vehicle_type, co2_per_km_saved)
+- trip_summaries (user_id, period, total_distance, total_co2_reduced)
+```
+
+#### **API Endpoints (12 endpoints):**
+**Trip Management (8):**
+- POST   /api/trips/upload              # Upload trip data (CSV/JSON)
+- POST   /api/trips/upload/batch        # Batch upload
+- GET    /api/trips                     # List my trips
+- GET    /api/trips/:id                 # Trip details
+- DELETE /api/trips/:id                 # Delete trip
+- POST   /api/trips/:id/calculate       # Recalculate CO2
+- POST   /api/trips/:id/submit-verification # Submit to CVA
+- GET    /api/trips/:id/status          # Verification status
+
+**Analytics (4):**
+- GET    /api/trips/summary             # Total stats (distance, CO2)
+- GET    /api/trips/summary/monthly     # Monthly summary
+- GET    /api/trips/chart/co2-trend     # CO2 trend chart
+- GET    /api/trips/chart/distance      # Distance chart
+
+#### **Events Published:**
+- TripUploaded
+- TripCalculated
+- TripSubmittedForVerification
+
+#### **Events Consumed:**
+- TripVerified (from Verification Service)
+- TripRejected (from Verification Service)
+
+#### **Business Logic:**
+```typescript
+// CO2 Calculation Formula
+CO2_Saved = Distance_KM × (ICE_Emission_Factor - EV_Emission_Factor)
+
+// Example:
+// Distance: 100 km
+// ICE car: 150g CO2/km
+// EV: 50g CO2/km (considering electricity source)
+// CO2_Saved = 100 × (150 - 50) = 10,000g = 10kg CO2
+```
+
+---
+
+### **3. Verification Service (CVA)** ✅
+**Port:** 3005  
+**Database:** verification_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Receive trip verification requests
+- CVA reviews trip data
+- Approve/reject credit issuance
+- Generate verification reports
+- Maintain verification audit trail
+
+#### **Key Features:**
+- Multi-step verification workflow
+- Automated validation rules
+- Manual review by CVA officers
+- Batch verification support
+- Verification history & audit logs
+
+#### **Database Tables:**
+```sql
+- verification_requests (id, trip_id, user_id, status, cva_id, submitted_at)
+- verification_rules (rule_name, rule_logic, threshold)
+- verification_actions (request_id, cva_id, action, reason, timestamp)
+- verification_reports (request_id, report_url, generated_at)
+```
+
+#### **API Endpoints (10 endpoints):**
+**CVA Workflow (6):**
+- GET    /api/cva/requests              # Pending verification requests
+- GET    /api/cva/requests/:id          # Request details
+- POST   /api/cva/requests/:id/approve  # Approve & issue credits
+- POST   /api/cva/requests/:id/reject   # Reject with reason
+- POST   /api/cva/requests/:id/request-info # Request more info
+- GET    /api/cva/requests/assigned     # Requests assigned to me
+
+**Reports (4):**
+- GET    /api/cva/reports               # My verification reports
+- GET    /api/cva/reports/:id/download  # Download report PDF
+- POST   /api/cva/reports/generate      # Generate summary report
+- GET    /api/cva/stats                 # CVA performance stats
+
+#### **Events Published:**
+- TripVerified (approved)
+- TripRejected
+- CreditIssuanceApproved
+- VerificationReportGenerated
+
+#### **Events Consumed:**
+- TripSubmittedForVerification (from Trip Service)
+
+---
+
+### **4. Credit Service** 💳(Hiếu)
+**Port:** 3003  
+**Database:** credit_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Issue carbon credits after verification
+- Manage credit wallet (balance tracking)
+- Lock/unlock credits for listings
+- Transfer credits on sale
+- Maintain credit ownership history
+
+#### **Key Features:**
+- Credit issuance workflow
+- Wallet balance management
+- Credit locking mechanism (for active listings)
+- Transfer tracking & audit
+- Credit expiration handling
+
+#### **Database Tables:**
+```sql
+- carbon_credits (id, user_id, amount, issued_at, expires_at, status, trip_id)
+- credit_wallets (user_id, available_balance, locked_balance, total_earned)
+- credit_transfers (id, from_user, to_user, amount, transaction_id, timestamp)
+- credit_history (wallet_id, action_type, amount, balance_after, timestamp)
+```
+
+#### **API Endpoints (12 endpoints):**
+**Wallet (5):**
+- GET    /api/credits/wallet            # My wallet balance
+- GET    /api/credits/wallet/history    # Transaction history
+- GET    /api/credits/wallet/summary    # Summary stats
+- GET    /api/credits/available          # Available for sale
+- GET    /api/credits/locked            # Locked in listings
+
+**Credits (5):**
+- GET    /api/credits                   # List my credits
+- GET    /api/credits/:id               # Credit details
+- POST   /api/credits/:id/retire        # Retire credit (for own use)
+- GET    /api/credits/expiring          # Soon-to-expire credits
+- POST   /api/credits/extend            # Extend credit validity
+
+**Internal API (2):**
+- POST   /internal/credits/issue        # Issue credits (called by CVA)
+- POST   /internal/credits/transfer     # Transfer (called by Transaction)
+
+#### **Events Published:**
+- CreditIssued
+- CreditLocked
+- CreditUnlocked
+- CreditTransferred
+- CreditRetired
+
+#### **Events Consumed:**
+- TripVerified (from Verification Service)
+- TransactionCompleted (from Transaction Service)
+- ListingCancelled (from Listing Service)
+
+---
+
+### **5. Listing Service** 📋(Hiếu)
+**Port:** 3004  
+**Database:** listing_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Create listings (fixed price / auction)
+- Search & filter marketplace
+- Manage listing lifecycle
+- Handle bidding for auctions
+- AI price suggestion
+
+#### **Key Features:**
+- Dual listing types (fixed price, auction)
+- Advanced search & filters
+- Real-time bid updates
+- Listing expiration management
+- AI-powered price recommendations
+
+#### **Database Tables:**
+```sql
+- listings (id, seller_id, credit_amount, price, listing_type, status, expires_at)
+- auctions (listing_id, start_time, end_time, current_bid, winner_id)
+- bids (auction_id, bidder_id, bid_amount, timestamp)
+- listing_views (listing_id, viewer_id, viewed_at)
+- price_suggestions (listing_id, suggested_price, algorithm_version)
+```
+
+#### **API Endpoints (18 endpoints):**
+**Listing Management (8):**
+- POST   /api/listings                  # Create listing
+- GET    /api/listings                  # Search listings (with filters)
+- GET    /api/listings/:id              # Listing details
+- PUT    /api/listings/:id              # Update listing
+- DELETE /api/listings/:id              # Cancel listing
+- POST   /api/listings/:id/renew        # Extend listing
+- GET    /api/listings/my-listings      # My active listings
+- GET    /api/listings/my-history       # My listing history
+
+**Fixed Price (2):**
+- POST   /api/listings/:id/buy          # Buy immediately
+- POST   /api/listings/:id/reserve      # Reserve (hold for 10 min)
+
+**Auction (5):**
+- POST   /api/listings/:id/bid          # Place bid
+- GET    /api/listings/:id/bids         # Bid history
+- GET    /api/listings/:id/highest-bid  # Current highest bid
+- GET    /api/listings/auctions/ending-soon # Ending soon
+- POST   /api/listings/:id/buy-now      # Buy now (if set)
+
+**AI Features (3):**
+- POST   /api/listings/price-suggestion # Get AI price suggestion
+- GET    /api/listings/similar          # Find similar listings
+- GET    /api/listings/trending         # Trending listings
+
+#### **Events Published:**
+- ListingCreated
+- ListingUpdated
+- ListingCancelled
+- ListingSold
+- BidPlaced
+- AuctionEnded
+
+#### **Events Consumed:**
+- CreditIssued (from Credit Service)
+- TransactionCompleted (from Transaction Service)
+
+---
+
+### **6. Transaction Service** 💰
+**Port:** 3006  
+**Database:** transaction_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Process buy/sell orders
+- Match buyers & sellers
+- Handle order lifecycle
+- Manage disputes
+- Settlement coordination
+
+#### **Key Features:**
+- Order matching engine
+- Transaction state machine
+- Dispute resolution workflow
+- Escrow mechanism
+- Automatic settlement
+
+#### **Database Tables:**
+```sql
+- transactions (id, buyer_id, seller_id, listing_id, amount, price, status)
+- orders (id, transaction_id, order_type, status, created_at)
+- escrow (transaction_id, amount_held, released_at)
+- disputes (transaction_id, raised_by, reason, status, resolved_at)
+- settlements (transaction_id, seller_amount, platform_fee, settled_at)
+```
+
+#### **API Endpoints (15 endpoints):**
+**Transaction (8):**
+- POST   /api/transactions              # Create transaction
+- GET    /api/transactions              # List my transactions
+- GET    /api/transactions/:id          # Transaction details
+- POST   /api/transactions/:id/confirm  # Confirm receipt
+- POST   /api/transactions/:id/cancel   # Cancel (if allowed)
+- GET    /api/transactions/buying       # My purchases
+- GET    /api/transactions/selling      # My sales
+- GET    /api/transactions/completed    # Completed transactions
+
+**Dispute (4):**
+- POST   /api/transactions/:id/dispute  # Raise dispute
+- GET    /api/transactions/:id/dispute  # Dispute details
+- POST   /api/transactions/:id/dispute/resolve # Resolve (admin)
+- GET    /api/transactions/disputes     # My disputes
+
+**Internal API (3):**
+- POST   /internal/transactions/settle  # Settle transaction
+- POST   /internal/transactions/refund  # Refund transaction
+- GET    /internal/transactions/:id/status # Check status
+
+#### **Events Published:**
+- TransactionCreated
+- TransactionPending
+- TransactionCompleted
+- TransactionCancelled
+- TransactionDisputed
+- DisputeResolved
+
+#### **Events Consumed:**
+- ListingPurchased (from Listing Service)
+- PaymentCompleted (from Payment Service)
+- PaymentFailed (from Payment Service)
+
+---
+
+### **7. Wallet Service** 💵(Chung)
+**Port:** 3008  
+**Database:** wallet_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Manage fiat money wallet (VND/USD)
+- Deposit & withdrawal
+- Balance tracking
+- Reserve funds for purchases
+- Settlement after transactions
+
+#### **Key Features:**
+- Multi-currency support
+- Fund reservation (escrow)
+- Withdrawal limits
+- Transaction history
+- Balance notifications
+
+#### **Database Tables:**
+```sql
+- wallets (user_id, balance, currency, status)
+- wallet_transactions (id, wallet_id, type, amount, status, ref_id, timestamp)
+- reserves (transaction_id, wallet_id, amount, expires_at)
+- withdrawals (id, wallet_id, amount, bank_account, status, processed_at)
+```
+
+#### **API Endpoints (10 endpoints):**
+**Wallet (6):**
+- GET    /api/wallets                   # Get wallet balance
+- POST   /api/wallets/deposit           # Deposit money
+- POST   /api/wallets/withdraw          # Withdraw money
+- GET    /api/wallets/transactions      # Transaction history
+- GET    /api/wallets/summary           # Summary stats
+- GET    /api/wallets/limits            # Withdrawal limits
+
+**Internal API (4):**
+- POST   /internal/wallets/reserve      # Reserve funds
+- POST   /internal/wallets/release      # Release reservation
+- POST   /internal/wallets/settle       # Settle transaction
+- POST   /internal/wallets/refund       # Refund payment
+
+#### **Events Published:**
+- WalletDeposited
+- WalletWithdrawn
+- FundsReserved
+- FundsReleased
+- FundsSettled
+
+#### **Events Consumed:**
+- TransactionCreated (from Transaction Service)
+- TransactionCompleted (from Transaction Service)
+- TransactionCancelled (from Transaction Service)
+
+---
+
+### **8. Payment Service** 💳(Hoàng)
+**Port:** 3007  
+**Database:** payment_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Integrate with payment gateways (VNPay, MoMo, Banking)
+- Handle payment callbacks
+- Process refunds
+- Payment status tracking
+
+#### **Key Features:**
+- Multi-gateway support
+- Payment retry mechanism
+- Webhook handling
+- Refund processing
+- Payment reconciliation
+
+#### **Database Tables:**
+```sql
+- payments (id, transaction_id, amount, gateway, status, payment_url)
+- payment_callbacks (payment_id, callback_data, received_at)
+- refunds (payment_id, amount, reason, status, processed_at)
+- gateway_configs (gateway_name, api_key, webhook_url, enabled)
+```
+
+#### **API Endpoints (8 endpoints):**
+- POST   /api/payments/initiate         # Start payment
+- GET    /api/payments/:id/status       # Check status
+- POST   /api/payments/callback         # Gateway callback
+- POST   /api/payments/:id/refund       # Process refund
+- GET    /api/payments/history          # My payment history
+- POST   /api/payments/:id/retry        # Retry failed payment
+- GET    /api/payments/methods          # Available payment methods
+- POST   /api/payments/verify           # Verify payment signature
+
+#### **Events Published:**
+- PaymentInitiated
+- PaymentCompleted
+- PaymentFailed
+- RefundProcessed
+
+#### **Events Consumed:**
+- TransactionCreated (from Transaction Service)
+- RefundRequested (from Transaction Service)
+
+---
+
+### **9. Certificate Service** 📜
+**Port:** 3009  
+**Database:** certificate_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Generate carbon credit certificates (PDF)
+- Digital signature & verification
+- Certificate registry
+- Certificate download & sharing
+
+#### **Key Features:**
+- PDF generation with QR code
+- Blockchain verification (optional)
+- Certificate templates
+- Bulk certificate generation
+- Certificate expiration
+
+#### **Database Tables:**
+```sql
+- certificates (id, transaction_id, buyer_id, credit_amount, cert_hash, issue_date)
+- certificate_templates (id, template_name, pdf_template_path)
+- certificate_verifications (cert_id, verified_by, verified_at)
+- certificate_downloads (cert_id, downloaded_by, downloaded_at)
+```
+
+#### **API Endpoints (8 endpoints):**
+- POST   /api/certificates/generate     # Generate certificate
+- GET    /api/certificates              # List my certificates
+- GET    /api/certificates/:id          # Certificate details
+- GET    /api/certificates/:id/download # Download PDF
+- POST   /api/certificates/:id/verify   # Verify authenticity
+- POST   /api/certificates/:id/share    # Share via email
+- GET    /api/certificates/public/:hash # Public verification
+- POST   /api/certificates/batch        # Batch generate
+
+#### **Events Published:**
+- CertificateGenerated
+- CertificateVerified
+- CertificateDownloaded
+
+#### **Events Consumed:**
+- TransactionCompleted (from Transaction Service)
+
+---
+
+### **10. Notification Service** 🔔
+**Port:** 3010  
+**Database:** notification_service_db (MySQL)  
+**Status:** 🔨 To Be Implemented
+
+#### **Responsibilities:**
+- Send email notifications
+- Send SMS notifications
+- Push notifications
+- In-app notifications
+- Notification preferences
+
+#### **Key Features:**
+- Multi-channel delivery (Email, SMS, Push)
+- Template management
+- Notification scheduling
+- Delivery tracking
+- User preferences
+
+#### **Database Tables:**
+```sql
+- notifications (id, user_id, type, channel, message, status, sent_at)
+- notification_templates (id, event_type, template_content, channel)
+- notification_preferences (user_id, event_type, channels_enabled)
+- notification_logs (notification_id, status, error_message, timestamp)
+```
+
+#### **API Endpoints (10 endpoints):**
+- GET    /api/notifications             # List my notifications
+- GET    /api/notifications/unread      # Unread notifications
+- PUT    /api/notifications/:id/read    # Mark as read
+- DELETE /api/notifications/:id         # Delete notification
+- POST   /api/notifications/read-all    # Mark all as read
+- GET    /api/notifications/preferences # Get preferences
+- PUT    /api/notifications/preferences # Update preferences
+- POST   /api/notifications/test        # Send test notification
+- GET    /api/notifications/history     # Notification history
+- POST   /internal/notifications/send   # Send notification (internal)
+
+#### **Events Published:**
+- NotificationSent
+- NotificationFailed
+
+#### **Events Consumed:**
+- ALL events from all services (notification triggers)
+
+---
+
+### **11. Admin Service** 🛡️(Hoàng)
+**Port:** 3000  
+**Database:** admin_service_db (MySQL)  
+**Status:** ✅ Implemented
+
+#### **Responsibilities:**
+- Monitor all services (cached data)
+- Manage users (lock, suspend, verify KYC)
+- Manage transactions (confirm, cancel, refund, dispute)
+- Manage wallets (reverse, adjust balance)
+- Manage listings (suspend, activate, flag)
+- Override requests (approval workflow)
+- Reports & analytics (dashboard, metrics)
+- Metric aggregation (daily statistics)
+
+#### **Key Features:**
+- Real-time dashboard
+- User management (all types)
+- Transaction oversight
+- Wallet administration
+- Listing moderation
+- Override approval workflow
+- Comprehensive reporting
+- Audit logging
+
+#### **Database Tables:**
+```sql
+- admin_users (id, username, email, password_hash, is_super_admin)
+- audit_logs (admin_user_id, action_name, resource_type, resource_id)
+- managed_users (cache from User Service)
+- managed_transactions (cache from Transaction Service)
+- managed_wallet_transactions (cache from Wallet Service)
+- managed_listings (cache from Listing Service)
+- metric_daily (daily aggregated metrics)
+- override_requests (id, request_type, target_id, status, approver_id)
+```
+
+#### **API Endpoints (67 endpoints):**
+**Auth (10 endpoints):**
+- POST   /api/admin/auth/login
+- POST   /api/admin/auth/logout
+- POST   /api/admin/auth/refresh
+- GET    /api/admin/auth/me
+- GET    /api/admin/auth/admins
+- POST   /api/admin/auth/admins
+- GET    /api/admin/auth/admins/:id
+- PUT    /api/admin/auth/admins/:id
+- POST   /api/admin/auth/admins/:id/lock
+- POST   /api/admin/auth/admins/:id/unlock
+
+**Audit Logs (2):**
+- GET    /api/admin/audit-logs
+- GET    /api/admin/audit-logs/:id
+
+**Users (9):**
+- GET    /api/admin/users
+- POST   /api/admin/users
+- GET    /api/admin/users/:id
+- PUT    /api/admin/users/:id
+- DELETE /api/admin/users/:id
+- POST   /api/admin/users/:id/lock
+- POST   /api/admin/users/:id/unlock
+- POST   /api/admin/users/:id/suspend
+- GET    /api/admin/users/:id/action-history
+
+**Transactions (7):**
+- GET    /api/admin/transactions
+- GET    /api/admin/transactions/:id
+- POST   /api/admin/transactions/:id/confirm
+- POST   /api/admin/transactions/:id/cancel
+- POST   /api/admin/transactions/:id/refund
+- POST   /api/admin/transactions/:id/resolve-dispute
+- GET    /api/admin/transactions/:id/action-history
+
+**Wallet Transactions (5):**
+- GET    /api/admin/wallet-transactions
+- GET    /api/admin/wallet-transactions/:id
+- POST   /api/admin/wallet-transactions/:id/reverse
+- POST   /api/admin/wallet-transactions/:id/confirm
+- POST   /api/admin/wallet-transactions/adjust-balance
+
+**Listings (6):**
+- GET    /api/admin/listings
+- GET    /api/admin/listings/:id
+- POST   /api/admin/listings/:id/suspend
+- POST   /api/admin/listings/:id/activate
+- POST   /api/admin/listings/:id/flag
+- POST   /api/admin/listings/:id/unflag
+
+**Reports (6):**
+- GET    /api/admin/reports/dashboard
+- GET    /api/admin/reports/transaction-trend
+- GET    /api/admin/reports/user-growth
+- GET    /api/admin/reports/co2-impact
+- GET    /api/admin/reports/revenue
+- GET    /api/admin/reports/admin-actions
+
+**Override Requests (5):**
+- POST   /api/admin/override-requests
+- GET    /api/admin/override-requests
+- POST   /api/admin/override-requests/:id/approve
+- POST   /api/admin/override-requests/:id/reject
+- GET    /api/admin/override-requests/:id
+
+**Health (3):**
+- GET    /health
+- GET    /health/live
+- GET    /health/ready
+
+#### **Events Published:**
+- AdminActionPerformed
+- OverrideApproved
+- OverrideRejected
+
+#### **Events Consumed:**
+- ALL events from all services (for monitoring & cache updates) ## 🎯 System Overview
+
+**Project:** Carbon Credit Marketplace for EV Owners  
+**Architecture:** Microservices + Event-Driven  
+**Total Services:** 11 microservices  
+
+---
+
+
+1.1 Bối cảnh
+
+Trong bối cảnh biến đổi khí hậu ngày càng trở thành vấn đề cấp bách toàn cầu, các quốc gia đang cam kết mạnh mẽ để đạt mục tiêu phát thải ròng bằng không (Net-Zero), qua đó thúc đẩy sự chuyển dịch từ phương tiện sử dụng nhiên liệu hóa thạch sang phương tiện thân thiện với môi trường, đặc biệt là xe điện (EV). Việc sử dụng xe điện không chỉ góp phần giảm ô nhiễm không khí mà còn mang lại hiệu quả giảm phát thải khí CO₂ rõ rệt. Tuy nhiên, giá trị môi trường này hiện vẫn chưa được tối ưu hóa ở cấp độ cá nhân. Chủ sở hữu xe điện – những người trực tiếp tạo ra lợi ích môi trường – lại thiếu cơ chế để chuyển hóa lượng CO₂ giảm phát thải thành lợi ích tài chính cụ thể. Bên cạnh đó, quy trình truyền thống để đo lường, xác minh và phát hành tín chỉ carbon thường phức tạp, tốn kém và không phù hợp với các nguồn cung nhỏ lẻ như cá nhân.
+
+1.2 Vấn đề đặt ra
+
+Thiếu cơ chể kinh tê: Chủ sở hữu EV hiện chưa có cách để chuyển hoá lợi ịch môi trường (giảm CO₂) thành lợi ích tài chính cụ thể.
+
+Quy trình phức tạp: Đo lương, xác minh và phát hành tín chỉ carbon truyền thống tốn kém, phức tạp, không phù hợp cho các nguồn cung nhỏ lẻ.
+
+1.3 Giải pháp đề xuất
+
+Đồ án "Carbon Credit Marketplace for EV Owners – Nền tảng giao dịch tín chỉ carbon cho chủ sở hữu xe điện" được thực hiện nhằm phát triển một nền tảng số tập trung/phi tập trung cho phép các cá nhân sở hữu EV có thể dễ dàng thương mại hóa lượng CO₂ đã giảm phát thải. Hệ thống cung cấp giao diện và chức năng riêng biệt cho bốn nhóm người dùng chính: chủ sở hữu EV, người mua tín chỉ (doanh nghiệp), tổ chức kiểm toán carbon (CVA), và quản trị viên hệ thống.
+
+1.4 Cách thức hoạt động của hệ thống
+
+Nền tảng sẽ tự động thu thập và phân tích dữ liệu hành trình của xe điện, tính toán lượng CO₂ giảm phát thải, gửi tới tổ chức xác minh để được cấp tín chỉ carbon. Sau đó, tín chỉ được ghi nhận vào ví carbon của người dùng và có thể niêm yết để bán dưới dạng giá cố định hoặc đấu giá. Người mua tín chỉ có thể tìm kiếm, thanh toán và nhận chứng nhận tín chỉ phục vụ cho báo cáo trung hòa phát thải. Công nghệ hỗ trợ như AI được tích hợp nhằm gợi ý giá bán hợp lý dựa trên dữ liệu thị trường; trong khi blockchain hoặc cơ chế lưu vết sẽ đảm bảo minh bạch, chống gian lận và truy xuất giao dịch. Đồ án sử dụng các công nghệ hiện đại như React.js và Java Spring Boot để xây dựng giao diện người dùng và backend API, cùng với cơ sở dữ liệu quan hệ để quản lý dữ liệu người dùng, tín chỉ và giao dịch. Kết quả của đồ án là một hệ thống nền tảng có tính ứng dụng cao trong lĩnh vực tài chính xanh, góp phần thúc đẩy kinh tế tuần hoàn carbon, khuyến khích sử dụng xe điện và hỗ trợ các doanh nghiệp tuân thủ cam kết Net-Zero một cách linh hoạt và minh bạch.
+
+1.5 Cấu trúc báo cáo
+
+Ngoài các phần mở đầu, kết luận, danh mục tài liệu tham khảo và phụ lục, báo cáo được tổ chức thành bốn chương chính nhằm đảm bảo tính logic và khoa học trong quá trình trình bày.
+
+Chương 1: Chương đầu tiên này tập trung vào việc giới thiệu tổng quan về đề tài, trong đó làm rõ bối cảnh nghiên cứu cũng như lý do lựa chọn đề tài. Phần này đồng thời xác định các mục tiêu mà hệ thống cần đạt được, phạm vi nghiên cứu cụ thể, và cuối cùng là giới thiệu cấu trúc chi tiết của toàn bộ báo cáo. Qua đó, người đọc có thể nắm được định hướng tổng thể của đề tài ngay từ đầu.
+
+Chương 2: Chương này sẽ tập trung vào phân tích và thiết kế hệ thống. Trước hết, chương này tiến hành khảo sát các quy trình nghiệp vụ thực tế, từ đó phân tích và xác định những yêu cầu cả về chức năng lẫn phi chức năng mà hệ thống cần đáp ứng. Trên cơ sở các yêu cầu đó, nội dung tiếp theo trình bày quá trình thiết kế, bao gồm thiết kế kiến trúc tổng thể, thiết kế cơ sở dữ liệu thông qua sơ đồ thực thể – liên kết (ERD), cũng như thiết kế các trường hợp sử dụng (Use Case) nhằm mô tả cụ thể mối quan hệ giữa người dùng và hệ thống.
+
+Chương 3: Chương này trình bày quá trình cài đặt và triển khai hệ thống. Nội dung đi sâu vào việc mô tả các công nghệ, ngôn ngữ lập trình và công cụ được lựa chọn để phát triển ứng dụng. Đồng thời, chương này cung cấp minh họa về kết quả cài đặt các chức năng chính thông qua hình ảnh giao diện ứng dụng và giải thích chi tiết các luồng xử lý quan trọng, giúp người đọc hiểu rõ cách thức hệ thống vận hành trong thực tế.
+
+Chương 4: Chương này trình bày các ngôn ngữ có trong dự án như HTML ,CSS, …,vv Một số hình ảnh về giao diện của dự án và những video demo liên quan đến dự án , ngoài ra còn nêu những ưu và nhược điểm của dự án.
+
+Chương 5: Chương này sẽ trình bày hướng phát triển và đưa ra các kết luận liên quan đến dự án. Cụ thể như thành quả và ý nghĩa xây dưng và phát triển dự án,…
+
+CHƯƠNG 2: PHÂN TÍCH HỆ THỐNG
+
+2.1 Thực trạng & quy trình nghiệp vụ
+
+2.1.1 Thực trạng
+
+Hiện nay, việc triển khai các giải pháp giảm phát thải khí nhà kính đang là xu hướng tất yếu trên toàn cầu. Tại Việt Nam, các doanh nghiệp và cá nhân sở hữu xe điện (EV Owner) đang đóng góp tích cực vào mục tiêu giảm phát thải CO₂ thông qua việc sử dụng phương tiện thân thiện với môi trường. Tuy nhiên, quá trình ghi nhận, quy đổi và giao dịch tín chỉ carbon phát sinh từ việc sử dụng xe điện vẫn còn nhiều hạn chế:
+
+Thiếu nền tảng tập trung: Dữ liệu giảm phát thải của chủ xe điện chưa được thu thập, xác minh và quy đổi một cách thống nhất.
+
+Quy trình xác minh thủ công: Việc xác minh dữ liệu phát thải và phát hành tín chỉ carbon chủ yếu dựa trên báo cáo rời rạc, dễ sai lệch hoặc chậm trễ.
+
+Khó khăn trong giao dịch: Chủ sở hữu tín chỉ và người mua chưa có môi trường giao dịch minh bạch, an toàn và có thể thanh toán trực tuyến.
+
+Thiếu kết nối giữa các bên: EV Owner, tổ chức xác minh (CVA), và người mua tín chỉ (Buyer) hoạt động rời rạc, không có cơ chế kết nối trực tiếp.
+
+Chính vì vậy, cần xây dựng một nền tảng giao dịch tín chỉ carbon số hóa, cho phép kết nối dữ liệu, xác minh, quy đổi, giao dịch và thanh toán trực tuyến, giúp thúc đẩy thị trường carbon phát triển minh bạch, hiệu quả và bền vững.
+
+2.1.2 Quy trình nghiệp vụ hiện tại
+
+Dựa trên khảo sát và phân tích nhu cầu của các bên liên quan, quy trình nghiệp vụ của hệ thống Carbon Credit Marketplace for EV Owners được đề xuất gồm 5 giai đoạn chính, thể hiện mối quan hệ giữa EV Owner – CVA – Buyer – Admin như sau:
+
+Bước 1: Đăng ký và đăng nhập hệ thống
+
+Người dùng (EV Owner, Buyer, CVA, Admin) khởi tạo tài khoản và đăng nhập hệ thống.
+
+Hệ thống xác thực quyền truy cập và hiển thị giao diện chức năng phù hợp với từng vai trò.
+
+Bước 2: Ghi nhận và xác minh dữ liệu hành trình
+
+EV Owner kết nối xe điện hoặc tải lên dữ liệu hành trình (giả lập).
+
+Hệ thống tính toán lượng CO₂ giảm phát thải dựa trên quãng đường di chuyển và loại xe.
+
+Dữ liệu được gửi đến CVA (Carbon Verification & Audit) để kiểm tra và xác minh.
+
+Sau khi được duyệt, hệ thống phát hành tín chỉ carbon và ghi vào ví điện tử của EV Owner.
+
+Bước 3: Niêm yết và giao dịch tín chỉ
+
+EV Owner có thể niêm yết tín chỉ carbon để bán với giá cố định hoặc hình thức đấu giá.
+
+Buyer truy cập hệ thống để tìm kiếm, lọc và mua tín chỉ carbon theo nhu cầu.
+
+Khi giao dịch diễn ra, hệ thống ghi nhận, cập nhật ví carbon và thông báo kết quả cho các bên liên quan.
+
+Bước 4: Thanh toán và cấp chứng nhận
+
+Buyer thực hiện thanh toán trực tuyến qua ví điện tử hoặc ngân hàng.
+
+Sau khi giao dịch hoàn tất, hệ thống tự động phát hành chứng nhận tín chỉ carbon (Certificate) cho Buyer.
+
+EV Owner có thể rút tiền về tài khoản sau khi hoàn tất giao dịch.
+
+Bước 5: Báo cáo và quản trị
+
+EV Owner và Buyer có thể xem báo cáo thống kê cá nhân về CO₂ giảm phát thải, doanh thu và lịch sử giao dịch.
+
+CVA xuất báo cáo xác minh và cấp phát tín chỉ carbon định kỳ.
+
+Admin quản lý toàn bộ hệ thống, bao gồm người dùng, giao dịch, dòng tiền và báo cáo tổng hợp.
+
+2.1.3 Tóm tắt quy trình nghiệp vụ
+
+EV Owner → nhập dữ liệu hành trình → hệ thống tính CO₂ giảm phát thải.
+
+CVA → xác minh dữ liệu → phát hành tín chỉ carbon.
+
+EV Owner → niêm yết tín chỉ carbon → Buyer tìm kiếm và mua.
+
+Hệ thống → xử lý thanh toán → cấp chứng nhận tín chỉ.
+
+Admin → quản trị và tổng hợp báo cáo toàn hệ thống.
+
+2.2 Phân tích yêu cầu người dùng
+
+2.2.1 Chủ sở hữu xe điện (EV Owner)
+
+Kết nối và đồng bộ dữ liệu hành trình từ xe điện (hoặc file giả lập).
+
+Tính toán lượng CO₂ giảm phát thải → quy đổi sang tín chỉ carbon.
+
+Quản lý ví carbon (xem số dư, lịch sử).
+
+Niêm yết tín chỉ carbon để bán (giá cố định hoặc đấu giá).
+
+Quản lý giao dịch (theo dõi, hủy, hoàn tất).
+
+Thanh toán và rút tiền sau khi bán tín chỉ.
+
+Xem báo cáo cá nhân (CO₂ giảm, doanh thu).
+
+Nhận gợi ý giá bán từ AI dựa trên dữ liệu thị trường.
+
+2.2.2 Người mua tín chỉ carbon (Carbon Credit Buyer)
+
+Tìm kiếm và lọc tín chỉ carbon (theo giá, số lượng, khu vực, thời gian).
+
+Mua tín chỉ trực tiếp hoặc tham gia đấu giá.
+
+Thanh toán online (ví điện tử, ngân hàng, ...).
+
+Nhận chứng nhận tín chỉ (certificate).
+
+Quản lý lịch sử mua tín chỉ.
+
+2.2.3 Tổ chức kiểm toán & xác minh carbon (CVA)
+
+Kiểm tra dữ liệu phát thải và hồ sơ tín chỉ.
+
+Duyệt hoặc từ chối yêu cầu phát hành tín chỉ.
+
+Cấp tín chỉ carbon hợp lệ và ghi vào ví EV Owner.
+
+Xuất báo cáo phát hành tín chỉ carbon.
+
+2.2.4 Quản trị hệ thống (Admin)
+
+Quản lý người dùng (EV Owner, Buyer, CVA).
+
+Quản lý giao dịch (theo dõi, xác nhận, xử lý tranh chấp).
+
+Quản lý ví điện tử và dòng tiền.
+
+Quản lý niêm yết tín chỉ và các giao dịch liên quan.
+
+Tạo báo cáo tổng hợp giao dịch và hoạt động nền tảng.
+
+2.3 Yêu cầu chức năng
+
+Để đáp ứng các yêu cầu đã xác định từ người dùng, hệ thống Carbon Credit Marketplace for EV Owners được thiết kế với một tập hợp các chức năng rõ ràng và chặt chẽ. Các chức năng này được tổ chức và cấu trúc thành những module nghiệp vụ chính, tương ứng với quy trình vận hành cốt lõi của nền tảng giao dịch tín chỉ carbon, bao gồm:
+
+CN-1: Quản lý Người dùng & Phiên làm việc
+
+CN-1.1: Xác thực người dùng
+Hệ thống cho phép người dùng (EV Owner, Buyer, CVA, Admin) đăng ký và đăng nhập bằng thông tin cá nhân. Dựa trên vai trò, hệ thống cấp quyền truy cập tới các chức năng tương ứng.
+
+CN-1.2: Giao diện chính & điều hướng
+Cung cấp không gian làm việc tập trung với các menu điều hướng theo quyền hạn, giúp người dùng truy cập nhanh tới các module nghiệp vụ chính của hệ thống.
+
+CN-2: Quản lý Dữ liệu Hành trình & Phát thải
+
+CN-2.1: Kết nối và đồng bộ dữ liệu hành trình
+Hệ thống cho phép chủ xe điện (EV Owner) kết nối và đồng bộ dữ liệu di chuyển từ xe điện hoặc nhập dữ liệu từ tệp mô phỏng.
+
+CN-2.2: Tính toán CO₂ giảm phát thải và quy đổi tín chỉ
+Từ dữ liệu hành trình, hệ thống tự động tính lượng CO₂ giảm phát thải và quy đổi thành tín chỉ carbon tương ứng.
+
+CN-2.3: Kiểm tra và xác minh dữ liệu phát thải
+Tổ chức kiểm toán và xác minh (CVA) xem xét dữ liệu, xác nhận tính chính xác trước khi phát hành tín chỉ carbon cho EV Owner.
+
+CN-3: Quản lý Tín chỉ Carbon
+
+CN-3.1: Cấp phát tín chỉ carbon
+Sau khi dữ liệu được xác minh, CVA phát hành tín chỉ carbon và ghi nhận vào ví carbon của EV Owner.
+
+CN-3.2: Quản lý ví carbon
+EV Owner có thể theo dõi số dư, tín chỉ đã nhận hoặc đã bán trên nền tảng.
+
+CN-3.3: Nhận chứng nhận tín chỉ carbon
+Người mua (Buyer) nhận chứng nhận điện tử (certificate) cho tín chỉ đã mua, phục vụ công tác báo cáo giảm phát thải.
+
+CN-4: Giao dịch và Thanh toán Tín chỉ
+
+CN-4.1: Niêm yết tín chỉ carbon
+EV Owner có thể đăng bán tín chỉ theo giá cố định hoặc hình thức đấu giá.
+
+CN-4.2: Tìm kiếm và mua tín chỉ
+Buyer có thể tìm kiếm, lọc tín chỉ theo tiêu chí (giá, khu vực, số lượng) và mua trực tiếp hoặc tham gia đấu giá.
+
+CN-4.3: Quản lý giao dịch
+Hệ thống hỗ trợ EV Owner, Buyer và Admin theo dõi, xác nhận, hủy hoặc xử lý tranh chấp các giao dịch.
+
+CN-4.4: Thanh toán và rút tiền
+Hỗ trợ thanh toán online qua ví điện tử hoặc ngân hàng và cho phép EV Owner rút tiền sau khi bán tín chỉ thành công.
+
+CN-5: Phân tích Dữ liệu & Báo cáo
+
+CN-5.1: AI gợi ý giá tín chỉ
+Hệ thống sử dụng thuật toán AI để phân tích dữ liệu thị trường và đề xuất mức giá bán hợp lý cho EV Owner.
+
+CN-5.2: Báo cáo cá nhân
+Cung cấp thống kê cho EV Owner và Buyer về lượng CO₂ giảm phát thải, doanh thu, lịch sử mua bán.
+
+CN-5.3: Báo cáo tổng hợp & phát hành
+CVA và Admin có thể xuất báo cáo định kỳ về lượng tín chỉ phát hành, giao dịch, doanh thu và tổng lượng CO₂ giảm phát thải.
+
+CN-6: Quản trị Hệ thống
+
+CN-6.1: Quản lý người dùng
+Admin quản lý danh sách tài khoản EV Owner, Buyer và CVA, bao gồm việc cấp quyền, khóa hoặc xóa tài khoản.
+
+CN-6.2: Quản lý ví điện tử & dòng tiền
+Giám sát các giao dịch thanh toán, nạp và rút tiền nhằm đảm bảo tính minh bạch tài chính.
+
+CN-6.3: Quản lý niêm yết tín chỉ
+Admin kiểm tra, phê duyệt hoặc tạm ngừng các niêm yết tín chỉ không hợp lệ để đảm bảo tính tuân thủ.
+
+Nhóm chức năng
+
+Mã CN
+
+Tên chức năng
+
+Người dùng
+
+Mô tả ngắn gọn
+
+CN-1: Quản lý người dùng và phiên làm việc
+
+CN-1.1
+
+Đăng ký / Đăng nhận / Xác thực người dùng 
+
+EV Owner, Buyer, CVN, Admin
+
+Cho phép người đùng tạo tài khoản, đăng nhập và xác thực quyển truy cập theo vai trò.
+
+CN-1.2
+
+Giao diện chính & điều hướng
+
+EV Owner, Buyer, CVN, Admin
+
+Cung cấp không giang làm việc tập trung, hiển thị các menu chức năng tương ứng với quyền hạn.
+
+CN-2: Quẩn lý dữ liệu hành trình & phát triển
+
+CN-2.1
+
+Kết nối và đòng bộ dữ liệu hành trình
+
+EV Owner
+
+Kết nối với xe điện.
+
+CN-2.2
+
+Tính toán CO₂ giảm phát thải & Quy đổi tín chỉ
+
+EV Owner
+
+Tính lượng CO₂ tiết kiệm được và quy đổi sang tín chỉ carbon.
+
+CN-2.3
+
+Kiểm tra & xác minh dữ liệu phát thải
+
+CVA
+
+Xác minh tính chính xác của dữ liệu phát thải và yêu cầu phát hành tín chỉ.
+
+CN-3: Quản lý tín chỉ carbon
+
+CN-3.1
+
+Cấp phát tín chỉ carbon 
+
+CVA
+
+Duyệt yêu cầu và cấp tín chỉ carbon vào ví người sở hữu xe điện.
+
+CN-3.2
+
+Quản lý ví carbon
+
+EV Owner
+
+Theo dõi số dư, tín chỉ đã nhận và đã bán.
+
+CN-3.3
+
+Nhận chứng nhận tín chỉ carbon
+
+Buyer
+
+Nhận chứng nhận  cho tín chỉ đã mua để phục vụ báo cáo môi trường.
+
+CN-4: Giao dịch và thanh toán tín chỉ
+
+CN-4.1
+
+Niêm yết tín chỉ carbon
+
+EV Owner
+
+Đăng bán tín chỉ (giá cố định hoặc đấu giá).
+
+CN-4.2
+
+Tìm kiếm & mua tín chỉ
+
+Buyer
+
+Tìm kiếm lọc và mua tín chỉ carbon trực tiếp hoặc qua đấu giá.
+
+CN-4.3
+
+Quản lý giao dịch
+
+EV Owner, Buyer, Admin
+
+Theo dỏi, xác nhận, huỷ hoặc xử lý tranh chấp giao dịch.
+
+CN-4.4
+
+Thanh toán & rút tiền
+
+EV Owner, Buyer
+
+Hỗ trợ thanh toán trực tuyết và rút tiền sau khi giao dịch hoàn tất.
+
+CN-5: Hổ trợ và phân tích dữ liệu
+
+CN-5.1
+
+AI gợi ý giá tín chỉ 
+
+EV Owner
+
+Đề xuất giá bán tối ưu dựa trên dữ liệu thị trường và lịch sử giao dịch.
+
+CN-5.2
+
+Báo cáo cá nhân
+
+EV Owner
+
+Thống kê CO₂ giảm phát thải, doanh thu hoặc lịch sử mua tín chỉ.
+
+CN-5.3
+
+Báo cáo phát hành và tổng hợp
+
+CVA, Admin
+
+Xuất báo cáo tín chỉ đã cấp, tổng hợp doanh thu và lượng CO₂ giảm trên toàn nền tảng.
+
+CN-6: Quản trị hệ thống
+
+CN-6.1
+
+Quản lý người dùng 
+
+Admin
+
+Quản lý thông tin tài khoản của EV Owner, Buyer, CVA.
+
+
+
+CN-6.2
+
+Quản lý ví điện tử & dòng tiền 
+
+Admin
+
+Giám sát hoạt động nạp, rút và giao dịch thanh toán.
+
+
+
+CN-6.3
+
+Quản lý niêm yết tín chỉ
+
+Admin
+
+Kiểm tra, duyệt hoặc khoá các tín chỉ niêm yết không hợp lệ.

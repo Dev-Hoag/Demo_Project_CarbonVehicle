@@ -11,12 +11,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
-  // CORS
-  app.enableCors({
-    origin: '*',
-    credentials: true,
-  });
-
+  // CORS is handled by nginx gateway, so we don't enable it here
+  // to avoid duplicate Access-Control-Allow-Origin headers
+  
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
