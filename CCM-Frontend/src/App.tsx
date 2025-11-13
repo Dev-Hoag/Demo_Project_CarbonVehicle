@@ -21,6 +21,7 @@ import PaymentsPage from './pages/Payments';
 import ListingsPage from './pages/Listings';
 import TransactionsPage from './pages/Transactions';
 import ProfilePage from './pages/Profile';
+import KYCPage from './pages/KYC';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import { AdminReportsPage } from './pages/AdminReports';
@@ -80,6 +81,7 @@ function App() {
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/kyc" element={<KYCPage />} />
               <Route path="/admin" element={<div>Admin Page (Coming Soon)</div>} />
               <Route path="/settings" element={<div>Settings Page (Coming Soon)</div>} />
             </Route>

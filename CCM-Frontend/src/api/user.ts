@@ -8,9 +8,22 @@ export interface UserProfile {
   userType: 'EV_OWNER' | 'BUYER' | 'CVA';
   status: string;
   isEmailVerified: boolean;
+  kycStatus?: string;
   profilePictureUrl?: string;
   address?: string;
+  city?: string;
   dateOfBirth?: string;
+  bio?: string;
+  // EV Owner fields
+  vehicleType?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
+  // Buyer fields
+  companyName?: string;
+  taxCode?: string;
+  // CVA fields
+  certificationNumber?: string;
+  organizationName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,8 +31,21 @@ export interface UserProfile {
 export interface UpdateProfileData {
   fullName?: string;
   phoneNumber?: string;
+  phone?: string;
   address?: string;
+  city?: string;
   dateOfBirth?: string;
+  bio?: string;
+  // EV Owner fields
+  vehicleType?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
+  // Buyer fields
+  companyName?: string;
+  taxCode?: string;
+  // CVA fields
+  certificationNumber?: string;
+  organizationName?: string;
 }
 
 export const userApi = {

@@ -30,6 +30,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
+  VerifiedUser as VerifiedUserIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
 
@@ -49,6 +50,7 @@ const menuItems: MenuItem[] = [
   { title: 'Listings', path: '/listings', icon: <ListIcon /> },
   { title: 'Transactions', path: '/transactions', icon: <ShoppingIcon /> },
   { title: 'Profile', path: '/profile', icon: <PersonIcon /> },
+  { title: 'KYC Verification', path: '/kyc', icon: <VerifiedUserIcon /> },
   { title: 'Admin', path: '/admin', icon: <AdminIcon />, adminOnly: true },
 ];
 
