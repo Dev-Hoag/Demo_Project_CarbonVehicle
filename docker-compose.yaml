@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+
+  # TRIP SERVICE
+  mysql-trip:
+    image: mysql:8.0.43
+    container_name: mysql-trip-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: trip_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-trip-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+  # LISTING SERVICE
+  mysql-listing:
+    image: mysql:8.0.43
+    container_name: mysql-listing-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: listing_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-listing-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+  # CREDIT SERVICE
+  mysql-credit:
+    image: mysql:8.0.43
+    container_name: mysql-credit-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: credit_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-credit-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+# VOLUMES
+volumes:
+  mysql-trip-data:
+    name: evowner_mysql_trip_data
+    driver: local
+  mysql-listing-data:
+    name: evowner_mysql_listing_data
+    driver: local
+  mysql-credit-data:
+    name: evowner_mysql_credit_data
+    driver: local
+
+# NETWORKS
+networks:
+  evowner-network:
+    name: evowner-network
+    driver: bridge
