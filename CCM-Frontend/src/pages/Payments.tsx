@@ -20,8 +20,12 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Pagination,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
-import { Add, Receipt } from '@mui/icons-material';
+import { Add, Receipt, FilterList, Refresh } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { paymentApi, type Payment } from '../api/payment';
 import { statusColors } from '../types';
@@ -30,6 +34,10 @@ import toast from 'react-hot-toast';
 export const PaymentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [createDialog, setCreateDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
@@ -38,8 +46,13 @@ export const PaymentsPage: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await paymentApi.getPaymentHistory({ limit: 50 });
+      const response = await paymentApi.getPaymentHistory({ 
+        page, 
+        limit,
+        status: statusFilter || undefined,
+      });
       setPayments(response.payments || []);
+      setTotal(response.total || 0);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to load payments');
       setPayments([]); // Set empty array on error to prevent undefined errors
@@ -50,7 +63,7 @@ export const PaymentsPage: React.FC = () => {
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [page, limit, statusFilter]);
 
   const handleInitiatePayment = async (data: any) => {
     try {
@@ -171,6 +184,66 @@ export const PaymentsPage: React.FC = () => {
         </Card>
       </Box>
 
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={2}>
+            <FilterList color="action" />
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              Filters
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<Refresh />}
+              onClick={() => {
+                setStatusFilter('');
+                setPage(1);
+              }}
+            >
+              Clear
+            </Button>
+          </Box>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <FormControl sx={{ minWidth: 200 }} size="small">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="PROCESSING">Processing</MenuItem>
+                <MenuItem value="COMPLETED">Completed</MenuItem>
+                <MenuItem value="FAILED">Failed</MenuItem>
+                <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                <MenuItem value="EXPIRED">Expired</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 120 }} size="small">
+              <InputLabel>Per Page</InputLabel>
+              <Select
+                value={limit}
+                label="Per Page"
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                <MenuItem value={5}>5</MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </CardContent>
+      </Card>
+
       {/* Payments Table */}
       <Card>
         <CardContent>
@@ -243,6 +316,20 @@ export const PaymentsPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          
+          {/* Pagination */}
+          {total > limit && (
+            <Box display="flex" justifyContent="center" mt={3}>
+              <Pagination
+                count={Math.ceil(total / limit)}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
         </CardContent>
       </Card>
 
