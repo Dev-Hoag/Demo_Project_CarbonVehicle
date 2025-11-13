@@ -4,7 +4,8 @@ export interface UserProfile {
   id: number;
   email: string;
   fullName: string;
-  phoneNumber: string;
+  phone?: string; // Backend uses 'phone' not 'phoneNumber'
+  phoneNumber?: string; // Keep for backward compatibility
   userType: 'EV_OWNER' | 'BUYER' | 'CVA';
   status: string;
   isEmailVerified: boolean;
@@ -53,13 +54,28 @@ export const userApi = {
   // Get user profile
   getProfile: async (): Promise<UserProfile> => {
     const response = await apiClient.get('/api/users/profile');
-    return response.data;
+    const data = response.data;
+    // Map backend 'phone' to frontend 'phoneNumber' for consistency
+    return {
+      ...data,
+      phoneNumber: data.phone || data.phoneNumber,
+    };
   },
 
   // Update user profile
   updateProfile: async (data: UpdateProfileData): Promise<UserProfile> => {
-    const response = await apiClient.patch('/api/users/profile', data);
-    return response.data;
+    // Map frontend 'phoneNumber' to backend 'phone'
+    const payload = {
+      ...data,
+      phone: data.phoneNumber || data.phone,
+    };
+    const response = await apiClient.put('/api/users/profile', payload);
+    const responseData = response.data;
+    // Map backend 'phone' to frontend 'phoneNumber'
+    return {
+      ...responseData,
+      phoneNumber: responseData.phone || responseData.phoneNumber,
+    };
   },
 
   // Upload profile picture

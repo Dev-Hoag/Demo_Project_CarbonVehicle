@@ -54,6 +54,16 @@ export const adminApi = {
     return response.data;
   },
 
+  lockUser: async (userId: number, reason: string): Promise<UserProfile> => {
+    const response = await apiClient.post(`/api/admin/users/${userId}/lock`, { reason });
+    return response.data;
+  },
+
+  unlockUser: async (userId: number): Promise<UserProfile> => {
+    const response = await apiClient.post(`/api/admin/users/${userId}/unlock`);
+    return response.data;
+  },
+
   deleteUser: async (userId: number): Promise<{ message: string }> => {
     const response = await apiClient.delete(`/api/admin/users/${userId}`);
     return response.data;

@@ -11,6 +11,7 @@ import { useAuthStore } from './store/authStore';
 // Layouts
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
+import AdminLayout from './layouts/AdminLayout';
 
 // Pages
 import LoginPage from './pages/Login';
@@ -23,11 +24,13 @@ import TransactionsPage from './pages/Transactions';
 import ProfilePage from './pages/Profile';
 import KYCPage from './pages/KYC';
 import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminKYC from './pages/admin/AdminKYC';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import { AdminReportsPage } from './pages/AdminReports';
-import { AdminWalletsPage } from './pages/AdminWallets';
-import { AdminTransactionsPage } from './pages/AdminTransactions';
+import AdminWalletsPage from './pages/admin/AdminWalletsPage';
+import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -57,26 +60,31 @@ function App() {
         <CssBaseline />
         <BrowserRouter>
           <Routes>
-            {/* Auth routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-            </Route>
+          {/* Auth routes */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+          </Route>
 
-            {/* Admin routes (no layout) */}
-            <Route path="/admin/kyc" element={<AdminKYC />} />
-            <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-            <Route path="/admin/reports" element={<AdminReportsPage />} />
-            <Route path="/admin/wallets" element={<AdminWalletsPage />} />
-            <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
+          {/* Admin routes with AdminLayout */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="kyc" element={<AdminKYC />} />
+            <Route path="withdrawals" element={<AdminWithdrawals />} />
+            <Route path="transactions" element={<AdminTransactionsPage />} />
+            <Route path="wallets" element={<AdminWalletsPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="settings" element={<div>Admin Settings (Coming Soon)</div>} />
+          </Route>
 
-            {/* Protected routes */}
-            <Route element={
-              <ProtectedRoute>
-                <MainLayout />
-              </ProtectedRoute>
-            }>
+          {/* Protected user routes */}
+          <Route element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
