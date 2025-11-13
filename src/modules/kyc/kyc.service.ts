@@ -111,4 +111,106 @@ export class KycService {
 
     return doc;
   }
+
+  /**
+   * Get all pending documents (for Admin)
+   */
+  async getPendingDocuments(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [documents, total] = await this.kycRepo.findAndCount({
+      where: { status: KycStatus.PENDING },
+      relations: ['user', 'user.profile'],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      documents: documents.map((doc) => ({
+        ...doc,
+        user: doc.user
+          ? {
+              id: doc.user.id,
+              email: doc.user.email,
+              fullName: doc.user.profile?.fullName || '',
+              userType: doc.user.userType,
+            }
+          : undefined,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Get all documents with optional filter (for Admin)
+   */
+  async getAllDocuments(page: number = 1, limit: number = 10, status?: string) {
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (status) {
+      where.status = status;
+    }
+
+    const [documents, total] = await this.kycRepo.findAndCount({
+      where,
+      relations: ['user', 'user.profile'],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      documents: documents.map((doc) => ({
+        ...doc,
+        user: doc.user
+          ? {
+              id: doc.user.id,
+              email: doc.user.email,
+              fullName: doc.user.profile?.fullName || '',
+              userType: doc.user.userType,
+            }
+          : undefined,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Get KYC statistics (for Admin)
+   */
+  async getKycStatistics() {
+    const [totalDocuments, pendingDocuments, approvedDocuments, rejectedDocuments] =
+      await Promise.all([
+        this.kycRepo.count(),
+        this.kycRepo.count({ where: { status: KycStatus.PENDING } }),
+        this.kycRepo.count({ where: { status: KycStatus.APPROVED } }),
+        this.kycRepo.count({ where: { status: KycStatus.REJECTED } }),
+      ]);
+
+    const totalUsersWithKyc = await this.kycRepo
+      .createQueryBuilder('kyc')
+      .select('COUNT(DISTINCT kyc.userId)', 'count')
+      .getRawOne();
+
+    const usersFullyVerified = await this.userRepo.count({
+      where: { kycStatus: KycStatus.APPROVED },
+    });
+
+    return {
+      totalDocuments,
+      pendingDocuments,
+      approvedDocuments,
+      rejectedDocuments,
+      totalUsersWithKyc: parseInt(totalUsersWithKyc.count) || 0,
+      usersFullyVerified,
+    };
+  }
 }

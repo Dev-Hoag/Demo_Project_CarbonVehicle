@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { UserType, UserStatus, KycStatus } from '../enums/user.enums';
+import { UserProfile } from './user-profile.entity';
 
 @Entity('users')
 export class User {
@@ -20,6 +21,10 @@ export class User {
 
   @Column({ type: 'enum', enum: KycStatus, default: KycStatus.PENDING, name: 'kyc_status' })
   kycStatus: KycStatus;
+
+  @OneToOne(() => UserProfile, { eager: false })
+  @JoinColumn({ name: 'id', referencedColumnName: 'userId' })
+  profile?: UserProfile;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

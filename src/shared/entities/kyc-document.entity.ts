@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { DocumentType, KycStatus } from '../enums/user.enums';
+import { User } from './user.entity';
 
 @Entity('kyc_documents')
 export class KycDocument {
@@ -8,6 +9,10 @@ export class KycDocument {
 
   @Column({ name: 'user_id' })
   userId: number;
+
+  @ManyToOne(() => User, { eager: false })
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
 
   @Column({ type: 'enum', enum: DocumentType, name: 'document_type' })
   documentType: DocumentType;
