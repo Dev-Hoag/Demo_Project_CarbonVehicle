@@ -46,11 +46,14 @@ export class AuthService {
     });
 
     const payload = {
+      sub: user.id, // Standard JWT subject claim
       id: user.id,
       username: user.username,
       email: user.email,
       fullName: user.fullName,
       isSuperAdmin: user.isSuperAdmin,
+      role: 'ADMIN', // 🔑 Add role for gateway authentication
+      userType: 'ADMIN', // Alternative field name
     };
 
     const accessTtl = Number(process.env.ACCESS_TOKEN_TTL ?? 3600);        // giây
@@ -206,11 +209,14 @@ export class AuthService {
       const user = await this.validateUser(payload);
 
       const newPayload = {
+        sub: user.id, // Standard JWT subject claim
         id: user.id,
         username: user.username,
         email: user.email,
         fullName: user.fullName,
         isSuperAdmin: user.isSuperAdmin,
+        role: 'ADMIN', // 🔑 Add role for gateway authentication
+        userType: 'ADMIN', // Alternative field name
       };
 
       const accessTtl = Number(process.env.ACCESS_TOKEN_TTL ?? 3600);
