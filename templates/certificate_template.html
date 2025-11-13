@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Credit Certificate</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            height: 297mm;
+            width: 210mm;
+        }
+        
+        .certificate {
+            background: white;
+            padding: 60px;
+            border: 10px solid #2c5282;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+            height: 100%;
+            position: relative;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c5282;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            color: #2c5282;
+            margin-bottom: 10px;
+        }
+        
+        .title {
+            font-size: 42px;
+            color: #2c5282;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: #4a5568;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .body {
+            margin: 40px 0;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+        
+        .awarded-to {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .awarded-label {
+            font-size: 18px;
+            color: #4a5568;
+            font-style: italic;
+        }
+        
+        .recipient-name {
+            font-size: 36px;
+            color: #2c5282;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 20px;
+            border-bottom: 2px solid #2c5282;
+            display: inline-block;
+        }
+        
+        .details {
+            margin: 40px 0;
+            background: #f7fafc;
+            padding: 30px;
+            border-left: 5px solid #48bb78;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .detail-value {
+            color: #4a5568;
+        }
+        
+        .credit-amount {
+            color: #48bb78;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 40px;
+            left: 60px;
+            right: 60px;
+            text-align: center;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        
+        .cert-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #718096;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        
+        .seal {
+            position: absolute;
+            bottom: 100px;
+            right: 80px;
+            width: 120px;
+            height: 120px;
+            border: 3px solid #2c5282;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        .decoration {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            border: 3px solid #48bb78;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        
+        .decoration-right {
+            right: 20px;
+            left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate">
+        <div class="decoration"></div>
+        <div class="decoration decoration-right"></div>
+        
+        <div class="header">
+            <div class="logo">🌱</div>
+            <div class="title">Carbon Credit Certificate</div>
+            <div class="subtitle">{{ subject }}</div>
+        </div>
+        
+        <div class="body">
+            <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+                This is to certify that
+            </p>
+            
+            <div class="awarded-to">
+                <div class="awarded-label">has been awarded to</div>
+                <div class="recipient-name">User ID: {{ user_id }}</div>
+            </div>
+            
+            <div class="details">
+                <div class="detail-row">
+                    <span class="detail-label">Certificate ID:</span>
+                    <span class="detail-value">#{{ certificate_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Trip ID:</span>
+                    <span class="detail-value">#{{ trip_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Verification ID:</span>
+                    <span class="detail-value">#{{ verification_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Carbon Credits:</span>
+                    <span class="detail-value credit-amount">{{ credit_amount }} kg CO₂</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Issue Date:</span>
+                    <span class="detail-value">{{ issue_date }}</span>
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 30px; font-style: italic; color: #4a5568;">
+                In recognition of their contribution to environmental sustainability<br>
+                through the use of electric vehicles and reduction of carbon emissions.
+            </p>
+        </div>
+        
+        <div class="seal">
+            VERIFIED<br>✓
+        </div>
+        
+        <div class="footer">
+            <div style="font-size: 12px; color: #718096;">
+                Issued by {{ author }}
+            </div>
+            <div class="cert-hash">
+                Certificate Hash: {{ cert_hash }}
+            </div>
+            <div style="font-size: 10px; color: #a0aec0; margin-top: 10px;">
+                © {{ current_year }} Carbon Credit Platform. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
