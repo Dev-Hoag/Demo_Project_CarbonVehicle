@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: admin_service_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: admin_service_db
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --default-time-zone=+07:00
+    ports:
+      - "3307:3306"            # host:container (host dùng 3307)
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - admin_network
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: admin_service_adminer
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - admin_network
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: ..
+      dockerfile: Admin_Service/Dockerfile
+    image: admin-service:dev
+    container_name: admin_service_app
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - admin_network
+      - ccm_net
+    restart: unless-stopped
+
+networks:
+  admin_network:
+    driver: bridge
+  ccm_net:
+    external: true
+
+volumes:
+  mysql_data:

@@ -1,0 +1,78 @@
+services:
+  mysql:
+    image: mysql:8.0
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: payment_service_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - payment_service_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      default:
+        aliases:
+          - payment-mysql     # ⭐ alias duy nhất cho DB của stack này
+
+  adminer:
+    image: adminer
+    restart: "no"
+    ports:
+      - "8082:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: payment-mysql   # ⭐ dùng alias mới
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - default
+
+  payment-service:
+    # image: payment-service:dev
+    build:
+      context: ..
+      dockerfile: Payment_Service/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 3002
+      NODE_ENV: production
+      TZ: Asia/Ho_Chi_Minh
+      INTERNAL_SECRET: super-secret-payment-key
+
+      # ⭐ Trỏ đúng alias để tránh đụng MySQL ở mạng khác
+      DB_HOST: payment-mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: payment_service_db
+
+      # RabbitMQ
+      RABBITMQ_URL: amqp://ccm_admin:ccm_password_2024@ccm_rabbitmq:5672/ccm_vhost
+
+      VNPAY_TMN_CODE: U94AQ1QM
+      VNPAY_HASH_SECRET: KJTJVFNOQM3MMD742PZ4UO5GN8SU9SIK
+      VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+
+      BACKEND_PUBLIC_URL: http://localhost:3002
+      VNPAY_RETURN_URL: http://localhost:3002/api/payments/vnpay/callback
+      VNPAY_IPN_URL: http://localhost:3002/api/payments/vnpay/ipn
+    ports:
+      - "3002:3002"
+    networks:
+      - default            # ⭐ đủ để thấy DB qua alias payment-mysql
+      - ccm_net            # (nếu cần gateway gọi vào) — vẫn OK, vì DB_HOST không còn là 'mysql'
+    restart: unless-stopped
+
+volumes:
+  payment_service_data:
+
+networks:
+  ccm_net:
+    external: true

@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: payment_service_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: payment_service_db
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - '3309:3306'
+    volumes:
+      - payment_service_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    container_name: payment_service_adminer
+    restart: "no"
+    ports:
+      - '8082:8080'
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment_service_app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # --- App ---
+      PORT: 3002
+      NODE_ENV: production
+      TZ: Asia/Ho_Chi_Minh
+
+      # --- Internal API key (đồng bộ với guard) ---
+      INTERNAL_SECRET: super-secret-payment-key
+
+      # --- DB (đúng tên biến như trong code/.env.example) ---
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: payment_service_db
+
+      # --- VNPay Sandbox ---
+      VNPAY_TMN_CODE: U94AQ1QM
+      VNPAY_HASH_SECRET: KJTJVFNOQM3MMD742PZ4UO5GN8SU9SIK
+      VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+
+      # Return URL chạy local: user từ sandbox quay về host → map tới container qua port 3002
+      # (Bạn đã dùng /api/payments/vnpay/callback → giữ nguyên)
+      VNPAY_RETURN_URL: http://localhost:3002/api/payments/vnpay/callback
+
+      # IPN thật cần public URL (ngrok...) — để tạm local cho dev;
+      # khi test thật: đổi thành https://<PUBLIC>/api/payments/vnpay/ipn
+      VNPAY_IPN_URL: http://localhost:3002/api/payments/vnpay/ipn
+
+      # Optional: phục vụ redirect sang FE khi bạn bật FRONTEND_URL
+      
+      BACKEND_PUBLIC_URL: http://localhost:3002
+    ports:
+      - '3002:3002'
+    restart: unless-stopped
+
+volumes:
+  payment_service_data:
