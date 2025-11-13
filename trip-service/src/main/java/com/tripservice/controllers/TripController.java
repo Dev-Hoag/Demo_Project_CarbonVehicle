@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/trips")
+@RequestMapping("/v1/trips")
 @RequiredArgsConstructor
 @Slf4j
 public class TripController {
@@ -244,6 +244,21 @@ public class TripController {
                 .statusCode(200)
                 .message("Get trip summary successful")
                 .data(summary)
+                .build();
+
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<ApiResponse<TripResponse>> completeTrip(@PathVariable UUID id) {
+        log.info("Request to complete trip: {}", id);
+
+        TripResponse response = tripService.completeTrip(id);
+
+        var result = ApiResponse.<TripResponse>builder()
+                .statusCode(200)
+                .message("Completing trip " + id)
+                .data(response)
                 .build();
 
         return ResponseEntity.status(result.getStatusCode()).body(result);

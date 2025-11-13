@@ -36,6 +36,12 @@ public class TripCustomMapper {
                 .build();
     }
 
+//    public Trip convertToTrip(TripData tripData, UUID tripId) {
+//        Trip.builder()
+//                .id(tripId)
+//                .build();
+//    }
+
     public TripResponse convertToResponse(Trip trip) {
         return TripResponse.builder()
                 .id(trip.getId())

@@ -1,13 +1,15 @@
 package com.tripservice.services.impl;
 
+import com.tripservice.clients.CreditServiceClient;
 import com.tripservice.constants.TripStatus;
 import com.tripservice.dtos.internal.TripData;
+import com.tripservice.dtos.request.AddCreditRequest;
 import com.tripservice.dtos.request.TripUploadRequest;
-import com.tripservice.dtos.response.CO2CalculationResponse;
-import com.tripservice.dtos.response.TripDetailResponse;
-import com.tripservice.dtos.response.TripResponse;
+import com.tripservice.dtos.response.*;
 import com.tripservice.entities.Trip;
-import com.tripservice.events.publisher.TripEventPublisher;
+import com.tripservice.exceptions.InvalidCalculationException;
+import com.tripservice.exceptions.InvalidTripStateException;
+import com.tripservice.exceptions.TripNotFoundException;
 import com.tripservice.mappers.TripCustomMapper;
 import com.tripservice.repositories.TripRepository;
 import com.tripservice.services.CO2CalculationService;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +35,7 @@ public class TripServiceImpl implements TripService {
     private final CO2CalculationService co2Service;
     private final TripUploadService uploadService;
     private final TripCustomMapper tripCustomMapper;
+    private final CreditServiceClient creditServiceClient;
 
     @Override
     @Transactional
@@ -74,7 +78,7 @@ public class TripServiceImpl implements TripService {
     @Override
     public TripDetailResponse getTripById(UUID id) {
         Trip trip = tripRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
+                .orElseThrow(() -> new TripNotFoundException(id.toString()));
 
         return tripCustomMapper.convertToDetailResponse(trip);
     }
@@ -89,7 +93,7 @@ public class TripServiceImpl implements TripService {
     @Transactional
     public void deleteTrip(UUID id) {
         Trip trip = tripRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trip not found: " + id));
+                .orElseThrow(() -> new TripNotFoundException(id.toString()));
 
         // Check if can delete
         if (trip.getStatus() != null && trip.getStatus().isFinal()) {
@@ -103,7 +107,7 @@ public class TripServiceImpl implements TripService {
     @Override
     public CO2CalculationResponse calculateCO2(UUID tripId) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found: " + tripId));
+                .orElseThrow(() -> new TripNotFoundException(tripId.toString()));
 
         return co2Service.calculateDetailed(
                 trip.getDistanceKm(),
@@ -115,10 +119,10 @@ public class TripServiceImpl implements TripService {
     @Transactional
     public void submitForVerification(UUID tripId) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found: " + tripId));
+                .orElseThrow(() -> new TripNotFoundException(tripId.toString()));
 
         if (!trip.getStatus().canSubmitForVerification()) {
-            throw new RuntimeException(
+            throw new InvalidTripStateException(
                     "Cannot submit trip. Current status: " + trip.getStatus()
             );
         }
@@ -128,5 +132,86 @@ public class TripServiceImpl implements TripService {
         tripRepository.save(trip);
 
         log.info("Trip {} submitted for verification", tripId);
+    }
+
+    @Override
+    @Transactional
+    public TripResponse completeTrip(UUID tripId) {
+        log.info("Completing trip: {}", tripId);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId.toString()));
+
+        if (trip.getStatus() == TripStatus.VERIFIED) {
+            throw new InvalidTripStateException("Cannot complete trip. Current status: " + trip.getStatus());
+        }
+
+        if (trip.getStatus() == TripStatus.CANCELLED) {
+            throw new InvalidTripStateException("Cannot complete trip. Current status: " + trip.getStatus());
+        }
+
+        // 3. Calculate CO2 reduced if not already calculated
+        if (trip.getCo2Reduced() == null || trip.getCo2Reduced() == 0.0) {
+            Double calculatedCo2 = calculateCO2Reduced(trip);
+            trip.setCo2Reduced(calculatedCo2);
+            log.info("Calculated CO2 reduced: {} kg for trip: {}", calculatedCo2, tripId);
+        }
+
+        trip.setStatus(TripStatus.VERIFIED);
+        trip.setVerificationStatus("VERIFIED");
+        trip.setUpdatedAt(Instant.now());
+
+        // 5. Save updated trip
+        Trip completedTrip = tripRepository.save(trip);
+        log.info("Trip {} marked as COMPLETED with {} kg CO2 reduced",
+                tripId, completedTrip.getCo2Reduced());
+
+        try {
+            AddCreditRequest creditRequest = AddCreditRequest.builder()
+                    .userId(completedTrip.getUserId())
+                    .amount(completedTrip.getCo2Reduced())
+                    .relatedTripId(tripId)
+                    .description(String.format("Earned from completing trip - %s km",
+                            completedTrip.getDistanceKm()))
+                    .build();
+
+            ApiResponse<CreditResponse> creditResponse =
+                    creditServiceClient.addCredit(creditRequest);
+
+            if (creditResponse.getStatusCode() == 200) {
+                log.info("Successfully added {} kg CO2 credits to user: {}",
+                        completedTrip.getCo2Reduced(), completedTrip.getUserId());
+            } else {
+                log.error("Failed to add credits: {}", creditResponse.getMessage());
+                // Note: Trip is still marked as completed even if credit addition fails
+                // You can implement compensation logic here if needed
+            }
+        } catch (Exception e) {
+            log.error("Error calling Credit Service to add credits: ", e);
+            // Decide: Should we rollback trip completion or continue?
+            // Current behavior: Trip is completed, but credits not added (manual intervention needed)
+        }
+        return tripCustomMapper.convertToResponse(completedTrip);
+    }
+
+    private Double calculateCO2Reduced(Trip trip) {
+        if (trip.getDistanceKm() == null || trip.getDistanceKm() <= 0) {
+            log.warn("Invalid distance for trip: {}", trip.getId());
+            return 0.0;
+        }
+
+        // Emission factor: kg CO2 per km for average gasoline car
+        final double GASOLINE_CAR_EMISSION_FACTOR = 0.12;
+
+        // Calculate CO2 saved
+        double co2Reduced = trip.getDistanceKm() * GASOLINE_CAR_EMISSION_FACTOR;
+
+        // Round to 2 decimal places
+        co2Reduced = Math.round(co2Reduced * 100.0) / 100.0;
+
+        log.debug("CO2 calculation: {} km × {} kg/km = {} kg",
+                trip.getDistanceKm(), GASOLINE_CAR_EMISSION_FACTOR, co2Reduced);
+
+        return co2Reduced;
     }
 }

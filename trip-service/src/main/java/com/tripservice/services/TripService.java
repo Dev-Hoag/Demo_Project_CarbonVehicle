@@ -18,4 +18,5 @@ public interface TripService {
     void deleteTrip(UUID id);
     CO2CalculationResponse calculateCO2(UUID tripId);
     void submitForVerification(UUID tripId);
+    TripResponse completeTrip(UUID tripId);
 }
