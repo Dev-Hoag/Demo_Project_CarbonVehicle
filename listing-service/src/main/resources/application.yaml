@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:3004}
+  port: ${PORT:8082}
   servlet:
     context-path: /api
 
@@ -43,13 +43,28 @@ spring:
       com.CarbonCredit.listingservice: DEBUG
       org.springframework.web: INFO
 
-# eureka:
-#   client:
-#     service-url:
-#       defaultZone: http://localhost:8761/eureka/
-#     register-with-eureka: true
-#     fetch-registry: true
-#   instance:
-#     hostname: localhost
-#     prefer-ip-address: true
-#     lease-renewal-interval-in-seconds: 30
+#  eureka:
+#    client:
+#      enabled: false
+#      service-url:
+#        defaultZone: http://localhost:8761/eureka/
+#      register-with-eureka: false
+#      fetch-registry: false
+#    instance:
+#       hostname: localhost
+#       prefer-ip-address: true
+#       lease-renewal-interval-in-seconds: 30
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+services:
+  trip-service:
+    url: http://localhost:8081/api
+  credit-service:
+    url: http://localhost:8083/api

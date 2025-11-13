@@ -26,4 +26,5 @@ public interface ListingService {
     Page<ListingResponse> getAllListings(Pageable pageable);
 
     Page<ListingResponse> searchListings(ListingSearchRequest request, Pageable pageable);
+
 }

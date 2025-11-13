@@ -1,22 +1,22 @@
 package com.listingservice.services.impl;
 
-import com.listingservice.dtos.requests.CreateListingRequest;
-import com.listingservice.dtos.requests.ListingSearchRequest;
-import com.listingservice.dtos.requests.UpdateListingRequest;
-import com.listingservice.dtos.responses.ListingDetailResponse;
-import com.listingservice.dtos.responses.ListingResponse;
+import com.listingservice.clients.CreditServiceClient;
+import com.listingservice.clients.TripServiceClient;
+import com.listingservice.dtos.requests.*;
+import com.listingservice.dtos.responses.*;
 import com.listingservice.entities.Bid;
 import com.listingservice.entities.Listing;
+import com.listingservice.entities.Transaction;
 import com.listingservice.enums.ListingStatus;
 import com.listingservice.enums.ListingType;
-import com.listingservice.exceptions.InvalidListingException;
-import com.listingservice.exceptions.InvalidListingStateException;
-import com.listingservice.exceptions.ListingNotFoundException;
-import com.listingservice.exceptions.UnauthorizedActionException;
+import com.listingservice.exceptions.*;
 import com.listingservice.mappers.ListingMapper;
+import com.listingservice.mappers.TransactionMapper;
 import com.listingservice.repositories.BidRepository;
 import com.listingservice.repositories.ListingRepository;
+import com.listingservice.repositories.TransactionRepository;
 import com.listingservice.services.ListingService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +25,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,11 +36,38 @@ public class ListingServiceImpl implements ListingService {
     private final ListingRepository listingRepository;
     private final BidRepository bidRepository;
     private final ListingMapper listingMapper;
+    private final TripServiceClient tripServiceClient;
+    private final TransactionMapper transactionMapper;
+    private final TransactionRepository transactionRepository;
+    private final CreditServiceClient creditServiceClient;
 
     @Override
     @Transactional
     public ListingResponse createListing(CreateListingRequest request) {
         log.info("Creating new listing: {}", request.getTitle());
+
+        if (request.getTripId() != null) {
+            try {
+                ApiResponse<TripResponse> tripResponse =
+                        tripServiceClient.getTripById(request.getTripId());
+
+                if (!(tripResponse.getStatusCode() == 200)) {
+                    throw new InvalidListingException("Trip not found: " + request.getTripId());
+                }
+
+                TripResponse trip = tripResponse.getData();
+
+                // Validate trip is completed
+                if (!"VERIFIED".equals(trip.getStatus())) {
+                    throw new InvalidListingException("Trip must be completed");
+                }
+
+                log.info("Trip verified: {}", request.getTripId());
+            } catch (Exception e) {
+                log.error("Error verifying trip: ", e);
+                throw new InvalidListingException("Failed to verify trip");
+            }
+        }
 
         // Validate request
         validateCreateListingRequest(request);
@@ -274,5 +302,152 @@ public class ListingServiceImpl implements ListingService {
         }
 
         return spec;
+    }
+
+    @Transactional
+    public TransactionResponse purchaseListing(UUID listingId, PurchaseRequest request){
+        log.info("Processing purchase with credit deduction");
+
+        log.info("Processing purchase for listing: {} by buyer: {}", listingId, request.getBuyerId());
+
+        // 1. Find and validate listing
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ListingNotFoundException(listingId));
+
+        validateListingForPurchase(listing, request);
+
+        // 2. Validate buyer is not the seller
+        if (listing.getSellerId().equals(request.getBuyerId())) {
+            throw new InvalidListingException("Seller cannot purchase their own listing");
+        }
+
+        // 3. Calculate transaction details
+        Double pricePerKg = listing.getPricePerKg();
+        Double totalPrice = pricePerKg * request.getAmount();
+
+        // 4. Deduct credits from buyer
+        try {
+            DeductCreditRequest deductRequest = DeductCreditRequest.builder()
+                    .userId(request.getBuyerId())
+                    .amount(request.getAmount()) // ← SỬA ĐÂY: amount in kg, not totalPrice
+                    .relatedListingId(listingId)
+                    .description(String.format("Purchase %.2f kg CO2 credits from marketplace",
+                            request.getAmount()))
+                    .build();
+
+            ApiResponse<CreditResponse> deductResponse =
+                    creditServiceClient.deductCredit(deductRequest);
+
+            // ← SỬA ĐÂY: Check success field
+            if (!(deductResponse.getStatusCode()==200)) {
+                throw new InsufficientCreditException(
+                        "Failed to deduct credits: " + deductResponse.getMessage()
+                );
+            }
+
+            log.info("Credits deducted from buyer: {}", request.getBuyerId());
+        } catch (FeignException e) {
+            log.error("Error calling Credit Service to deduct: ", e);
+            throw new InsufficientCreditException("Insufficient credits or Credit Service unavailable");
+        } catch (InsufficientCreditException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error deducting credits: ", e);
+            throw new InsufficientCreditException("Failed to process credit deduction");
+        }
+
+        // 5. Add credits to seller
+        try {
+            AddCreditRequest addRequest = AddCreditRequest.builder()
+                    .userId(listing.getSellerId())
+                    .amount(request.getAmount())
+                    .relatedTripId(listingId)
+                    .description(String.format("Sold %.2f kg CO2 credits on marketplace",
+                            request.getAmount()))
+                    .build();
+
+            ApiResponse<CreditResponse> addResponse =
+                    creditServiceClient.addCredit(addRequest);
+
+            if (!(addResponse.getStatusCode()==200)) {
+                log.error("Failed to add credits to seller: {}", addResponse.getMessage());
+                // Note: Buyer credits already deducted, may need compensation logic
+            } else {
+                log.info("Credits added to seller: {}", listing.getSellerId());
+            }
+        } catch (Exception e) {
+            log.error("Error adding credits to seller: ", e);
+            // Note: Transaction continues, but seller credits not added
+        }
+
+        // 6. Create transaction record
+        Transaction transaction = Transaction.builder()
+                .listingId(listingId)
+                .buyerId(request.getBuyerId())
+                .sellerId(listing.getSellerId())
+                .co2Amount(request.getAmount())
+                .pricePerKg(pricePerKg)
+                .totalPrice(totalPrice)
+                .transactionType("PURCHASE")
+                .status("COMPLETED")
+                .paymentStatus("PAID")
+                .notes(request.getNotes())
+                .build();
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        log.info("Transaction created: {} with total price: ${}", savedTransaction.getId(), totalPrice);
+
+        // 7. Update listing available amount
+        Double newAvailableAmount = listing.getAvailableAmount() - request.getAmount();
+        listingRepository.updateAvailableAmount(listingId, newAvailableAmount, Instant.now());
+        log.info("Updated listing {} available amount from {} to {} kg",
+                listingId, listing.getAvailableAmount(), newAvailableAmount);
+
+        // 8. If listing is sold out, mark as SOLD
+        if (newAvailableAmount <= 0) {
+            listingRepository.updateStatus(listingId, ListingStatus.SOLD, Instant.now());
+            log.info("Listing {} marked as SOLD (fully purchased)", listingId);
+        }
+
+        log.info("Purchase completed successfully for listing {}", listingId);
+
+        // 9. Return response
+        return transactionMapper.toResponse(savedTransaction);
+    }
+
+    private void validateListingForPurchase(Listing listing, PurchaseRequest request) {
+        // Check if listing is FIXED_PRICE type (not auction)
+        if (listing.getListingType() == ListingType.AUCTION) {
+            throw new InvalidListingException(
+                    "Cannot directly purchase auction listings. Place a bid instead."
+            );
+        }
+
+        // Check if listing is active
+        if (listing.getStatus() != ListingStatus.ACTIVE) {
+            throw new InvalidListingException(
+                    "Listing is not available for purchase. Status: " + listing.getStatus().getDisplayName()
+            );
+        }
+
+        // Check if listing has expired
+        if (listing.getExpiresAt() != null && Instant.now().isAfter(listing.getExpiresAt())) {
+            throw new InvalidListingException("Listing has expired");
+        }
+
+        // Check if amount is positive
+        if (request.getAmount() <= 0) {
+            throw new InvalidListingException("Purchase amount must be greater than 0");
+        }
+
+        // Check if requested amount is available
+        if (request.getAmount() > listing.getAvailableAmount()) {
+            throw new InsufficientCreditException(request.getAmount(), listing.getAvailableAmount());
+        }
+
+        // Check if listing has price set
+        if (listing.getPricePerKg() == null || listing.getPricePerKg() <= 0) {
+            throw new InvalidListingException("Listing does not have a valid price");
+        }
     }
 }
