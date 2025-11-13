@@ -50,6 +50,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'reset_token_expires' })
   resetTokenExpires: Date | null;
 
+  @Column({ type: 'timestamp', nullable: true, name: 'password_changed_at' })
+  passwordChangedAt: Date | null;
+
   @Column({ type: 'timestamp', nullable: true })
   lockedAt: Date;
 

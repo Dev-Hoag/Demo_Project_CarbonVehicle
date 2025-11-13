@@ -68,3 +68,15 @@ export class VerifyPasswordDto {
   @IsString()
   password: string;
 }
+
+export class ChangePasswordDto {
+  @ApiProperty({ example: 'currentPassword123', description: 'Current password' })
+  @IsString()
+  @MinLength(1)
+  currentPassword: string;
+
+  @ApiProperty({ example: 'newPassword123', minLength: 8, description: 'New password' })
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
+}

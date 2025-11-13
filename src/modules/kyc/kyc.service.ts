@@ -5,6 +5,7 @@ import { KycDocument } from '../../shared/entities/kyc-document.entity';
 import { User } from '../../shared/entities/user.entity';
 import { UploadKycDocumentDto, VerifyKycDto } from '../../shared/dtos/kyc.dto';
 import { KycStatus } from '../../shared/enums/user.enums';
+import { UserEventPublisher } from '../events/user-event.publisher';
 
 @Injectable()
 export class KycService {
@@ -13,6 +14,7 @@ export class KycService {
     private readonly kycRepo: Repository<KycDocument>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly userEventPublisher: UserEventPublisher,
   ) {}
 
   /**
@@ -58,7 +60,8 @@ export class KycService {
         id: d.id,
         documentType: d.documentType,
         status: d.status,
-        uploadedAt: d.createdAt,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
       })),
     };
   }
@@ -101,12 +104,43 @@ export class KycService {
 
     await this.kycRepo.save(doc);
 
-    // Update user KYC status if all documents approved
+    // Update user KYC status based on documents
     const allDocs = await this.kycRepo.find({ where: { userId: doc.userId } });
     const allApproved = allDocs.every((d) => d.status === KycStatus.APPROVED);
+    const hasRejected = allDocs.some((d) => d.status === KycStatus.REJECTED);
 
+    console.log('[KYC] Updating user status:', {
+      userId: doc.userId,
+      totalDocs: allDocs.length,
+      allApproved,
+      hasRejected,
+      docStatuses: allDocs.map(d => ({ id: d.id, status: d.status }))
+    });
+
+    let newKycStatus: KycStatus;
     if (allApproved && allDocs.length > 0) {
+      console.log('[KYC] Setting status to APPROVED');
+      newKycStatus = KycStatus.APPROVED;
       await this.userRepo.update(doc.userId, { kycStatus: KycStatus.APPROVED });
+    } else if (hasRejected) {
+      console.log('[KYC] Setting status to REJECTED');
+      newKycStatus = KycStatus.REJECTED;
+      await this.userRepo.update(doc.userId, { kycStatus: KycStatus.REJECTED });
+    } else {
+      console.log('[KYC] Setting status to PENDING');
+      newKycStatus = KycStatus.PENDING;
+      await this.userRepo.update(doc.userId, { kycStatus: KycStatus.PENDING });
+    }
+
+    // 🔥 Publish KYC status updated event to RabbitMQ for Admin Service sync
+    const user = await this.userRepo.findOne({ where: { id: doc.userId } });
+    if (user) {
+      await this.userEventPublisher.publishKycStatusUpdated({
+        userId: user.id,
+        email: user.email,
+        kycStatus: newKycStatus as 'PENDING' | 'APPROVED' | 'REJECTED',
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     return doc;

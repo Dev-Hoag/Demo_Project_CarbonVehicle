@@ -44,10 +44,27 @@ export class UserService {
       userType: user.userType,
       status: user.status,
       kycStatus: user.kycStatus,
+      isEmailVerified: user.isVerified,
       fullName: profile?.fullName ?? null,
       phone: profile?.phone ?? null,
+      phoneNumber: profile?.phone ?? null,
       city: profile?.city ?? null,
+      address: profile?.address ?? null,
+      dateOfBirth: profile?.dateOfBirth ?? null,
+      bio: profile?.bio ?? null,
+      // EV Owner fields
+      vehicleType: profile?.vehicleType ?? null,
+      vehicleModel: profile?.vehicleModel ?? null,
+      vehiclePlate: profile?.vehiclePlate ?? null,
+      // Buyer fields
+      companyName: profile?.companyName ?? null,
+      taxCode: profile?.taxCode ?? null,
+      // CVA fields
+      certificationNumber: profile?.certificationNumber ?? null,
+      organizationName: profile?.organizationName ?? null,
       createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      passwordChangedAt: user.passwordChangedAt,
     };
   }
 
@@ -60,6 +77,14 @@ export class UserService {
 
     const profile: UserProfile | null = await this.profileRepo.findOne({
       where: { userId },
+    });
+
+    console.log('DEBUG getProfile - user data:', {
+      id: user.id,
+      email: user.email,
+      createdAt: user.createdAt,
+      isVerified: user.isVerified,
+      passwordChangedAt: user.passwordChangedAt,
     });
 
     return this.toProfileResponse(user, profile);

@@ -5,11 +5,12 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../shared/entities/user.entity';
 import { UserProfile } from '../../shared/entities/user-profile.entity';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from '../../shared/dtos/auth.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from '../../shared/dtos/auth.dto';
 import { UserStatus } from '../../shared/enums/user.enums';
 import { ConfigService } from '@nestjs/config';
 import { type StringValue } from 'ms';
 import { EmailService } from './email.service';
+import { UserEventPublisher } from '../events/user-event.publisher';
 import { parseTtl } from '../../common/utils/ttl.util'; 
 
 @Injectable()
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly userEventPublisher: UserEventPublisher,
   ) {}
 
   /**
@@ -47,7 +49,7 @@ export class AuthService {
       isVerified: false,
     });
 
-    await this.profileRepo.save({
+    const profile = await this.profileRepo.save({
       userId: user.id,
       fullName: dto.fullName,
       phone: dto.phone,
@@ -63,6 +65,16 @@ export class AuthService {
     await this.userRepo.save(user);
 
     await this.emailService.sendVerificationEmail(user.email, verificationToken);
+
+    // 🔥 Publish user.created event to RabbitMQ for Admin Service sync
+    await this.userEventPublisher.publishUserCreated({
+      id: user.id,
+      email: user.email,
+      fullName: profile.fullName,
+      phone: profile.phone,
+      userType: dto.userType as 'EV_OWNER' | 'BUYER' | 'CVA',
+      createdAt: user.createdAt.toISOString(),
+    });
 
     return { message: 'Registration successful. Please check your email to verify.' };
   }
@@ -88,6 +100,10 @@ export class AuthService {
 
     if (!user.isVerified) {
       throw new UnauthorizedException('Email not verified. Please check your inbox.');
+    }
+
+    if (user.lockedAt) {
+      throw new UnauthorizedException(`Account locked: ${user.lockReason || 'Contact support for details'}`);
     }
 
     if (user.status === UserStatus.SUSPENDED) {
@@ -284,5 +300,32 @@ async verifyPassword(userId: number, password: string): Promise<{ valid: boolean
   } catch (error) {
     return { valid: false };
   }
+}
+
+/**
+ * Change password for logged-in user
+ * - Verify current password
+ * - Hash and save new password
+ * - Optionally invalidate refresh tokens for security
+ */
+async changePassword(userId: number, currentPassword: string, newPassword: string) {
+  const user = await this.userRepo.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Verify current password
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isPasswordValid) {
+    throw new UnauthorizedException('Current password is incorrect');
+  }
+
+  // Hash and save new password
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  user.passwordHash = newPasswordHash;
+  user.passwordChangedAt = new Date();
+  await this.userRepo.save(user);
+
+  return { message: 'Password changed successfully' };
 }
 }

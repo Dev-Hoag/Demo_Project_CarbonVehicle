@@ -7,6 +7,10 @@ export const getRabbitMQConfig = (): RabbitMQConfig => ({
       name: 'ccm.events',
       type: 'topic',
     },
+    {
+      name: 'admin_events',
+      type: 'topic',
+    },
   ],
   uri: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
   connectionInitOptions: { wait: true, timeout: 20000 },

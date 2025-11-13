@@ -11,6 +11,7 @@ import { InternalAuthController } from './internal-auth.controller';
 import { User } from '../../shared/entities/user.entity';
 import { UserProfile } from '../../shared/entities/user-profile.entity';
 import { EmailService } from './email.service';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EmailService } from './email.service';
         signOptions: { expiresIn: 60 * 60 * 24 },
       }),
     }),
+    EventsModule,
   ],
   controllers: [
     AuthController,
