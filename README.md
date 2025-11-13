@@ -16,7 +16,7 @@ Service quản lý và phát hành **Carbon Credit Certificates** cho nền tả
 - **Deployment**: Docker Compose
 
 ## ⚙️ Quick Start
-```bash
+
 # Clone repo
 git clone <repo-url>
 cd certificate-service
