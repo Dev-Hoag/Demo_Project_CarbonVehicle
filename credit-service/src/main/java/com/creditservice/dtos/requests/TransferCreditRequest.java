@@ -1,0 +1,28 @@
+package com.creditservice.dtos.requests;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class TransferCreditRequest {
+    @NotNull(message = "From user ID is required")
+    private UUID fromUserId;
+
+    @NotNull(message = "To user ID is required")
+    private UUID toUserId;
+
+    @NotNull(message = "Amount is required")
+    @DecimalMin(value = "0.1", message = "Amount must be at least 0.1 kg")
+    private Double amount;
+
+    private String description;
+}
