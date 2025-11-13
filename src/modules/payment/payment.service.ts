@@ -368,15 +368,61 @@ export class PaymentService {
   }
 
   /**
-   * Get payment history for a user
+   * Get payment history for a user with filters and pagination
    */
-  async getPaymentHistory(userId: number, page: number = 1, limit: number = 50) {
-    const [payments, total] = await this.paymentRepository.findAndCount({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      take: limit,
-      skip: (page - 1) * limit,
-    });
+  async getPaymentHistory(userId: number, query?: any) {
+    const page = query?.page || 1;
+    const limit = Math.min(query?.limit || 20, 100); // Max 100 items per page
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = { userId };
+
+    // Filter by status
+    if (query?.status) {
+      where.status = query.status;
+    }
+
+    // Filter by gateway
+    if (query?.gateway) {
+      where.gateway = query.gateway;
+    }
+
+    // Build query with filters
+    const queryBuilder = this.paymentRepository
+      .createQueryBuilder('payment')
+      .where('payment.userId = :userId', { userId });
+
+    if (query?.status) {
+      queryBuilder.andWhere('payment.status = :status', { status: query.status });
+    }
+
+    if (query?.gateway) {
+      queryBuilder.andWhere('payment.gateway = :gateway', { gateway: query.gateway });
+    }
+
+    // Date range filter
+    if (query?.fromDate) {
+      queryBuilder.andWhere('payment.createdAt >= :fromDate', { 
+        fromDate: new Date(query.fromDate) 
+      });
+    }
+
+    if (query?.toDate) {
+      const toDate = new Date(query.toDate);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      queryBuilder.andWhere('payment.createdAt <= :toDate', { toDate });
+    }
+
+    // Sort order
+    const sortOrder = query?.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    queryBuilder.orderBy('payment.createdAt', sortOrder);
+
+    // Pagination
+    queryBuilder.skip(skip).take(limit);
+
+    const [payments, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
 
     return {
       payments: payments.map(p => ({
@@ -388,12 +434,15 @@ export class PaymentService {
         paymentMethod: p.gateway,
         transactionId: p.transactionId,
         description: p.orderInfo,
+        paymentCode: p.paymentCode,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
+        completedAt: p.completedAt,
       })),
       total,
       page,
       limit,
+      totalPages,
     };
   }
 

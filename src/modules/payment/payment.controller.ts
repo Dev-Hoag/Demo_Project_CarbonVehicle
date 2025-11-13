@@ -4,6 +4,7 @@ import {
   Get,
   Body,
   Param,
+  Query,
   Req,
   UseGuards,
   HttpStatus,
@@ -15,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PaymentService } from './payment.service';
@@ -22,6 +24,8 @@ import {
   CreatePaymentDto,
   PaymentResponseDto,
   PaymentStatusDto,
+  PaymentHistoryQueryDto,
+  PaymentHistoryResponseDto,
 } from '../../shared/dtos/payment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -75,15 +79,31 @@ async initiatePayment(@Body() dto: CreatePaymentDto, @Req() req: Request): Promi
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Lịch sử thanh toán',
-    description: 'Lấy danh sách payment của user',
+    description: 'Lấy danh sách payment của user với filter và pagination',
   })
-  @ApiResponse({ status: 200, description: 'Payment history' })
-  async getPaymentHistory(@Req() req: Request) {
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'COMPLETED', 'FAILED', 'EXPIRED'] })
+  @ApiQuery({ name: 'fromDate', required: false, type: String, example: '2025-01-01' })
+  @ApiQuery({ name: 'toDate', required: false, type: String, example: '2025-12-31' })
+  @ApiQuery({ name: 'gateway', required: false, enum: ['VNPAY', 'MOMO'] })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], example: 'desc' })
+  @ApiResponse({ status: 200, description: 'Payment history', type: PaymentHistoryResponseDto })
+  async getPaymentHistory(
+    @Req() req: Request,
+    @Query() query: PaymentHistoryQueryDto,
+  ): Promise<PaymentHistoryResponseDto> {
     const userId = req.headers['x-user-id'] as string;
     if (!userId) {
-      return { payments: [], total: 0, page: 1, limit: 50 };
+      return {
+        payments: [],
+        total: 0,
+        page: query.page || 1,
+        limit: query.limit || 20,
+        totalPages: 0,
+      };
     }
-    return this.paymentService.getPaymentHistory(parseInt(userId));
+    return this.paymentService.getPaymentHistory(parseInt(userId), query);
   }
 
   @Get(':id')

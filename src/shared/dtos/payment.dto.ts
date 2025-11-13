@@ -80,3 +80,59 @@ export class PaymentStatusDto {
   @ApiProperty({ example: '2025-01-01T10:45:00Z', required: false })
   completedAt?: Date;
 }
+
+export class PaymentHistoryQueryDto {
+  @ApiPropertyOptional({ example: 1, description: 'Page number', minimum: 1, default: 1 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ example: 20, description: 'Items per page', minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  limit?: number = 20;
+
+  @ApiPropertyOptional({ enum: PaymentStatus, description: 'Filter by payment status' })
+  @IsOptional()
+  @IsEnum(PaymentStatus)
+  status?: PaymentStatus;
+
+  @ApiPropertyOptional({ example: '2025-01-01', description: 'Start date (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  fromDate?: string;
+
+  @ApiPropertyOptional({ example: '2025-12-31', description: 'End date (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  toDate?: string;
+
+  @ApiPropertyOptional({ enum: PaymentGateway, description: 'Filter by payment gateway' })
+  @IsOptional()
+  @IsEnum(PaymentGateway)
+  gateway?: PaymentGateway;
+
+  @ApiPropertyOptional({ example: 'desc', enum: ['asc', 'desc'], description: 'Sort order', default: 'desc' })
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc' = 'desc';
+}
+
+export class PaymentHistoryResponseDto {
+  @ApiProperty({ type: [PaymentStatusDto] })
+  payments: PaymentStatusDto[];
+
+  @ApiProperty({ example: 100, description: 'Total number of payments' })
+  total: number;
+
+  @ApiProperty({ example: 1, description: 'Current page' })
+  page: number;
+
+  @ApiProperty({ example: 20, description: 'Items per page' })
+  limit: number;
+
+  @ApiProperty({ example: 5, description: 'Total pages' })
+  totalPages: number;
+}
