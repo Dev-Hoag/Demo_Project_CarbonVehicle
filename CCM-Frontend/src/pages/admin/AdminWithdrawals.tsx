@@ -32,6 +32,7 @@ import {
   Refresh,
   AccountBalance,
   Assessment,
+  VerifiedUser,
 } from '@mui/icons-material';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -175,6 +176,14 @@ export default function AdminWithdrawals() {
           <Typography variant="body2" sx={{ mr: 2 }}>
             {adminUser.email}
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<VerifiedUser />}
+            onClick={() => navigate('/admin/kyc')}
+            sx={{ mr: 1 }}
+          >
+            KYC
+          </Button>
           <Button
             color="inherit"
             startIcon={<Assessment />}

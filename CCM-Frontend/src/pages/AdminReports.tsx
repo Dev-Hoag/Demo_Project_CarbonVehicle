@@ -31,6 +31,7 @@ import {
   People,
   ArrowBack,
   Logout,
+  VerifiedUser,
 } from '@mui/icons-material';
 import { adminReportsApi, type FinancialReport, type TransactionReport, type WalletReport } from '../api/admin-reports';
 import toast from 'react-hot-toast';
@@ -132,6 +133,14 @@ export const AdminReportsPage: React.FC = () => {
           <Typography variant="body2" sx={{ mr: 2 }}>
             {adminUser.email}
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<VerifiedUser />}
+            onClick={() => navigate('/admin/kyc')}
+            sx={{ mr: 1 }}
+          >
+            KYC
+          </Button>
           <Button
             color="inherit"
             startIcon={<ArrowBack />}

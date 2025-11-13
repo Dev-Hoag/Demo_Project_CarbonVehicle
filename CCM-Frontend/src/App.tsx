@@ -23,6 +23,7 @@ import TransactionsPage from './pages/Transactions';
 import ProfilePage from './pages/Profile';
 import KYCPage from './pages/KYC';
 import AdminLogin from './pages/admin/AdminLogin';
+import AdminKYC from './pages/admin/AdminKYC';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import { AdminReportsPage } from './pages/AdminReports';
 import { AdminWalletsPage } from './pages/AdminWallets';
@@ -64,6 +65,7 @@ function App() {
             </Route>
 
             {/* Admin routes (no layout) */}
+            <Route path="/admin/kyc" element={<AdminKYC />} />
             <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
             <Route path="/admin/wallets" element={<AdminWalletsPage />} />
