@@ -22,6 +22,7 @@ import {
   TextField,
   Tabs,
   Tab,
+  Grid,
 } from '@mui/material';
 import { Add, Remove, Send, Receipt } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
@@ -78,7 +79,6 @@ export const WalletPage: React.FC = () => {
         walletApi.getWithdrawals(),
       ]);
 
-      // Convert balance to number (API returns string)
       const balanceNumber = typeof summaryData.wallet.balance === 'number'
         ? summaryData.wallet.balance
         : parseFloat(String(summaryData.wallet.balance)) || 0;
@@ -92,7 +92,7 @@ export const WalletPage: React.FC = () => {
       setWithdrawals(withdrawalsData || []);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load wallet data');
-      setTransactions([]); // Set empty array on error
+      setTransactions([]);
       setWithdrawals([]);
     } finally {
       setLoading(false);
@@ -111,7 +111,6 @@ export const WalletPage: React.FC = () => {
         description: data.description,
       });
       
-      // If payment URL is returned, open it in new tab
       if (response.paymentUrl) {
         toast.success('Redirecting to payment gateway...');
         window.open(response.paymentUrl, '_blank');
@@ -129,11 +128,9 @@ export const WalletPage: React.FC = () => {
 
   const handleWithdraw = async (data: any) => {
     try {
-      // Clean amount (remove spaces, commas)
       const cleanAmount = data.amount.toString().replace(/[\s,]/g, '');
       const amount = parseFloat(cleanAmount);
 
-      // Validate amount
       if (isNaN(amount) || amount <= 0) {
         toast.error('Invalid amount');
         return;
@@ -154,7 +151,6 @@ export const WalletPage: React.FC = () => {
         return;
       }
 
-      // Show confirmation dialog instead of immediate withdrawal
       const fee = amount * 0.005;
       const netAmount = amount - fee;
       
@@ -179,25 +175,21 @@ export const WalletPage: React.FC = () => {
       const amount = parseFloat(data.amount);
       const toUserId = parseInt(data.toUserId);
 
-      // Validate amount
       if (isNaN(amount) || amount <= 0) {
         toast.error('Invalid amount');
         return;
       }
 
-      // Validate user ID
       if (isNaN(toUserId) || toUserId <= 0) {
         toast.error('Invalid recipient user ID');
         return;
       }
 
-      // Check balance
       if (amount > balance) {
         toast.error('Insufficient balance');
         return;
       }
 
-      // Show confirmation dialog instead of immediate transfer
       setPendingData({
         toUserId,
         amount,
@@ -215,25 +207,18 @@ export const WalletPage: React.FC = () => {
 
   const handleConfirmAction = async (password: string) => {
     try {
-      console.log('💰 Confirm action:', confirmAction);
-      console.log('💰 Pending data:', pendingData);
-      console.log('💰 Password received:', password);
-      
       if (confirmAction === 'withdraw') {
-        // Map 'description' to 'notes' for backend
         const { description, ...rest } = pendingData;
         const withdrawData = {
           ...rest,
-          notes: description, // Rename description to notes
+          notes: description,
           password
         };
-        console.log('💰 Withdraw data to send:', withdrawData);
         await walletApi.withdraw(withdrawData);
         toast.success('Withdrawal request submitted successfully');
         fetchWalletData();
       } else if (confirmAction === 'transfer') {
         const transferData = { ...pendingData, password };
-        console.log('💰 Transfer data to send:', transferData);
         await walletApi.transfer(transferData);
         toast.success('Transfer completed successfully');
         fetchWalletData();
@@ -259,9 +244,12 @@ export const WalletPage: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-        Wallet
-      </Typography>
+      {/* Header giống ListingsPage */}
+      <Box mb={3}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          Wallet
+        </Typography>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -269,220 +257,233 @@ export const WalletPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Balance Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography color="text.secondary" gutterBottom>
-            Available Balance
-          </Typography>
-          <Typography variant="h3" component="div" sx={{ mb: 2, fontWeight: 600 }}>
-            {balance.toLocaleString('vi-VN')} VND
-          </Typography>
-          
-          {/* Stats Row */}
-          <Box display="flex" gap={3} mb={2}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Locked Balance
+      {/* Dùng Grid container giống Listings */}
+      <Grid container spacing={3} sx={{ width: '100%' }}>
+        {/* Balance Card */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ width: '100%' }}>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Available Balance
               </Typography>
-              <Typography variant="body2" fontWeight={500}>
-                {lockedBalance.toLocaleString('vi-VN')} VND
+              <Typography variant="h3" component="div" sx={{ mb: 2, fontWeight: 600 }}>
+                {balance.toLocaleString('vi-VN')} VND
               </Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Total Deposited
-              </Typography>
-              <Typography variant="body2" fontWeight={500} color="success.main">
-                +{totalDeposited.toLocaleString('vi-VN')} VND
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Total Withdrawn
-              </Typography>
-              <Typography variant="body2" fontWeight={500} color="error.main">
-                -{totalWithdrawn.toLocaleString('vi-VN')} VND
-              </Typography>
-            </Box>
-          </Box>
+              
+              <Box display="flex" gap={3} mb={2}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Locked Balance
+                  </Typography>
+                  <Typography variant="body2" fontWeight={500}>
+                    {lockedBalance.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Deposited
+                  </Typography>
+                  <Typography variant="body2" fontWeight={500} color="success.main">
+                    +{totalDeposited.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Withdrawn
+                  </Typography>
+                  <Typography variant="body2" fontWeight={500} color="error.main">
+                    -{totalWithdrawn.toLocaleString('vi-VN')} VND
+                  </Typography>
+                </Box>
+              </Box>
 
-          <Box display="flex" gap={2}>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setDepositDialog(true)}
-            >
-              Deposit
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Remove />}
-              onClick={() => setWithdrawDialog(true)}
-            >
-              Withdraw
-            </Button>
-            <Button 
-              variant="outlined" 
-              startIcon={<Send />}
-              onClick={() => setTransferDialog(true)}
-            >
-              Transfer
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+              <Box display="flex" gap={2}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setDepositDialog(true)}
+                >
+                  Deposit
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Remove />}
+                  onClick={() => setWithdrawDialog(true)}
+                >
+                  Withdraw
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  startIcon={<Send />}
+                  onClick={() => setTransferDialog(true)}
+                >
+                  Transfer
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Transactions & Withdrawals Tabs */}
-      <Card>
-        <CardContent>
-          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-            <Tab label="Transaction History" />
-            <Tab label="Withdrawal Requests" icon={<Receipt />} iconPosition="start" />
-          </Tabs>
+        {/* Transactions / Withdrawals Card */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ width: '100%' }}>
+            <CardContent>
+              <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
+                <Tab label="Transaction History" />
+                <Tab label="Withdrawal Requests" icon={<Receipt />} iconPosition="start" />
+              </Tabs>
 
-          {activeTab === 0 && (
-            <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {!transactions || transactions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        No transactions yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    transactions.map((tx) => {
-                      const amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount)) || 0;
-                      return (
-                        <TableRow key={tx.id}>
-                          <TableCell>{new Date(tx.createdAt).toLocaleDateString('vi-VN')}</TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={tx.type} 
-                              size="small"
-                              color={tx.type === 'DEPOSIT' ? 'success' : tx.type === 'WITHDRAWAL' ? 'warning' : 'default'}
-                            />
-                          </TableCell>
-                          <TableCell>{tx.description || '-'}</TableCell>
-                          <TableCell align="right">
-                            <Typography
-                              fontWeight={600}
-                              color={['DEPOSIT', 'REFUND'].includes(tx.type) ? 'success.main' : 'error.main'}
-                            >
-                              {['DEPOSIT', 'REFUND'].includes(tx.type) ? '+' : '-'}{amount.toLocaleString('vi-VN')} VND
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={tx.status} color={statusColors[tx.status]} size="small" />
+              {activeTab === 0 && (
+                <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Description</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                        <TableCell>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {!transactions || transactions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center">
+                            No transactions yet
                           </TableCell>
                         </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                      ) : (
+                        transactions.map((tx) => {
+                          const amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount)) || 0;
+                          return (
+                            <TableRow key={tx.id}>
+                              <TableCell>{new Date(tx.createdAt).toLocaleDateString('vi-VN')}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={tx.type} 
+                                  size="small"
+                                  color={
+                                    tx.type === 'DEPOSIT'
+                                      ? 'success'
+                                      : tx.type === 'WITHDRAWAL'
+                                      ? 'warning'
+                                      : 'default'
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>{tx.description || '-'}</TableCell>
+                              <TableCell align="right">
+                                <Typography
+                                  fontWeight={600}
+                                  color={['DEPOSIT', 'REFUND'].includes(tx.type) ? 'success.main' : 'error.main'}
+                                >
+                                  {['DEPOSIT', 'REFUND'].includes(tx.type) ? '+' : '-'}
+                                  {amount.toLocaleString('vi-VN')} VND
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip label={tx.status} color={statusColors[tx.status]} size="small" />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
 
-          {activeTab === 1 && (
-            <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Bank Info</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Fee</TableCell>
-                    <TableCell align="right">Net Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Note</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {withdrawals.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        No withdrawal requests yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    withdrawals.map((withdrawal) => {
-                      const withdrawalStatusColors: Record<string, any> = {
-                        PENDING: 'warning',
-                        APPROVED: 'success',
-                        REJECTED: 'error',
-                      };
-
-                      return (
-                        <TableRow key={withdrawal.id}>
-                          <TableCell>
-                            {new Date(withdrawal.createdAt).toLocaleDateString('vi-VN', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {withdrawal.bankName}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {withdrawal.bankAccountNumber} - {withdrawal.bankAccountName}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            {parseFloat(String(withdrawal.amount)).toLocaleString('vi-VN')} VND
-                          </TableCell>
-                          <TableCell align="right">
-                            {parseFloat(String(withdrawal.fee)).toLocaleString('vi-VN')} VND
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography fontWeight="medium" color="error.main">
-                              {parseFloat(String(withdrawal.netAmount)).toLocaleString('vi-VN')} VND
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={withdrawal.status} 
-                              color={withdrawalStatusColors[withdrawal.status] || 'default'}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {withdrawal.status === 'REJECTED' && withdrawal.rejectionReason ? (
-                              <Typography variant="caption" color="error">
-                                {withdrawal.rejectionReason}
-                              </Typography>
-                            ) : withdrawal.status === 'APPROVED' && withdrawal.approvedAt ? (
-                              <Typography variant="caption" color="success.main">
-                                Approved: {new Date(withdrawal.approvedAt).toLocaleDateString('vi-VN')}
-                              </Typography>
-                            ) : (
-                              '-'
-                            )}
+              {activeTab === 1 && (
+                <TableContainer component={Paper} elevation={0} sx={{ mt: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Bank Info</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                        <TableCell align="right">Fee</TableCell>
+                        <TableCell align="right">Net Amount</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Note</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {withdrawals.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            No withdrawal requests yet
                           </TableCell>
                         </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
+                      ) : (
+                        withdrawals.map((withdrawal) => {
+                          const withdrawalStatusColors: Record<string, any> = {
+                            PENDING: 'warning',
+                            APPROVED: 'success',
+                            REJECTED: 'error',
+                          };
+
+                          return (
+                            <TableRow key={withdrawal.id}>
+                              <TableCell>
+                                {new Date(withdrawal.createdAt).toLocaleDateString('vi-VN', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">
+                                  {withdrawal.bankName}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {withdrawal.bankAccountNumber} - {withdrawal.bankAccountName}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                {parseFloat(String(withdrawal.amount)).toLocaleString('vi-VN')} VND
+                              </TableCell>
+                              <TableCell align="right">
+                                {parseFloat(String(withdrawal.fee)).toLocaleString('vi-VN')} VND
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography fontWeight="medium" color="error.main">
+                                  {parseFloat(String(withdrawal.netAmount)).toLocaleString('vi-VN')} VND
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={withdrawal.status} 
+                                  color={withdrawalStatusColors[withdrawal.status] || 'default'}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {withdrawal.status === 'REJECTED' && withdrawal.rejectionReason ? (
+                                  <Typography variant="caption" color="error">
+                                    {withdrawal.rejectionReason}
+                                  </Typography>
+                                ) : withdrawal.status === 'APPROVED' && withdrawal.approvedAt ? (
+                                  <Typography variant="caption" color="success.main">
+                                    Approved: {new Date(withdrawal.approvedAt).toLocaleDateString('vi-VN')}
+                                  </Typography>
+                                ) : (
+                                  '-'
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Deposit Dialog */}
       <Dialog open={depositDialog} onClose={() => setDepositDialog(false)}>

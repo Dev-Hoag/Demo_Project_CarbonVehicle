@@ -26,6 +26,7 @@ export interface UserProfile {
   organizationName?: string;
   createdAt: string;
   updatedAt: string;
+  passwordChangedAt?: string;
 }
 
 export interface UpdateProfileData {

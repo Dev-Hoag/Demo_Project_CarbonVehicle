@@ -313,7 +313,7 @@ export const KYCPage: React.FC = () => {
                           </Typography>
                         )}
                         <Typography variant="caption" color="text.secondary">
-                          Uploaded: {new Date(doc.uploadedAt).toLocaleString()}
+                          Uploaded: {new Date(doc.createdAt).toLocaleString()}
                         </Typography>
                         {doc.verifiedAt && (
                           <Typography variant="caption" color="text.secondary" display="block">

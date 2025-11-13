@@ -63,43 +63,29 @@ export const MainLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+  const handleMenuClick = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-    handleMenuClose();
+    setAnchorEl(null);
   };
 
   const handleNavigate = (path: string) => {
     navigate(path);
-    if (isMobile) {
-      setMobileOpen(false);
-    }
+    if (isMobile) setMobileOpen(false);
   };
 
   const drawer = (
     <Box>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
-          CCM
-        </Typography>
-      </Toolbar>
+      <Toolbar />
       <Divider />
       <List>
         {menuItems
           .filter(item => !item.adminOnly || user?.userType === 'CVA')
-          .map((item) => (
+          .map(item => (
             <ListItem key={item.title} disablePadding>
               <ListItemButton onClick={() => handleNavigate(item.path)}>
                 <ListItemIcon sx={{ color: theme.palette.primary.main }}>
@@ -114,96 +100,112 @@ export const MainLayout: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      minHeight: '100vh',
+      bgcolor: 'background.default',
+    }}>
+      
+      {/* FULL WIDTH APPBAR */}
       <AppBar
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
+          zIndex: theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar>
+          {/* Mobile Menu Button */}
           <IconButton
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Carbon Credit Market
           </Typography>
+
           <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>
             <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
               {user?.fullName?.charAt(0) || 'U'}
             </Avatar>
           </IconButton>
+
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           >
             <MenuItem onClick={() => { handleNavigate('/profile'); handleMenuClose(); }}>
-              <ListItemIcon>
-                <PersonIcon fontSize="small" />
-              </ListItemIcon>
+              <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
               Profile
             </MenuItem>
+
             <MenuItem onClick={() => { handleNavigate('/settings'); handleMenuClose(); }}>
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
+              <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
               Settings
             </MenuItem>
+
             <Divider />
+
             <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" />
-              </ListItemIcon>
+              <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
               Logout
             </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
+
+      {/* DRAWER */}
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+        
+        {/* Mobile Drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { width: drawerWidth },
           }}
         >
           {drawer}
         </Drawer>
+
+        {/* Desktop Drawer */}
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              mt: '64px',
+              height: 'calc(100% - 64px)',
+            },
           }}
           open
         >
           {drawer}
         </Drawer>
       </Box>
+
+      {/* MAIN CONTENT - FIXED */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
           p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
-          minHeight: '100vh',
-          bgcolor: theme.palette.background.default,
+          mt: '64px',
+          minHeight: 'calc(100vh - 64px)',
+          bgcolor: 'background.default',
+          boxSizing: 'border-box',
         }}
       >
         <Outlet />

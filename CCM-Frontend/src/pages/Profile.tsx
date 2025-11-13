@@ -17,12 +17,14 @@ import { useForm } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
 import { userApi, type UpdateProfileData } from '../api/user';
 import toast from 'react-hot-toast';
+import { ChangePasswordDialog } from '../components/ChangePasswordDialog';
 
 export const ProfilePage: React.FC = () => {
   const { user, setUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
@@ -32,6 +34,19 @@ export const ProfilePage: React.FC = () => {
       dateOfBirth: user?.dateOfBirth || '',
     },
   });
+
+  // Fetch fresh profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const freshProfile = await userApi.getProfile();
+        setUser(freshProfile);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      }
+    };
+    fetchProfile();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (user) {
@@ -139,7 +154,14 @@ export const ProfilePage: React.FC = () => {
                   <strong>Email Verified:</strong> {user.isEmailVerified ? 'Yes' : 'No'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  <strong>Member Since:</strong> {new Date(user.createdAt).toLocaleDateString()}
+                  <strong>Member Since:</strong>{' '}
+                  {user.createdAt 
+                    ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })
+                    : 'N/A'}
                 </Typography>
               </Box>
             </CardContent>
@@ -250,16 +272,33 @@ export const ProfilePage: React.FC = () => {
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Account Security
               </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }}>
+              <Button 
+                variant="outlined" 
+                sx={{ mt: 2 }}
+                onClick={() => setShowChangePassword(true)}
+              >
                 Change Password
               </Button>
               <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
-                Last password change: Never
+                <strong>Last password change:</strong>{' '}
+                {user.passwordChangedAt
+                  ? new Date(user.passwordChangedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : 'Never'}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        open={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
     </Box>
   );
 };

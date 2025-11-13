@@ -383,7 +383,7 @@ const AdminKYC: React.FC = () => {
                       <Chip label={doc.status} color={getStatusColor(doc.status)} size="small" />
                     </TableCell>
                     <TableCell>
-                      {new Date(doc.uploadedAt).toLocaleDateString('en-US', {
+                      {new Date(doc.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
@@ -483,7 +483,7 @@ const AdminKYC: React.FC = () => {
                   </Typography>
                 )}
                 <Typography variant="body2" color="text.secondary">
-                  Uploaded: <strong>{new Date(selectedDoc.uploadedAt).toLocaleString()}</strong>
+                  Uploaded: <strong>{new Date(selectedDoc.createdAt).toLocaleString()}</strong>
                 </Typography>
                 {selectedDoc.rejectionReason && (
                   <Alert severity="error" sx={{ mt: 2 }}>

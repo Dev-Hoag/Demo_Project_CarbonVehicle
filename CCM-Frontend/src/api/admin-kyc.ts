@@ -15,7 +15,8 @@ export interface KycDocument {
   documentNumber?: string;
   fileUrl: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  uploadedAt: string;
+  createdAt: string;
+  updatedAt: string;
   verifiedBy?: number;
   verifiedAt?: string;
   rejectionReason?: string;
