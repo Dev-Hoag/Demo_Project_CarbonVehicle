@@ -15,30 +15,6 @@ Service quản lý và phát hành **Carbon Credit Certificates** cho nền tả
 - **Messaging**: RabbitMQ
 - **Deployment**: Docker Compose
 
-## ⚙️ Quick Start
-
-# Clone repo
-git clone <repo-url>
-cd certificate-service
-
-# Run with Docker
-docker compose up -d
-
-# Access API docs
-http://localhost:8005/docs
-
-
-certificate-service/
-├── app/
-│   ├── main.py
-│   ├── api/
-│   ├── models/
-│   ├── services/
-│   └── messaging/
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-
 ## 📘 API Overview
 
 ### 🔹 Certificate Management
@@ -64,4 +40,29 @@ certificate-service/
 ### 🔹 Utility
 - `GET /health` — Kiểm tra tình trạng service  
 - `GET /` — Thông tin service & liên kết tài liệu API  
+
+
+## ⚙️ Quick Start
+```bash
+# Clone repo
+git clone <repo-url>
+cd certificate-service
+
+# Run with Docker
+docker compose up -d
+
+# Access API docs
+http://localhost:8005/docs
+
+
+certificate-service/
+├── app/
+│   ├── main.py
+│   ├── api/
+│   ├── models/
+│   ├── services/
+│   └── messaging/
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
 
