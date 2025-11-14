@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../shared/entities/user.entity';
 import { UserProfile } from '../../shared/entities/user-profile.entity';
+import { UserStatus } from '../../shared/enums/user.enums';
+import { UserEventPublisher } from './user-event.publisher';
 
 /**
  * Consumes events from Admin Service to sync admin changes back to User Service
@@ -29,7 +31,7 @@ interface AdminKycUpdateEvent {
 interface AdminUserStatusEvent {
   userId: number;
   email: string;
-  action: 'LOCK' | 'UNLOCK' | 'SUSPEND';
+  action: 'LOCK' | 'UNLOCK' | 'SUSPEND' | 'ACTIVATE';
   reason?: string;
   updatedBy: string;
   updatedAt: string;
@@ -44,6 +46,7 @@ export class AdminEventConsumer {
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
+    private readonly userEventPublisher: UserEventPublisher,
   ) {}
 
   /**
@@ -193,23 +196,76 @@ export class AdminEventConsumer {
       // Map Admin Service actions to User Service fields
       switch (payload.action) {
         case 'LOCK':
+          user.status = UserStatus.SUSPENDED; // Lock means suspended status
           user.lockedAt = new Date();
           user.lockReason = payload.reason || 'Locked by admin';
           this.logger.log(`🔒 Locking user ${payload.email} (ID: ${payload.userId})`);
           break;
         case 'UNLOCK':
+          user.status = UserStatus.ACTIVE; // Unlock means active status
           user.lockedAt = null;
           user.lockReason = null;
           this.logger.log(`🔓 Unlocking user ${payload.email} (ID: ${payload.userId})`);
           break;
         case 'SUSPEND':
+          user.status = UserStatus.SUSPENDED; // Update status to SUSPENDED
           user.suspendedAt = new Date();
           user.suspendReason = payload.reason || 'Suspended by admin';
           this.logger.log(`⛔ Suspending user ${payload.email} (ID: ${payload.userId})`);
           break;
+        case 'ACTIVATE':
+          user.status = UserStatus.ACTIVE; // Update status to ACTIVE
+          user.suspendedAt = null;
+          user.suspendReason = null;
+          this.logger.log(`✅ Activating user ${payload.email} (ID: ${payload.userId})`);
+          break;
       }
 
       await this.userRepository.save(user);
+
+      // Publish corresponding user event to Wallet Service
+      try {
+        switch (payload.action) {
+          case 'LOCK':
+            await this.userEventPublisher.publishUserLocked({
+              userId: user.id,
+              email: user.email,
+              reason: user.lockReason,
+              lockedBy: 1, // Admin user
+              lockedAt: user.lockedAt.toISOString(),
+            });
+            break;
+          case 'UNLOCK':
+            await this.userEventPublisher.publishUserUnlocked({
+              userId: user.id,
+              email: user.email,
+              unlockedBy: 1, // Admin user
+              unlockedAt: new Date().toISOString(),
+            });
+            break;
+          case 'SUSPEND':
+            await this.userEventPublisher.publishUserSuspended({
+              userId: user.id,
+              email: user.email,
+              reason: user.suspendReason,
+              suspendedBy: 1, // Admin user
+              suspendedAt: user.suspendedAt.toISOString(),
+            });
+            break;
+          case 'ACTIVATE':
+            await this.userEventPublisher.publishUserActivated({
+              userId: user.id,
+              email: user.email,
+              activatedBy: 1, // Admin user
+              activatedAt: new Date().toISOString(),
+            });
+            break;
+        }
+      } catch (publishError) {
+        this.logger.error(
+          `Failed to publish user event for action ${payload.action}: ${publishError.message}`,
+        );
+      }
 
       this.logger.log(
         `✅ Successfully synced admin status change for user ${payload.email}: ${payload.action}`,

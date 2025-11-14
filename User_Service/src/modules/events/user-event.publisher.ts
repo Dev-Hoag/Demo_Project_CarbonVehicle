@@ -25,6 +25,44 @@ interface UserKycStatusPayload {
   updatedAt: string;
 }
 
+interface UserLockedPayload {
+  userId: number;
+  email: string;
+  reason: string;
+  lockedBy: number;
+  lockedAt: string;
+}
+
+interface UserUnlockedPayload {
+  userId: number;
+  email: string;
+  unlockedBy: number;
+  unlockedAt: string;
+}
+
+interface UserSuspendedPayload {
+  userId: number;
+  email: string;
+  reason: string;
+  suspendedBy: number;
+  suspendedAt: string;
+}
+
+interface UserActivatedPayload {
+  userId: number;
+  email: string;
+  activatedBy: number;
+  activatedAt: string;
+}
+
+interface UserDeletedPayload {
+  userId: number;
+  email: string;
+  reason: string;
+  deletedBy: number;
+  deletedAt: string;
+}
+
 @Injectable()
 export class UserEventPublisher {
   private readonly logger = new Logger(UserEventPublisher.name);
@@ -86,6 +124,101 @@ export class UserEventPublisher {
     } catch (error) {
       this.logger.error(
         `Failed to publish KYC status event for user ${payload.userId}: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Publish user.locked event when admin locks a user
+   */
+  async publishUserLocked(payload: UserLockedPayload): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        'user_events',
+        'user.locked',
+        payload,
+      );
+      this.logger.log(`Published user.locked event for user ${payload.userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish user.locked event for user ${payload.userId}: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Publish user.unlocked event when admin unlocks a user
+   */
+  async publishUserUnlocked(payload: UserUnlockedPayload): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        'user_events',
+        'user.unlocked',
+        payload,
+      );
+      this.logger.log(`Published user.unlocked event for user ${payload.userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish user.unlocked event for user ${payload.userId}: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Publish user.suspended event when admin suspends a user
+   */
+  async publishUserSuspended(payload: UserSuspendedPayload): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        'user_events',
+        'user.suspended',
+        payload,
+      );
+      this.logger.log(`Published user.suspended event for user ${payload.userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish user.suspended event for user ${payload.userId}: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Publish user.activated event when admin activates a suspended user
+   */
+  async publishUserActivated(payload: UserActivatedPayload): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        'user_events',
+        'user.activated',
+        payload,
+      );
+      this.logger.log(`Published user.activated event for user ${payload.userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish user.activated event for user ${payload.userId}: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Publish user.deleted event when admin deletes a user
+   */
+  async publishUserDeleted(payload: UserDeletedPayload): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        'user_events',
+        'user.deleted',
+        payload,
+      );
+      this.logger.log(`Published user.deleted event for user ${payload.userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish user.deleted event for user ${payload.userId}: ${error.message}`,
         error.stack,
       );
     }

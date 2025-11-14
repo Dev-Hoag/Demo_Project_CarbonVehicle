@@ -8,6 +8,7 @@ import { AuditLog } from '../../shared/entities/audit-log.entity';
 import { AdminUser } from '../../shared/entities/admin-user.entity';
 import { ManagedUser } from '../../shared/entities/managed-user.entity';
 import { ManagedTransaction } from '../../shared/entities/managed-transaction.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ManagedTransaction } from '../../shared/entities/managed-transaction.en
       ManagedUser,
       ManagedTransaction,
     ]),
+    AuthModule, // Import AuthModule để JwtAuthGuard hoạt động
   ],
   controllers: [ReportController],
   providers: [ReportService],

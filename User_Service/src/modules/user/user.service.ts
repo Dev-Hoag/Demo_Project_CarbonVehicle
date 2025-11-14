@@ -19,6 +19,7 @@ import {
   LockUserDto,
   SuspendUserDto,
 } from '../../shared/dtos/internal-user.dto';
+import { UserEventPublisher } from '../events/user-event.publisher';
 
 @Injectable()
 export class UserService {
@@ -32,6 +33,7 @@ export class UserService {
     @InjectRepository(UserActionLog)
     private readonly actionLogRepo: Repository<UserActionLog>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly userEventPublisher: UserEventPublisher,
   ) {}
 
   /**
@@ -320,12 +322,21 @@ export class UserService {
       dto.adminId,
     );
 
-    // Emit event
+    // Emit local event
     this.eventEmitter.emit('user.locked', {
       userId: id,
       reason: dto.reason,
       lockedBy: dto.adminId,
       lockedAt: new Date(),
+    });
+
+    // Publish event to RabbitMQ for other services
+    await this.userEventPublisher.publishUserLocked({
+      userId: id,
+      email: user.email,
+      reason: dto.reason,
+      lockedBy: dto.adminId,
+      lockedAt: new Date().toISOString(),
     });
 
     return {
@@ -360,11 +371,19 @@ export class UserService {
       adminId,
     );
 
-    // Emit event
+    // Emit local event
     this.eventEmitter.emit('user.unlocked', {
       userId: id,
       unlockedBy: adminId,
       unlockedAt: new Date(),
+    });
+
+    // Publish event to RabbitMQ
+    await this.userEventPublisher.publishUserUnlocked({
+      userId: id,
+      email: user.email,
+      unlockedBy: adminId,
+      unlockedAt: new Date().toISOString(),
     });
 
     return {
@@ -404,12 +423,21 @@ export class UserService {
       dto.adminId,
     );
 
-    // Emit event
+    // Emit local event
     this.eventEmitter.emit('user.suspended', {
       userId: id,
       reason: dto.reason,
       suspendedBy: dto.adminId,
       suspendedAt: new Date(),
+    });
+
+    // Publish event to RabbitMQ
+    await this.userEventPublisher.publishUserSuspended({
+      userId: id,
+      email: user.email,
+      reason: dto.reason,
+      suspendedBy: dto.adminId,
+      suspendedAt: new Date().toISOString(),
     });
 
     return {
@@ -443,11 +471,19 @@ export class UserService {
       adminId,
     );
 
-    // Emit event
+    // Emit local event
     this.eventEmitter.emit('user.activated', {
       userId: id,
       activatedBy: adminId,
       activatedAt: new Date(),
+    });
+
+    // Publish event to RabbitMQ
+    await this.userEventPublisher.publishUserActivated({
+      userId: id,
+      email: user.email,
+      activatedBy: adminId,
+      activatedAt: new Date().toISOString(),
     });
 
     return {
@@ -484,12 +520,21 @@ export class UserService {
       adminId,
     );
 
-    // Emit event
+    // Emit local event
     this.eventEmitter.emit('user.deleted', {
       userId: id,
       reason,
       deletedBy: adminId,
       deletedAt: new Date(),
+    });
+
+    // Publish event to RabbitMQ
+    await this.userEventPublisher.publishUserDeleted({
+      userId: id,
+      email: user.email,
+      reason,
+      deletedBy: adminId,
+      deletedAt: new Date().toISOString(),
     });
 
     return {

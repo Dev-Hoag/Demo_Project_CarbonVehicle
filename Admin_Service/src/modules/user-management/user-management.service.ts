@@ -338,18 +338,95 @@ export class UserManagementService {
       newValue: { status: ManagedUserStatus.SUSPENDED, suspensionReason: reason },
     });
 
+    // Publish suspend event to User Service
+    if (updated.externalUserId) {
+      try {
+        await this.adminEventPublisher.publishAdminUserStatusChanged({
+          userId: parseInt(updated.externalUserId),
+          email: updated.email,
+          action: 'SUSPEND',
+          reason,
+          updatedBy: 'admin',
+          updatedAt: new Date().toISOString(),
+        });
+        this.logger.log(`📤 Published admin.user.status_changed: SUSPEND for userId=${updated.externalUserId}`);
+      } catch (err: any) {
+        this.logger.error(`❌ Failed to publish suspend event: ${err.message}`);
+      }
+    }
+
+    return this.toResponseDto(updated);
+  }
+
+  async activateUser(id: number, adminId: number, notes?: string): Promise<ManagedUserResponseDto> {
+    const user = await this.managedUserRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const oldStatus = user.status;
+    user.status = ManagedUserStatus.ACTIVE;
+    user.suspensionReason = ''; // Clear suspension reason when activating
+    const updated: ManagedUser = await this.managedUserRepository.save(user);
+
+    await this.userActionAuditRepository.save({
+      managedUser: { id } as any,
+      actionType: 'ACTIVATE',
+      performedBy: { id: adminId } as any,
+      reason: notes || 'User activated by admin',
+    });
+
+    await this.auditLogService.log({
+      adminUserId: adminId,
+      actionName: 'ACTIVATE_USER',
+      resourceType: 'USER',
+      resourceId: String(id),
+      description: notes || 'User activated (unsuspended)',
+      oldValue: { status: oldStatus },
+      newValue: { status: ManagedUserStatus.ACTIVE },
+    });
+
+    // Publish activate event to User Service
+    if (updated.externalUserId) {
+      try {
+        await this.adminEventPublisher.publishAdminUserStatusChanged({
+          userId: parseInt(updated.externalUserId),
+          email: updated.email,
+          action: 'ACTIVATE',
+          reason: notes || 'User activated by admin',
+          updatedBy: 'admin',
+          updatedAt: new Date().toISOString(),
+        });
+        this.logger.log(`📤 Published admin.user.status_changed: ACTIVATE for userId=${updated.externalUserId}`);
+      } catch (err: any) {
+        this.logger.error(`❌ Failed to publish activate event: ${err.message}`);
+      }
+    }
+
     return this.toResponseDto(updated);
   }
 
   async getUserActionHistory(userId: number, page = 1, limit = 10) {
     const [data, total] = await this.userActionAuditRepository.findAndCount({
       where: { managedUser: { id: userId } },
+      relations: ['performedBy'], // Load admin user who performed the action
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
-    return { data, total, page, limit };
+    // Map to safe response DTO
+    const mappedData = data.map(audit => ({
+      id: audit.id,
+      actionType: audit.actionType,
+      reason: audit.reason,
+      createdAt: audit.createdAt,
+      performedBy: audit.performedBy ? {
+        id: audit.performedBy.id,
+        username: audit.performedBy.username,
+        email: audit.performedBy.email,
+      } : null,
+    }));
+
+    return { data: mappedData, total, page, limit };
   }
 
   private toResponseDto(user: ManagedUser): ManagedUserResponseDto {

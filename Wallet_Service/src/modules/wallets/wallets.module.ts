@@ -12,6 +12,6 @@ import { EventsModule } from '../events/events.module';
   imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction, Reserve, WalletAuditLog]), EventsModule],
   controllers: [WalletsController],
   providers: [WalletsService],
-  exports: [WalletsService],
+  exports: [WalletsService, TypeOrmModule], // Export TypeOrmModule to make Wallet repository available
 })
 export class WalletsModule {}

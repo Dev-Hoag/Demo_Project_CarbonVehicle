@@ -17,7 +17,7 @@ export class AuditLogController {
   @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
   @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
   @ApiQuery({ name: 'adminId', type: Number, required: false })
-  @ApiQuery({ name: 'resourceType', type: String, required: false, example: 'USER' })
+  @ApiQuery({ name: 'resourceType', type: String, required: false })
   @ApiOkResponse({ description: 'List of audit logs' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async findAll(
@@ -26,7 +26,29 @@ export class AuditLogController {
     @Query('adminId') adminId?: number,
     @Query('resourceType') resourceType?: string,
   ) {
-    return this.auditLogService.findAll(page, limit, { adminId, resourceType });
+    const result = await this.auditLogService.findAll(page, limit, { adminId, resourceType });
+    
+    // Map response to include adminId and adminUsername
+    const mappedData = result.data.map(log => ({
+      id: log.id,
+      adminId: log.adminUser?.id || null,
+      adminUsername: log.adminUser?.username || null,
+      actionName: log.actionName,
+      targetType: log.resourceType,
+      targetId: log.resourceId,
+      changes: log.newValue,
+      ipAddress: log.ipAddress,
+      userAgent: log.traceId,
+      createdAt: log.createdAt,
+    }));
+
+    return {
+      data: mappedData,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: Math.ceil(result.total / result.limit),
+    };
   }
 
   @Get(':id')
@@ -35,6 +57,24 @@ export class AuditLogController {
   @ApiParam({ name: 'id', type: Number, description: 'Audit log ID' })
   @ApiOkResponse({ description: 'Audit log detail' })
   async findById(@Param('id') id: number) {
-    return this.auditLogService.findById(id);
+    const log = await this.auditLogService.findById(id);
+    
+    if (!log) {
+      return null;
+    }
+
+    // Map response to match frontend interface
+    return {
+      id: log.id,
+      adminId: log.adminUser?.id || null,
+      adminUsername: log.adminUser?.username || null,
+      actionName: log.actionName,
+      targetType: log.resourceType,
+      targetId: log.resourceId,
+      changes: log.newValue,
+      ipAddress: log.ipAddress,
+      userAgent: log.traceId,
+      createdAt: log.createdAt,
+    };
   }
 }

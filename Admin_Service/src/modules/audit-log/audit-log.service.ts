@@ -49,7 +49,7 @@ export class AuditLogService {
   async findAll(page: number = 1, limit: number = 10, filters?: any) {
     const qb = this.auditLogRepository
       .createQueryBuilder('log')
-      .leftJoin('log.adminUser', 'admin'); 
+      .leftJoinAndSelect('log.adminUser', 'admin'); // Changed to leftJoinAndSelect to include admin data
 
     if (filters?.adminId) {
      

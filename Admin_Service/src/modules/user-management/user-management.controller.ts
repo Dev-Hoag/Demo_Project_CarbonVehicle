@@ -100,6 +100,15 @@ export class UserManagementController {
     return this.userService.suspendUser(id, admin.id, body.reason);
   }
 
+  @Post(':id/unsuspend')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Unsuspend user', description: 'Kích hoạt lại user đã bị suspend (status=ACTIVE).' })
+  @ApiParam({ name: 'id', type: Number, description: 'User ID' })
+  @ApiOkResponse({ description: 'User activated', type: ManagedUserResponseDto })
+  async unsuspendUser(@Param('id') id: number, @CurrentUser() admin: any) {
+    return this.userService.activateUser(id, admin.id);
+  }
+
   @Get(':id/action-history')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'User action history', description: 'Lịch sử thao tác (lock/unlock/suspend/delete) trên user.' })

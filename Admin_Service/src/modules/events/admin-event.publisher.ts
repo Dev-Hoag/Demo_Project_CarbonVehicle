@@ -25,7 +25,7 @@ export interface AdminKycUpdatePayload {
 export interface AdminUserStatusPayload {
   userId: number;
   email: string;
-  action: 'LOCK' | 'UNLOCK' | 'SUSPEND';
+  action: 'LOCK' | 'UNLOCK' | 'SUSPEND' | 'ACTIVATE';
   reason?: string;
   updatedBy: string;
   updatedAt: string;
