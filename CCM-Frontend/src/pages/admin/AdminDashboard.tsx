@@ -20,12 +20,29 @@ import { useNavigate } from 'react-router-dom';
 import adminService from '../../services/admin';
 
 interface DashboardStats {
+  // Overview
   totalUsers: number;
+  activeUsers: number;
+  suspendedUsers: number;
+  evOwners: number;
+  buyers: number;
+  verifiers: number;
+  
+  // Credits
+  totalCreditsIssued: number;
+  totalCreditsTraded: number;
+  totalCo2Reduced: number;
+  
+  // Financial
+  totalRevenue: number;
+  totalFeeCollected: number;
+  totalTransactions: number;
+  
+  // Pending items (from other APIs)
   pendingKYC: number;
   pendingWithdrawals: number;
-  totalTransactions: number;
-  totalWalletBalance: number;
-  monthlyRevenue: number;
+  
+  timestamp: string;
 }
 
 const StatCard: React.FC<{
@@ -87,11 +104,20 @@ export const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
+    activeUsers: 0,
+    suspendedUsers: 0,
+    evOwners: 0,
+    buyers: 0,
+    verifiers: 0,
+    totalCreditsIssued: 0,
+    totalCreditsTraded: 0,
+    totalCo2Reduced: 0,
+    totalRevenue: 0,
+    totalFeeCollected: 0,
+    totalTransactions: 0,
     pendingKYC: 0,
     pendingWithdrawals: 0,
-    totalTransactions: 0,
-    totalWalletBalance: 0,
-    monthlyRevenue: 0,
+    timestamp: new Date().toISOString(),
   });
 
   useEffect(() => {
@@ -103,17 +129,51 @@ export const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Call real Admin API
-      const data = await adminService.reports.getDashboardSummary();
+      // Fetch dashboard summary
+      const dashboardData = await adminService.reports.getDashboardSummary();
       
-      // API returns nested structure: { overview: {...}, credits: {...}, financial: {...} }
+      // Try to fetch pending counts (don't fail if endpoints don't exist)
+      let pendingKYC = 0;
+      let pendingWithdrawals = 0;
+      
+      try {
+        const kycData = await adminService.kyc.getAllDocuments({ page: 1, limit: 1, status: 'PENDING' });
+        pendingKYC = kycData.total || 0;
+      } catch (e) {
+        console.log('KYC endpoint not available or error:', e);
+      }
+      
+      try {
+        const withdrawalData = await adminService.withdrawals.getPendingWithdrawals();
+        pendingWithdrawals = Array.isArray(withdrawalData) ? withdrawalData.length : withdrawalData.total || 0;
+      } catch (e) {
+        console.log('Withdrawal endpoint not available or error:', e);
+      }
+
       setStats({
-        totalUsers: data.overview?.totalUsers || 0,
-        pendingKYC: 0, // TODO: Get from KYC service
-        pendingWithdrawals: 0, // TODO: Get from withdrawal service
-        totalTransactions: data.financial?.totalTransactions || 0,
-        totalWalletBalance: 0, // TODO: Get from wallet service
-        monthlyRevenue: data.financial?.totalRevenue || 0,
+        // Overview from dashboard API
+        totalUsers: dashboardData.overview?.totalUsers || 0,
+        activeUsers: dashboardData.overview?.activeUsers || 0,
+        suspendedUsers: dashboardData.overview?.suspendedUsers || 0,
+        evOwners: dashboardData.overview?.evOwners || 0,
+        buyers: dashboardData.overview?.buyers || 0,
+        verifiers: dashboardData.overview?.verifiers || 0,
+        
+        // Credits
+        totalCreditsIssued: dashboardData.credits?.totalIssued || 0,
+        totalCreditsTraded: dashboardData.credits?.totalTraded || 0,
+        totalCo2Reduced: dashboardData.credits?.totalCo2Reduced || 0,
+        
+        // Financial
+        totalRevenue: dashboardData.financial?.totalRevenue || 0,
+        totalFeeCollected: dashboardData.financial?.totalFeeCollected || 0,
+        totalTransactions: dashboardData.financial?.totalTransactions || 0,
+        
+        // Pending items
+        pendingKYC,
+        pendingWithdrawals,
+        
+        timestamp: dashboardData.timestamp || new Date().toISOString(),
       });
     } catch (err: any) {
       console.error('Failed to fetch dashboard stats:', err);
@@ -161,13 +221,73 @@ export const AdminDashboard: React.FC = () => {
           />
         </Grid>
 
+        {/* Active Users */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Active Users"
+            value={stats.activeUsers.toLocaleString()}
+            icon={<VerifiedIcon fontSize="large" />}
+            color="success"
+            subtitle="Currently active"
+            onClick={() => navigate('/admin/users')}
+          />
+        </Grid>
+
+        {/* Suspended Users */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Suspended Users"
+            value={stats.suspendedUsers.toLocaleString()}
+            icon={<MoneyIcon fontSize="large" />}
+            color="warning"
+            subtitle="Suspended accounts"
+            onClick={() => navigate('/admin/users')}
+          />
+        </Grid>
+
+        {/* Total Transactions */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Total Transactions"
+            value={stats.totalTransactions.toLocaleString()}
+            icon={<TransactionIcon fontSize="large" />}
+            color="info"
+            subtitle="All time"
+            onClick={() => navigate('/admin/transactions')}
+          />
+        </Grid>
+
+        {/* Total Revenue */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Total Revenue"
+            value={`${(stats.totalRevenue / 1000000).toFixed(1)}M VND`}
+            icon={<TrendingIcon fontSize="large" />}
+            color="secondary"
+            subtitle="Platform revenue"
+            onClick={() => navigate('/admin/reports')}
+          />
+        </Grid>
+
+        {/* Total Fee Collected */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Fee Collected"
+            value={`${(stats.totalFeeCollected / 1000000).toFixed(1)}M VND`}
+            icon={<WalletIcon fontSize="large" />}
+            color="success"
+            subtitle="Transaction fees"
+            onClick={() => navigate('/admin/reports')}
+          />
+        </Grid>
+
         {/* Pending KYC */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
             title="Pending KYC"
             value={stats.pendingKYC}
             icon={<VerifiedIcon fontSize="large" />}
-            color="warning"
+            color="error"
             subtitle="Awaiting verification"
             onClick={() => navigate('/admin/kyc')}
           />
@@ -185,41 +305,18 @@ export const AdminDashboard: React.FC = () => {
           />
         </Grid>
 
-        {/* Total Transactions */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <StatCard
-            title="Total Transactions"
-            value={stats.totalTransactions.toLocaleString()}
-            icon={<TransactionIcon fontSize="large" />}
-            color="info"
-            subtitle="All time"
-            onClick={() => navigate('/admin/transactions')}
-          />
-        </Grid>
-
-        {/* Total Wallet Balance */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <StatCard
-            title="Total Wallet Balance"
-            value={`${(stats.totalWalletBalance / 1000000).toFixed(1)}M VND`}
-            icon={<WalletIcon fontSize="large" />}
-            color="success"
-            subtitle="Platform-wide"
-            onClick={() => navigate('/admin/wallets')}
-          />
-        </Grid>
-
-        {/* Monthly Revenue */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <StatCard
-            title="Monthly Revenue"
-            value={`${(stats.monthlyRevenue / 1000000).toFixed(1)}M VND`}
-            icon={<TrendingIcon fontSize="large" />}
-            color="secondary"
-            subtitle="This month"
-            onClick={() => navigate('/admin/reports')}
-          />
-        </Grid>
+        {/* Credits Statistics - if available */}
+        {stats.totalCreditsIssued > 0 && (
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <StatCard
+              title="Credits Issued"
+              value={stats.totalCreditsIssued.toLocaleString()}
+              icon={<TrendingIcon fontSize="large" />}
+              color="primary"
+              subtitle="Total carbon credits"
+            />
+          </Grid>
+        )}
       </Grid>
 
       {/* Quick Actions or Recent Activity can be added here */}
@@ -275,6 +372,45 @@ export const AdminDashboard: React.FC = () => {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Analytics & insights
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/admin/management')}>
+              <CardContent>
+                <Typography variant="body2" fontWeight={600}>
+                  Admin Management
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Manage admin users
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/admin/audit-logs')}>
+              <CardContent>
+                <Typography variant="body2" fontWeight={600}>
+                  Audit Logs
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  System activity logs
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/admin/override-requests')}>
+              <CardContent>
+                <Typography variant="body2" fontWeight={600}>
+                  Override Requests
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Review special requests
                 </Typography>
               </CardContent>
             </Card>

@@ -37,6 +37,7 @@ import {
   Refresh as RefreshIcon,
   Assessment as StatsIcon,
   Visibility as ViewIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import adminService from '../../services/admin';
@@ -90,6 +91,9 @@ export const AdminTransactionsPage: React.FC = () => {
   const [refundDialog, setRefundDialog] = useState(false);
   const [resolveDialog, setResolveDialog] = useState(false);
   const [detailDialog, setDetailDialog] = useState(false);
+  const [historyDialog, setHistoryDialog] = useState(false);
+  const [actionHistory, setActionHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
@@ -242,6 +246,24 @@ export const AdminTransactionsPage: React.FC = () => {
       toast.error(error.response?.data?.message || 'Failed to refund transaction');
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  // Handle view action history
+  const handleViewHistory = async (tx: Transaction) => {
+    setSelectedTransaction(tx);
+    setHistoryDialog(true);
+    setLoadingHistory(true);
+    setActionHistory([]);
+
+    try {
+      const history = await adminService.transactions.getTransactionActionHistory(tx.id, 1, 50);
+      setActionHistory(history.data || []);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load action history');
+      setActionHistory([]);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -484,6 +506,9 @@ export const AdminTransactionsPage: React.FC = () => {
                     <TableCell align="right">
                       <IconButton size="small" color="info" onClick={() => handleViewDetails(tx)} title="View">
                         <ViewIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="default" onClick={() => handleViewHistory(tx)} title="Action History">
+                        <HistoryIcon fontSize="small" />
                       </IconButton>
 
                       {tx.status === 'PENDING' && (
@@ -822,6 +847,58 @@ export const AdminTransactionsPage: React.FC = () => {
           >
             {processingId ? <CircularProgress size={20} /> : 'Resolve Dispute'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Action History Dialog */}
+      <Dialog open={historyDialog} onClose={() => setHistoryDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Transaction Action History</DialogTitle>
+        <DialogContent>
+          {selectedTransaction && (
+            <Box>
+              <Typography variant="body1" gutterBottom sx={{ mb: 2 }}>
+                <strong>Transaction ID:</strong> {selectedTransaction.id}
+              </Typography>
+
+              {loadingHistory ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : actionHistory.length === 0 ? (
+                <Alert severity="info">No action history found for this transaction.</Alert>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Action</TableCell>
+                      <TableCell>Admin</TableCell>
+                      <TableCell>Details</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {actionHistory.map((action, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {new Date(action.createdAt || action.timestamp).toLocaleString('vi-VN')}
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={action.action || action.actionType} size="small" color="primary" />
+                        </TableCell>
+                        <TableCell>{action.adminId || action.performedBy || 'System'}</TableCell>
+                        <TableCell>
+                          {action.reason || action.notes || action.details || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistoryDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -2,12 +2,43 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost';
 
-const getAuthHeaders = () => {
+// Create axios instance with admin auth interceptor
+const adminApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor to add admin token
+adminApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('adminToken');
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
+  console.log('[admin-reports.ts] Interceptor - Token:', token ? 'exists' : 'missing');
+  console.log('[admin-reports.ts] Request URL:', config.url);
+  if (token) {
+    // Decode token to check payload and expiry
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('[admin-reports.ts] Token payload:', payload);
+      
+      // Check if token is expired
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        console.error('[admin-reports.ts] Token expired! Please login again.');
+        // Clear expired token
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminRefreshToken');
+        // Redirect to login
+        window.location.href = '/admin/login';
+        return Promise.reject(new Error('Token expired'));
+      }
+    } catch (e) {
+      console.error('[admin-reports.ts] Failed to decode token:', e);
+    }
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export interface FinancialReport {
   [x: string]: string | number | Date;
@@ -80,29 +111,21 @@ export interface WalletReportParams {
 }
 
 export const adminReportsApi = {
-  // Get financial overview report
+  // Get financial overview report (from Wallet Service, not Admin Service!)
   getFinancialReport: async (): Promise<FinancialReport> => {
-    const response = await axios.get(`${API_URL}/api/admin/reports/financial`, {
-      headers: getAuthHeaders(),
-    });
+    const response = await adminApi.get('/api/admin/reports/financial');
     return response.data;
   },
 
-  // Get transaction report by time period
+  // Get transaction report by time period (from Wallet Service)
   getTransactionReport: async (params?: TransactionReportParams): Promise<TransactionReport[]> => {
-    const response = await axios.get(`${API_URL}/api/admin/reports/transactions`, {
-      headers: getAuthHeaders(),
-      params,
-    });
+    const response = await adminApi.get('/api/admin/reports/transactions', { params });
     return response.data;
   },
 
-  // Get wallet report
+  // Get wallet report (from Wallet Service)
   getWalletReport: async (params?: WalletReportParams): Promise<WalletReport> => {
-    const response = await axios.get(`${API_URL}/api/admin/reports/wallets`, {
-      headers: getAuthHeaders(),
-      params,
-    });
+    const response = await adminApi.get('/api/admin/reports/wallets', { params });
     return response.data;
   },
 };

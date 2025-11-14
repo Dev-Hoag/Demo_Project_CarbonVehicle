@@ -230,10 +230,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Total Withdrawn</Typography>
                   </Box>
                   <Typography variant="h4" fontWeight={600}>
-                    {financialReport.withdrawalAmount.toLocaleString('vi-VN')} VND
+                    {(financialReport.withdrawalAmount || 0).toLocaleString('vi-VN')} VND
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8, mt: 1, display: 'block' }}>
-                    Completed: {financialReport.completedWithdrawals} transactions
+                    Completed: {financialReport.completedWithdrawals || 0} transactions
                   </Typography>
                 </CardContent>
               </Card>
@@ -248,10 +248,10 @@ export const AdminReportsPage: React.FC = () => {
                     <Typography variant="subtitle2">Pending Withdrawals</Typography>
                   </Box>
                   <Typography variant="h5" fontWeight={600} color="warning.main">
-                    {financialReport.pendingWithdrawalAmount.toLocaleString('vi-VN')} VND
+                    {(financialReport.pendingWithdrawalAmount || 0).toLocaleString('vi-VN')} VND
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    {financialReport.pendingWithdrawals} requests
+                    {financialReport.pendingWithdrawals || 0} requests
                   </Typography>
                 </CardContent>
               </Card>
@@ -281,10 +281,10 @@ export const AdminReportsPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      Total Transactions: {financialReport.totalTransactions.toLocaleString('vi-VN')}
+                      Total Transactions: {(financialReport.totalTransactions || 0).toLocaleString('vi-VN')}
                     </Typography>
                     <Typography variant="body2">
-                      Net Flow: {(financialReport.depositAmount - financialReport.withdrawalAmount).toLocaleString('vi-VN')} VND
+                      Net Flow: {((financialReport.depositAmount || 0) - (financialReport.withdrawalAmount || 0)).toLocaleString('vi-VN')} VND
                     </Typography>
                   </Box>
                 </CardContent>

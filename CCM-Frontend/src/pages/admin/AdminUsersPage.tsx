@@ -37,6 +37,7 @@ import {
   CheckCircle as ActivateIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import adminService from '../../services/admin';
 import type { UserFilters } from '../../services/admin';
@@ -95,6 +96,12 @@ export const AdminUsersPage: React.FC = () => {
   // Detail dialog
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+
+  // History dialog
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [actionHistory, setActionHistory] = useState<any[]>([]);
+  const [historyUserId, setHistoryUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -190,6 +197,20 @@ export const AdminUsersPage: React.FC = () => {
   const handleViewDetail = (user: ManagedUser) => {
     setSelectedUser(user);
     setDetailDialogOpen(true);
+  };
+
+  const handleViewHistory = async (userId: number) => {
+    setHistoryUserId(userId);
+    setHistoryDialogOpen(true);
+    setHistoryLoading(true);
+    try {
+      const response = await adminService.users.getUserActionHistory(userId, 1, 50);
+      setActionHistory(response.data || []);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to load action history');
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const handleCloseDetailDialog = () => {
@@ -379,6 +400,12 @@ export const AdminUsersPage: React.FC = () => {
                           </IconButton>
                         </Tooltip>
 
+                        <Tooltip title="Action History">
+                          <IconButton size="small" color="primary" onClick={() => handleViewHistory(user.id)}>
+                            <HistoryIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
                         {user.status === 'ACTIVE' && (
                           <>
                             <Tooltip title="Lock User">
@@ -499,6 +526,74 @@ export const AdminUsersPage: React.FC = () => {
         onClose={handleCloseDetailDialog}
         onUserUpdated={fetchUsers}
       />
+
+      {/* Action History Dialog */}
+      <Dialog 
+        open={historyDialogOpen} 
+        onClose={() => setHistoryDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          User Action History {historyUserId && `(User ID: ${historyUserId})`}
+        </DialogTitle>
+        <DialogContent>
+          {historyLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : actionHistory.length === 0 ? (
+            <Alert severity="info">No action history found for this user.</Alert>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>Date</strong></TableCell>
+                    <TableCell><strong>Action</strong></TableCell>
+                    <TableCell><strong>Performed By</strong></TableCell>
+                    <TableCell><strong>Reason</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {actionHistory.map((history: any) => (
+                    <TableRow key={history.id}>
+                      <TableCell>
+                        {new Date(history.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={history.actionType || history.action || 'UNKNOWN'} 
+                          size="small"
+                          color={
+                            (history.actionType || history.action || '')?.includes('LOCK') || 
+                            (history.actionType || history.action || '')?.includes('DELETE') 
+                              ? 'error' 
+                              : (history.actionType || history.action || '')?.includes('UNLOCK') || 
+                                (history.actionType || history.action || '')?.includes('UNSUSPEND')
+                              ? 'success'
+                              : 'warning'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {history.performedBy?.username || 
+                         history.performedBy?.email || 
+                         history.adminUsername || 
+                         'System'}
+                      </TableCell>
+                      <TableCell>{history.reason || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistoryDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

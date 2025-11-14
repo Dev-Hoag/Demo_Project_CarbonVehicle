@@ -149,6 +149,11 @@ export const userManagement = {
     const { data } = await adminApi.delete(`/api/admin/users/${id}`, { data: { reason } });
     return data;
   },
+
+  getUserActionHistory: async (id: number, page = 1, limit = 10) => {
+    const { data } = await adminApi.get(`/api/admin/users/${id}/action-history`, { params: { page, limit } });
+    return data;
+  },
 };
 
 // ==================== KYC MANAGEMENT ====================
@@ -194,6 +199,11 @@ export const kycManagement = {
     const { data } = await adminApi.post(`/api/admin/kyc/documents/${docId}/request-info`, { message });
     return data;
   },
+
+  getStatistics: async () => {
+    const { data } = await adminApi.get('/api/admin/kyc/statistics');
+    return data;
+  },
 };
 
 // ==================== WALLET MANAGEMENT ====================
@@ -231,6 +241,59 @@ export const walletManagement = {
 
   adjustBalance: async (userId: string, amount: number, reason: string) => {
     const { data } = await adminApi.post('/api/admin/wallet-transactions/adjust-balance', { userId, amount, reason });
+    return data;
+  },
+};
+
+// ==================== WITHDRAWAL MANAGEMENT ====================
+
+export interface WithdrawalFilters {
+  page?: number;
+  limit?: number;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+}
+
+export const withdrawalManagement = {
+  // Get all pending withdrawals
+  getPendingWithdrawals: async () => {
+    const { data } = await adminApi.get('/api/admin/withdrawals/pending');
+    return data;
+  },
+
+  // Get all withdrawals with optional status filter
+  getAllWithdrawals: async (status?: string) => {
+    const params = status ? { status } : {};
+    const { data } = await adminApi.get('/api/admin/withdrawals', { params });
+    return data;
+  },
+
+  // Get withdrawal by ID
+  getWithdrawalById: async (withdrawalId: string) => {
+    const { data } = await adminApi.get(`/api/admin/withdrawals/${withdrawalId}`);
+    return data;
+  },
+
+  // Approve withdrawal request
+  approveWithdrawal: async (withdrawalId: string, adminNote?: string) => {
+    const { data } = await adminApi.post(`/api/admin/withdrawals/${withdrawalId}/approve`, { adminNote });
+    return data;
+  },
+
+  // Reject withdrawal request
+  rejectWithdrawal: async (withdrawalId: string, reason: string) => {
+    const { data } = await adminApi.post(`/api/admin/withdrawals/${withdrawalId}/reject`, { reason });
+    return data;
+  },
+
+  // Complete withdrawal request
+  completeWithdrawal: async (withdrawalId: string, transactionHash?: string) => {
+    const { data } = await adminApi.post(`/api/admin/withdrawals/${withdrawalId}/complete`, { transactionHash });
+    return data;
+  },
+
+  // Get withdrawal statistics
+  getStatistics: async () => {
+    const { data } = await adminApi.get('/api/admin/withdrawals/statistics');
     return data;
   },
 };
@@ -275,6 +338,11 @@ export const transactionManagement = {
 
   resolveDispute: async (id: number, resolution: string, notes?: string) => {
     const { data } = await adminApi.post(`/api/admin/transactions/${id}/resolve-dispute`, { resolution, notes });
+    return data;
+  },
+
+  getTransactionActionHistory: async (id: number, page = 1, limit = 10) => {
+    const { data } = await adminApi.get(`/api/admin/transactions/${id}/action-history`, { params: { page, limit } });
     return data;
   },
 };
@@ -345,6 +413,7 @@ const adminService = {
   users: userManagement,
   kyc: kycManagement,
   wallets: walletManagement,
+  withdrawals: withdrawalManagement,
   transactions: transactionManagement,
   reports,
   auditLogs,

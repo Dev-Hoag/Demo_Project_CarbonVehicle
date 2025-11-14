@@ -9,7 +9,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Chip,
   Button,
   Dialog,
@@ -25,155 +24,193 @@ import {
   Card,
   CardContent,
   Stack,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import {
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   Refresh as RefreshIcon,
   Assessment as StatsIcon,
-  Undo as ReverseIcon,
+  Done as CompleteIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import adminService from '../../services/admin';
-import type { WalletFilters } from '../../services/admin';
 
-interface WalletTransaction {
-  id: number;
-  userId: string;
+interface Withdrawal {
+  id: string;
+  userId: number;
+  walletId: string;
   amount: number;
-  transactionType: string;
+  fee: number;
+  netAmount: number;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankName: string;
+  bankBranch?: string;
   status: string;
-  description?: string;
-  bankAccountName?: string;
-  bankAccountNumber?: string;
-  bankName?: string;
+  notes?: string;
+  rejectionReason?: string;
+  approvedBy?: number;
+  approvedAt?: string;
+  processedAt?: string;
   createdAt: string;
-  confirmedAt?: string;
-  reversedAt?: string;
+  updatedAt: string;
 }
 
-interface WalletTransactionListResponse {
-  data: WalletTransaction[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'REVERSED';
+type StatusFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 const AdminWithdrawals: React.FC = () => {
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(10);
-  const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING');
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('WITHDRAWAL');
 
   const [statistics, setStatistics] = useState({
     total: 0,
     pending: 0,
-    confirmed: 0,
-    reversed: 0,
+    approved: 0,
+    rejected: 0,
   });
 
   // Action dialogs
-  const [selectedTransaction, setSelectedTransaction] = useState<WalletTransaction | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState(false);
-  const [reverseDialog, setReverseDialog] = useState(false);
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [approveDialog, setApproveDialog] = useState(false);
+  const [rejectDialog, setRejectDialog] = useState(false);
+  const [completeDialog, setCompleteDialog] = useState(false);
   const [reason, setReason] = useState('');
-  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [transactionHash, setTransactionHash] = useState('');
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Load transactions
-  const loadTransactions = async () => {
+  // Load withdrawals
+  const loadWithdrawals = async () => {
     setLoading(true);
     try {
-      const filters: WalletFilters = {
-        page: page + 1,
-        limit,
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
-        transactionType: transactionTypeFilter || undefined,
-      };
+      let data: Withdrawal[];
+      
+      if (statusFilter === 'ALL') {
+        data = await adminService.withdrawals.getAllWithdrawals();
+      } else if (statusFilter === 'PENDING') {
+        data = await adminService.withdrawals.getPendingWithdrawals();
+      } else {
+        data = await adminService.withdrawals.getAllWithdrawals(statusFilter);
+      }
 
-      const response: WalletTransactionListResponse = await adminService.wallets.getAllTransactions(filters);
-      setTransactions(response.data);
-      setTotal(response.total);
+      setWithdrawals(data);
 
       // Calculate statistics
-      calculateStatistics(response.data);
+      calculateStatistics(data);
     } catch (error: any) {
-      console.error('Failed to load transactions:', error);
-      toast.error(error.response?.data?.message || 'Failed to load transactions');
+      console.error('Failed to load withdrawals:', error);
+      toast.error(error.response?.data?.message || 'Failed to load withdrawals');
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateStatistics = (txs: WalletTransaction[]) => {
+  const calculateStatistics = (withdrawals: Withdrawal[]) => {
     setStatistics({
-      total: txs.length,
-      pending: txs.filter(t => t.status === 'PENDING').length,
-      confirmed: txs.filter(t => t.status === 'CONFIRMED').length,
-      reversed: txs.filter(t => t.status === 'REVERSED').length,
+      total: withdrawals.length,
+      pending: withdrawals.filter(w => w.status === 'PENDING').length,
+      approved: withdrawals.filter(w => w.status === 'APPROVED').length,
+      rejected: withdrawals.filter(w => w.status === 'REJECTED').length,
     });
   };
 
-  useEffect(() => {
-    loadTransactions();
-  }, [page, limit, statusFilter, transactionTypeFilter]);
-
-  // Handle confirm
-  const handleConfirmClick = (tx: WalletTransaction) => {
-    setSelectedTransaction(tx);
-    setReason('');
-    setConfirmDialog(true);
+  // Load statistics from API
+  const loadStatistics = async () => {
+    try {
+      const stats = await adminService.withdrawals.getStatistics();
+      setStatistics({
+        total: stats.total || 0,
+        pending: stats.pending || 0,
+        approved: stats.approved || stats.confirmed || 0,
+        rejected: stats.rejected || stats.reversed || 0,
+      });
+    } catch (error: any) {
+      console.error('Failed to load withdrawal statistics:', error);
+    }
   };
 
-  const handleConfirmSubmit = async () => {
-    if (!selectedTransaction) return;
+  useEffect(() => {
+    loadWithdrawals();
+    loadStatistics();
+  }, [statusFilter]);
 
-    setProcessingId(selectedTransaction.id);
+  // Handle approve
+  const handleApproveClick = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setReason('');
+    setApproveDialog(true);
+  };
+
+  const handleApproveSubmit = async () => {
+    if (!selectedWithdrawal) return;
+
+    setProcessingId(selectedWithdrawal.id);
     try {
-      await adminService.wallets.confirmTransaction(selectedTransaction.id, reason || 'Approved by admin');
-      toast.success('Transaction confirmed successfully');
-      setConfirmDialog(false);
-      setSelectedTransaction(null);
+      await adminService.withdrawals.approveWithdrawal(selectedWithdrawal.id, reason || undefined);
+      toast.success('Withdrawal approved successfully');
+      setApproveDialog(false);
+      setSelectedWithdrawal(null);
       setReason('');
-      loadTransactions();
+      loadWithdrawals();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to confirm transaction');
+      toast.error(error.response?.data?.message || 'Failed to approve withdrawal');
     } finally {
       setProcessingId(null);
     }
   };
 
-  // Handle reverse
-  const handleReverseClick = (tx: WalletTransaction) => {
-    setSelectedTransaction(tx);
+  // Handle reject
+  const handleRejectClick = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
     setReason('');
-    setReverseDialog(true);
+    setRejectDialog(true);
   };
 
-  const handleReverseSubmit = async () => {
-    if (!selectedTransaction || !reason.trim()) {
-      toast.error('Please provide a reason for reversal');
+  const handleRejectSubmit = async () => {
+    if (!selectedWithdrawal || !reason.trim()) {
+      toast.error('Please provide a reason for rejection');
       return;
     }
 
-    setProcessingId(selectedTransaction.id);
+    setProcessingId(selectedWithdrawal.id);
     try {
-      await adminService.wallets.reverseTransaction(selectedTransaction.id, reason);
-      toast.success('Transaction reversed successfully');
-      setReverseDialog(false);
-      setSelectedTransaction(null);
+      await adminService.withdrawals.rejectWithdrawal(selectedWithdrawal.id, reason);
+      toast.success('Withdrawal rejected successfully');
+      setRejectDialog(false);
+      setSelectedWithdrawal(null);
       setReason('');
-      loadTransactions();
+      loadWithdrawals();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to reverse transaction');
+      toast.error(error.response?.data?.message || 'Failed to reject withdrawal');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Handle complete withdrawal
+  const handleCompleteClick = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setTransactionHash('');
+    setCompleteDialog(true);
+  };
+
+  const handleCompleteSubmit = async () => {
+    if (!selectedWithdrawal || !transactionHash.trim()) {
+      toast.error('Please provide transaction hash');
+      return;
+    }
+
+    setProcessingId(selectedWithdrawal.id);
+    try {
+      await adminService.withdrawals.completeWithdrawal(selectedWithdrawal.id, transactionHash);
+      toast.success('Withdrawal completed successfully');
+      setCompleteDialog(false);
+      setSelectedWithdrawal(null);
+      setTransactionHash('');
+      loadWithdrawals();
+      loadStatistics();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to complete withdrawal');
     } finally {
       setProcessingId(null);
     }
@@ -182,9 +219,9 @@ const AdminWithdrawals: React.FC = () => {
   const getStatusColor = (status: string) => {
     const colors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
       PENDING: 'warning',
-      CONFIRMED: 'success',
-      REVERSED: 'error',
-      FAILED: 'error',
+      APPROVED: 'success',
+      REJECTED: 'error',
+      COMPLETED: 'success',
     };
     return colors[status] || 'default';
   };
@@ -206,8 +243,8 @@ const AdminWithdrawals: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Withdrawal & Wallet Management</Typography>
-        <IconButton onClick={loadTransactions} color="primary" title="Refresh">
+        <Typography variant="h4">Withdrawal Management</Typography>
+        <IconButton onClick={loadWithdrawals} color="primary" title="Refresh">
           <RefreshIcon />
         </IconButton>
       </Stack>
@@ -221,7 +258,7 @@ const AdminWithdrawals: React.FC = () => {
               <Typography variant="h6">{statistics.total}</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Total Transactions
+              Total Withdrawals
             </Typography>
           </CardContent>
         </Card>
@@ -240,10 +277,10 @@ const AdminWithdrawals: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <StatsIcon color="success" sx={{ mr: 1 }} />
-              <Typography variant="h6">{statistics.confirmed}</Typography>
+              <Typography variant="h6">{statistics.approved}</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Confirmed
+              Approved
             </Typography>
           </CardContent>
         </Card>
@@ -251,10 +288,10 @@ const AdminWithdrawals: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <StatsIcon color="error" sx={{ mr: 1 }} />
-              <Typography variant="h6">{statistics.reversed}</Typography>
+              <Typography variant="h6">{statistics.rejected}</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Reversed
+              Rejected
             </Typography>
           </CardContent>
         </Card>
@@ -262,100 +299,82 @@ const AdminWithdrawals: React.FC = () => {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Transaction Type</InputLabel>
-            <Select
-              value={transactionTypeFilter}
-              onChange={(e) => {
-                setTransactionTypeFilter(e.target.value);
-                setPage(0);
-              }}
-              label="Transaction Type"
-            >
-              <MenuItem value="">All Types</MenuItem>
-              <MenuItem value="WITHDRAWAL">Withdrawal</MenuItem>
-              <MenuItem value="DEPOSIT">Deposit</MenuItem>
-              <MenuItem value="PAYMENT">Payment</MenuItem>
-              <MenuItem value="REFUND">Refund</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Tabs
-            value={statusFilter}
-            onChange={(_, newValue) => {
-              setStatusFilter(newValue);
-              setPage(0);
-            }}
-          >
-            <Tab label="Pending" value="PENDING" />
-            <Tab label="All" value="ALL" />
-            <Tab label="Confirmed" value="CONFIRMED" />
-            <Tab label="Reversed" value="REVERSED" />
-          </Tabs>
-        </Stack>
+        <Tabs
+          value={statusFilter}
+          onChange={(_, newValue) => {
+            setStatusFilter(newValue);
+          }}
+        >
+          <Tab label="Pending" value="PENDING" />
+          <Tab label="All" value="ALL" />
+          <Tab label="Approved" value="APPROVED" />
+          <Tab label="Rejected" value="REJECTED" />
+        </Tabs>
       </Paper>
 
-      {/* Transactions Table */}
+      {/* Withdrawals Table */}
       <TableContainer component={Paper}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
-        ) : transactions.length === 0 ? (
+        ) : withdrawals.length === 0 ? (
           <Alert severity="info" sx={{ m: 2 }}>
-            No transactions found
+            No withdrawals found
           </Alert>
         ) : (
           <>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
+                  <TableCell>Date</TableCell>
                   <TableCell>User ID</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Amount</TableCell>
+                  <TableCell>Bank Info</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                  <TableCell align="right">Fee</TableCell>
+                  <TableCell align="right">Net Amount</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Bank Details</TableCell>
-                  <TableCell>Created At</TableCell>
+                  <TableCell>Note</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.map((tx) => (
-                  <TableRow key={tx.id}>
-                    <TableCell>{tx.id}</TableCell>
-                    <TableCell>{tx.userId}</TableCell>
+                {withdrawals.map((withdrawal) => (
+                  <TableRow key={withdrawal.id}>
+                    <TableCell>{formatDate(withdrawal.createdAt)}</TableCell>
+                    <TableCell>{withdrawal.userId}</TableCell>
                     <TableCell>
-                      <Chip label={tx.transactionType} size="small" variant="outlined" />
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">{withdrawal.bankName}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {withdrawal.bankAccountNumber} - {withdrawal.bankAccountName}
+                        </Typography>
+                      </Box>
                     </TableCell>
-                    <TableCell>{formatCurrency(tx.amount)}</TableCell>
-                    <TableCell>
-                      <Chip label={tx.status} color={getStatusColor(tx.status)} size="small" />
-                    </TableCell>
-                    <TableCell>
-                      {tx.bankAccountName && (
-                        <Box>
-                          <Typography variant="body2">{tx.bankAccountName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {tx.bankName} - {tx.bankAccountNumber}
-                          </Typography>
-                        </Box>
-                      )}
-                      {!tx.bankAccountName && '-'}
-                    </TableCell>
-                    <TableCell>{formatDate(tx.createdAt)}</TableCell>
+                    <TableCell align="right">{formatCurrency(withdrawal.amount)}</TableCell>
+                    <TableCell align="right">{formatCurrency(withdrawal.fee)}</TableCell>
                     <TableCell align="right">
-                      {tx.status === 'PENDING' && (
+                      <Typography fontWeight="bold">{formatCurrency(withdrawal.netAmount)}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={withdrawal.status} color={getStatusColor(withdrawal.status)} size="small" />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption">
+                        {withdrawal.notes || withdrawal.rejectionReason || '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      {withdrawal.status === 'PENDING' && (
                         <>
                           <IconButton
                             size="small"
                             color="success"
-                            onClick={() => handleConfirmClick(tx)}
-                            disabled={processingId === tx.id}
-                            title="Confirm"
+                            onClick={() => handleApproveClick(withdrawal)}
+                            disabled={processingId === withdrawal.id}
+                            title="Approve"
                           >
-                            {processingId === tx.id ? (
+                            {processingId === withdrawal.id ? (
                               <CircularProgress size={20} />
                             ) : (
                               <ApproveIcon fontSize="small" />
@@ -364,23 +383,23 @@ const AdminWithdrawals: React.FC = () => {
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => handleReverseClick(tx)}
-                            disabled={processingId === tx.id}
+                            onClick={() => handleRejectClick(withdrawal)}
+                            disabled={processingId === withdrawal.id}
                             title="Reject"
                           >
                             <RejectIcon fontSize="small" />
                           </IconButton>
                         </>
                       )}
-                      {tx.status === 'CONFIRMED' && (
+                      {withdrawal.status === 'APPROVED' && (
                         <IconButton
                           size="small"
-                          color="warning"
-                          onClick={() => handleReverseClick(tx)}
-                          disabled={processingId === tx.id}
-                          title="Reverse"
+                          color="primary"
+                          onClick={() => handleCompleteClick(withdrawal)}
+                          disabled={processingId === withdrawal.id}
+                          title="Complete Withdrawal"
                         >
-                          <ReverseIcon fontSize="small" />
+                          <CompleteIcon fontSize="small" />
                         </IconButton>
                       )}
                     </TableCell>
@@ -388,106 +407,145 @@ const AdminWithdrawals: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
-
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25, 50]}
-              component="div"
-              count={total}
-              rowsPerPage={limit}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => {
-                setLimit(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-            />
           </>
         )}
       </TableContainer>
 
-      {/* Confirm Dialog */}
-      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Confirm Transaction</DialogTitle>
+      {/* Approve Dialog */}
+      <Dialog open={approveDialog} onClose={() => setApproveDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Approve Withdrawal</DialogTitle>
         <DialogContent>
-          {selectedTransaction && (
+          {selectedWithdrawal && (
             <Box>
               <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
+                <strong>User ID:</strong> {selectedWithdrawal.userId}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
+                <strong>Amount:</strong> {formatCurrency(selectedWithdrawal.amount)}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Type:</strong> {selectedTransaction.transactionType}
+                <strong>Net Amount:</strong> {formatCurrency(selectedWithdrawal.netAmount)}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Bank:</strong> {selectedWithdrawal.bankName}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Account:</strong> {selectedWithdrawal.bankAccountNumber} - {selectedWithdrawal.bankAccountName}
               </Typography>
               <TextField
                 autoFocus
                 margin="dense"
-                label="Confirmation Note (optional)"
+                label="Admin Note (optional)"
                 type="text"
                 fullWidth
                 multiline
                 rows={2}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Add any notes about this confirmation..."
+                placeholder="Add any notes about this approval..."
               />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)}>Cancel</Button>
+          <Button onClick={() => setApproveDialog(false)}>Cancel</Button>
           <Button
-            onClick={handleConfirmSubmit}
+            onClick={handleApproveSubmit}
             color="success"
             variant="contained"
             disabled={processingId !== null}
           >
-            {processingId ? <CircularProgress size={20} /> : 'Confirm'}
+            {processingId ? <CircularProgress size={20} /> : 'Approve'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Reverse Dialog */}
-      <Dialog open={reverseDialog} onClose={() => setReverseDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Reverse Transaction</DialogTitle>
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialog} onClose={() => setRejectDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reject Withdrawal</DialogTitle>
         <DialogContent>
-          {selectedTransaction && (
+          {selectedWithdrawal && (
             <Box>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                This will reverse the transaction and refund the amount to the user's wallet.
+                This will reject the withdrawal request.
               </Alert>
               <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
+                <strong>User ID:</strong> {selectedWithdrawal.userId}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
+                <strong>Amount:</strong> {formatCurrency(selectedWithdrawal.amount)}
               </Typography>
               <TextField
                 autoFocus
                 margin="dense"
-                label="Reason for Reversal"
+                label="Reason for Rejection"
                 type="text"
                 fullWidth
                 multiline
                 rows={3}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Provide a detailed reason for reversing this transaction..."
+                placeholder="Provide a detailed reason for rejecting this withdrawal..."
                 required
               />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setReverseDialog(false)}>Cancel</Button>
+          <Button onClick={() => setRejectDialog(false)}>Cancel</Button>
           <Button
-            onClick={handleReverseSubmit}
+            onClick={handleRejectSubmit}
             color="error"
             variant="contained"
             disabled={!reason.trim() || processingId !== null}
           >
-            {processingId ? <CircularProgress size={20} /> : 'Reverse'}
+            {processingId ? <CircularProgress size={20} /> : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Complete Withdrawal Dialog */}
+      <Dialog open={completeDialog} onClose={() => setCompleteDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Complete Withdrawal</DialogTitle>
+        <DialogContent>
+          {selectedWithdrawal && (
+            <Box>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Mark this withdrawal as completed by providing the blockchain transaction hash.
+              </Alert>
+              <Typography variant="body1" gutterBottom>
+                <strong>Withdrawal ID:</strong> {selectedWithdrawal.id}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Amount:</strong> {formatCurrency(selectedWithdrawal.amount)}
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ mb: 2 }}>
+                <strong>Bank:</strong> {selectedWithdrawal.bankName} - {selectedWithdrawal.bankAccountNumber}
+              </Typography>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Transaction Hash"
+                type="text"
+                fullWidth
+                value={transactionHash}
+                onChange={(e) => setTransactionHash(e.target.value)}
+                placeholder="Enter blockchain transaction hash..."
+                required
+                helperText="Provide the blockchain transaction hash as proof of transfer"
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCompleteDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleCompleteSubmit}
+            color="primary"
+            variant="contained"
+            disabled={!transactionHash.trim() || processingId !== null}
+          >
+            {processingId ? <CircularProgress size={20} /> : 'Complete'}
           </Button>
         </DialogActions>
       </Dialog>

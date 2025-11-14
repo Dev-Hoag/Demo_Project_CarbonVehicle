@@ -115,8 +115,24 @@ const AdminKYC: React.FC = () => {
     });
   };
 
+  // Load statistics from API
+  const loadStatistics = async () => {
+    try {
+      const stats = await adminService.kyc.getStatistics();
+      setStatistics({
+        total: stats.total || 0,
+        pending: stats.pending || 0,
+        approved: stats.approved || 0,
+        rejected: stats.rejected || 0,
+      });
+    } catch (error: any) {
+      console.error('Failed to load KYC statistics:', error);
+    }
+  };
+
   useEffect(() => {
     loadDocuments();
+    loadStatistics();
   }, [page, limit, statusFilter]);
 
   // Handle preview

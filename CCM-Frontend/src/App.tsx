@@ -31,6 +31,9 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import { AdminReportsPage } from './pages/AdminReports';
 import AdminWalletsPage from './pages/admin/AdminWalletsPage';
 import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
+import { AdminManagementPage } from './pages/admin/AdminManagement';
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogs';
+import { AdminOverrideRequestsPage } from './pages/admin/AdminOverrideRequests';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -76,6 +79,9 @@ function App() {
             <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="wallets" element={<AdminWalletsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="management" element={<AdminManagementPage />} />
+            <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+            <Route path="override-requests" element={<AdminOverrideRequestsPage />} />
             <Route path="settings" element={<div>Admin Settings (Coming Soon)</div>} />
           </Route>
 

@@ -36,6 +36,7 @@ import {
   Refresh as RefreshIcon,
   Assessment as StatsIcon,
   Undo as ReverseIcon,
+  Done as CompleteIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import adminService from '../../services/admin';
@@ -85,7 +86,9 @@ const AdminWithdrawals: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<WalletTransaction | null>(null);
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [reverseDialog, setReverseDialog] = useState(false);
+  const [completeDialog, setCompleteDialog] = useState(false);
   const [reason, setReason] = useState('');
+  const [transactionHash, setTransactionHash] = useState('');
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   // Load transactions
@@ -122,8 +125,24 @@ const AdminWithdrawals: React.FC = () => {
     });
   };
 
+  // Load statistics from API
+  const loadStatistics = async () => {
+    try {
+      const stats = await adminService.withdrawals.getStatistics();
+      setStatistics({
+        total: stats.total || 0,
+        pending: stats.pending || 0,
+        confirmed: stats.confirmed || 0,
+        reversed: stats.reversed || 0,
+      });
+    } catch (error: any) {
+      console.error('Failed to load withdrawal statistics:', error);
+    }
+  };
+
   useEffect(() => {
     loadTransactions();
+    loadStatistics();
   }, [page, limit, statusFilter, transactionTypeFilter]);
 
   // Handle confirm
@@ -174,6 +193,34 @@ const AdminWithdrawals: React.FC = () => {
       loadTransactions();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to reverse transaction');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Handle complete withdrawal
+  const handleCompleteClick = (tx: WalletTransaction) => {
+    setSelectedTransaction(tx);
+    setTransactionHash('');
+    setCompleteDialog(true);
+  };
+
+  const handleCompleteSubmit = async () => {
+    if (!selectedTransaction || !transactionHash.trim()) {
+      toast.error('Please provide transaction hash');
+      return;
+    }
+
+    setProcessingId(selectedTransaction.id);
+    try {
+      await adminService.withdrawals.completeWithdrawal(selectedTransaction.id.toString(), transactionHash);
+      toast.success('Withdrawal completed successfully');
+      setCompleteDialog(false);
+      setSelectedTransaction(null);
+      setTransactionHash('');
+      loadTransactions();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to complete withdrawal');
     } finally {
       setProcessingId(null);
     }
@@ -372,7 +419,29 @@ const AdminWithdrawals: React.FC = () => {
                           </IconButton>
                         </>
                       )}
-                      {tx.status === 'CONFIRMED' && (
+                      {tx.status === 'CONFIRMED' && tx.transactionType === 'WITHDRAWAL' && (
+                        <>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleCompleteClick(tx)}
+                            disabled={processingId === tx.id}
+                            title="Complete Withdrawal"
+                          >
+                            <CompleteIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            onClick={() => handleReverseClick(tx)}
+                            disabled={processingId === tx.id}
+                            title="Reverse"
+                          >
+                            <ReverseIcon fontSize="small" />
+                          </IconButton>
+                        </>
+                      )}
+                      {tx.status === 'CONFIRMED' && tx.transactionType !== 'WITHDRAWAL' && (
                         <IconButton
                           size="small"
                           color="warning"
@@ -488,6 +557,52 @@ const AdminWithdrawals: React.FC = () => {
             disabled={!reason.trim() || processingId !== null}
           >
             {processingId ? <CircularProgress size={20} /> : 'Reverse'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Complete Withdrawal Dialog */}
+      <Dialog open={completeDialog} onClose={() => setCompleteDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Complete Withdrawal</DialogTitle>
+        <DialogContent>
+          {selectedTransaction && (
+            <Box>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Mark this withdrawal as completed by providing the blockchain transaction hash.
+              </Alert>
+              <Typography variant="body1" gutterBottom>
+                <strong>Transaction ID:</strong> {selectedTransaction.id}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ mb: 2 }}>
+                <strong>Bank:</strong> {selectedTransaction.bankName} - {selectedTransaction.bankAccountNumber}
+              </Typography>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Transaction Hash"
+                type="text"
+                fullWidth
+                value={transactionHash}
+                onChange={(e) => setTransactionHash(e.target.value)}
+                placeholder="Enter blockchain transaction hash..."
+                required
+                helperText="Provide the blockchain transaction hash as proof of transfer"
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCompleteDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleCompleteSubmit}
+            color="primary"
+            variant="contained"
+            disabled={!transactionHash.trim() || processingId !== null}
+          >
+            {processingId ? <CircularProgress size={20} /> : 'Complete'}
           </Button>
         </DialogActions>
       </Dialog>

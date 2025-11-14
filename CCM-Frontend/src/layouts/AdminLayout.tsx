@@ -31,6 +31,9 @@ import {
   Settings as SettingsIcon,
   MonetizationOn as MoneyIcon,
   SwapHoriz as TransactionIcon,
+  AdminPanelSettings as AdminIcon,
+  Description as DescriptionIcon,
+  AssignmentTurnedIn as AssignmentIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
@@ -50,6 +53,9 @@ const menuItems: AdminMenuItem[] = [
   { title: 'Transactions', path: '/admin/transactions', icon: <TransactionIcon /> },
   { title: 'Wallets', path: '/admin/wallets', icon: <WalletIcon /> },
   { title: 'Reports', path: '/admin/reports', icon: <AssessmentIcon /> },
+  { title: 'Admin Management', path: '/admin/management', icon: <AdminIcon /> },
+  { title: 'Audit Logs', path: '/admin/audit-logs', icon: <DescriptionIcon /> },
+  { title: 'Override Requests', path: '/admin/override-requests', icon: <AssignmentIcon /> },
 ];
 
 export const AdminLayout: React.FC = () => {
