@@ -51,18 +51,29 @@ cd certificate-service
 # Run with Docker
 docker compose up -d
 
-# Access API docs
-http://localhost:8005/docs
+Services sẽ chạy tại:
+
+Certificate Service: http://localhost:3009
+MySQL: localhost:3307
+RabbitMQ Management: http://localhost:15673
 
 
 certificate-service/
 ├── app/
-│   ├── main.py
-│   ├── api/
-│   ├── models/
-│   ├── services/
-│   └── messaging/
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
+│   ├── api/              # API routes
+│   ├── models/           # SQLAlchemy models
+│   ├── schemas/          # Pydantic schemas
+│   ├── services/         # Business logic
+│   ├── messaging/        # RabbitMQ
+│   ├── config.py         # Configuration
+│   ├── database.py       # Database setup
+│   └── main.py           # FastAPI app
+├── templates/            # PDF templates
+├── uploads/              # Generated PDFs
+├── tests/                # Test files
+├── .env.example          # Environment template
+├── requirements.txt      # Python dependencies
+├── Dockerfile            # Docker image
+├── docker-compose.yml    # Docker compose
+└── README.md             # This file
 
