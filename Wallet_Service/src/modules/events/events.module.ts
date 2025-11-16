@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigModule } from '@nestjs/config';
 import { getRabbitMQConfig } from '../../config/rabbitmq.config';
+import { WalletEventPublisher } from './wallet-event.publisher';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { getRabbitMQConfig } from '../../config/rabbitmq.config';
       useFactory: () => getRabbitMQConfig(),
     }),
   ],
-  providers: [],
-  exports: [RabbitMQModule],
+  providers: [WalletEventPublisher],
+  exports: [RabbitMQModule, WalletEventPublisher],
 })
 export class EventsModule {}

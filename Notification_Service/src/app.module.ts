@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationModule } from './modules/notification/notification.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { EventsModule } from './modules/events/events.module';
+import { NotificationGateway } from './modules/notification/notification.gateway';
 
 @Module({
   imports: [
@@ -30,4 +31,10 @@ import { EventsModule } from './modules/events/events.module';
     EventsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(private readonly notificationGateway: NotificationGateway) {}
+  
+  onModuleInit() {
+    // This will trigger WebSocket Gateway instantiation
+  }
+}

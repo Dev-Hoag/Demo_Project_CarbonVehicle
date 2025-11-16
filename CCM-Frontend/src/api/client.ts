@@ -49,36 +49,23 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 errors (unauthorized)
+    // Handle 401 errors (unauthorized) - JWT expired or invalid
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+      console.warn('[API Client] 401 Unauthorized - Token expired or invalid, logging out...');
       
-      try {
-        const token = localStorage.getItem('auth-storage');
-        if (token) {
-          const authData = JSON.parse(token);
-          const refreshToken = authData.state?.refreshToken;
-          
-          if (refreshToken) {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-              refreshToken,
-            });
-            
-            const { accessToken } = response.data;
-            
-            // Update token in storage
-            authData.state.accessToken = accessToken;
-            localStorage.setItem('auth-storage', JSON.stringify(authData));
-            
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return apiClient(originalRequest);
-          }
-        }
-      } catch (refreshError) {
-        // Refresh failed, clear auth and redirect to login
-        localStorage.removeItem('auth-storage');
+      // Clear auth storage
+      localStorage.removeItem('auth-storage');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      
+      // Redirect to login
+      if (window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/admin/login';
+      } else {
         window.location.href = '/login';
       }
+      
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

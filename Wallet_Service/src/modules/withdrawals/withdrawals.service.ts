@@ -7,6 +7,7 @@ import axios from 'axios';
 import { Withdrawal, Wallet, WalletTransaction } from '../../shared/entities';
 import { WithdrawalStatus, TransactionType, TransactionStatus } from '../../shared/enums';
 import { CreateWithdrawalDto } from '../../shared/dtos/wallet.dto';
+import { WalletEventPublisher } from '../events/wallet-event.publisher';
 
 @Injectable()
 export class WithdrawalsService {
@@ -18,6 +19,7 @@ export class WithdrawalsService {
     private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(WalletTransaction)
     private readonly transactionRepo: Repository<WalletTransaction>,
+    private readonly walletEventPublisher: WalletEventPublisher,
   ) {}
 
   async requestWithdrawal(userId: string, dto: CreateWithdrawalDto) {
@@ -213,6 +215,15 @@ export class WithdrawalsService {
     await this.walletRepo.save(wallet);
     await this.withdrawalRepo.save(withdrawal);
 
+    // Publish withdrawal approved event
+    await this.walletEventPublisher.publishWithdrawalApproved({
+      userId: withdrawal.userId,
+      withdrawalId: withdrawal.id,
+      amount: withdrawal.amount,
+      currency: 'VND',
+      status: 'APPROVED',
+    });
+
     return {
       message: 'Withdrawal approved and processed successfully',
       withdrawal,
@@ -243,6 +254,16 @@ export class WithdrawalsService {
     withdrawal.processedAt = new Date();
 
     await this.withdrawalRepo.save(withdrawal);
+
+    // Publish withdrawal rejected event
+    await this.walletEventPublisher.publishWithdrawalRejected({
+      userId: withdrawal.userId,
+      withdrawalId: withdrawal.id,
+      amount: withdrawal.amount,
+      currency: 'VND',
+      status: 'REJECTED',
+      reason: reason,
+    });
 
     return {
       message: 'Withdrawal rejected',

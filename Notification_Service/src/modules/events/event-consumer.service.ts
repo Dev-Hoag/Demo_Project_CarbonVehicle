@@ -53,7 +53,7 @@ export class EventConsumerService implements OnModuleInit {
     const queue = `notification_service_${eventName}`;
     
     await this.channel.assertQueue(queue, { durable: true });
-    await this.channel.bindQueue(queue, 'events', eventName);
+    await this.channel.bindQueue(queue, 'ccm.events', eventName);
 
     this.logger.log(`📬 Listening to ${eventName} events`);
 
@@ -72,7 +72,7 @@ export class EventConsumerService implements OnModuleInit {
   }
 
   private async handleEvent(eventName: string, data: any) {
-    this.logger.log(`Handling event: ${eventName}`, JSON.stringify(data));
+    this.logger.log(`📨 Received event: ${eventName}`, JSON.stringify(data).substring(0, 200));
 
     const templateMap = {
       'trip.verified': 'TRIP_VERIFIED',
@@ -91,13 +91,21 @@ export class EventConsumerService implements OnModuleInit {
       return;
     }
 
-    // Extract userId and variables from event data
-    const { userId, ...variables } = data;
+    // Support both flat and nested event structures
+    // Some services send: { userId: "1", ... }
+    // Others send: { payload: { userId: "1", ... } }
+    const eventPayload = data.payload || data;
+    const userId = eventPayload.userId || data.userId;
     
     if (!userId) {
-      this.logger.warn(`No userId found in event: ${eventName}`);
+      this.logger.warn(`❌ No userId found in event: ${eventName}`, JSON.stringify(data));
       return;
     }
+
+    this.logger.log(`👤 Processing notification for userId: ${userId}`);
+    
+    // Use event payload as variables
+    const variables = eventPayload;
 
     try {
       await this.notificationService.sendInternalNotification({
@@ -116,8 +124,8 @@ export class EventConsumerService implements OnModuleInit {
 
   async publishNotificationEvent(eventName: string, data: any) {
     try {
-      await this.channel.assertExchange('events', 'topic', { durable: true });
-      this.channel.publish('events', eventName, Buffer.from(JSON.stringify(data)));
+      await this.channel.assertExchange('ccm.events', 'topic', { durable: true });
+      this.channel.publish('ccm.events', eventName, Buffer.from(JSON.stringify(data)));
       this.logger.log(`Published event: ${eventName}`);
     } catch (error) {
       this.logger.error(`Failed to publish ${eventName} event:`, error.message);

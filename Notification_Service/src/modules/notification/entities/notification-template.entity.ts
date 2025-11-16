@@ -8,10 +8,13 @@ export class NotificationTemplate {
   @Column({ unique: true, length: 100 })
   code: string;
 
-  @Column()
+  @Column({ name: 'event_type', length: 100 })
+  eventType: string;
+
+  @Column({ name: 'title_template', length: 255, nullable: true })
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ name: 'content_template', type: 'text' })
   body: string;
 
   @Column({ type: 'enum', enum: ['EMAIL', 'SMS', 'PUSH', 'IN_APP'] })

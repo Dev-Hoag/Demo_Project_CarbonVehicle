@@ -6,9 +6,13 @@ import { WithdrawalsController } from './withdrawals.controller';
 import { AdminWithdrawalsController } from './admin-withdrawals.controller';
 import { WithdrawalsService } from './withdrawals.service';
 import { Withdrawal, Wallet, WalletTransaction } from '../../shared/entities';
+import { EventsModule } from '../events/events.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Withdrawal, Wallet, WalletTransaction])],
+  imports: [
+    TypeOrmModule.forFeature([Withdrawal, Wallet, WalletTransaction]),
+    EventsModule,
+  ],
   controllers: [WithdrawalsController, AdminWithdrawalsController],
   providers: [WithdrawalsService],
   exports: [WithdrawalsService],

@@ -16,6 +16,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-trip:3306/trip_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=123456
+      - RABBITMQ_HOST=ccm_rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=ccm_admin
+      - RABBITMQ_PASSWORD=ccm_password_2024
+      - RABBITMQ_VHOST=ccm_vhost
     depends_on:
       mysql-trip:
         condition: service_healthy
@@ -39,6 +44,11 @@ services:
       - SPRING_DATASOURCE_PASSWORD=123456
       - SERVICES_TRIP_SERVICE_URL=http://trip-service:8091/api
       - SERVICES_CREDIT_SERVICE_URL=http://credit-service:8093/api
+      - RABBITMQ_HOST=ccm_rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=ccm_admin
+      - RABBITMQ_PASSWORD=ccm_password_2024
+      - RABBITMQ_VHOST=ccm_vhost
     depends_on:
       mysql-listing:
         condition: service_healthy
@@ -64,6 +74,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-credit:3306/credit_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=123456
+      - RABBITMQ_HOST=ccm_rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=ccm_admin
+      - RABBITMQ_PASSWORD=ccm_password_2024
+      - RABBITMQ_VHOST=ccm_vhost
     depends_on:
       mysql-credit:
         condition: service_healthy

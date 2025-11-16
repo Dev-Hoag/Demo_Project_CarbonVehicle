@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType, NotificationChannel, NotificationStatus } from './entities/notification.entity';
@@ -7,6 +7,7 @@ import { DeviceToken } from './entities/device-token.entity';
 import { NotificationLog } from './entities/notification-log.entity';
 import { NotificationTemplate } from './entities/notification-template.entity';
 import { FirebaseService } from '../firebase/firebase.service';
+import { NotificationGateway } from './notification.gateway';
 import { SendNotificationDto, SendInternalNotificationDto } from './dto/send-notification.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { RegisterDeviceDto } from './dto/register-device.dto';
@@ -27,6 +28,8 @@ export class NotificationService {
     @InjectRepository(NotificationTemplate)
     private templateRepo: Repository<NotificationTemplate>,
     private firebaseService: FirebaseService,
+    @Inject(forwardRef(() => NotificationGateway))
+    private notificationGateway: NotificationGateway,
   ) {}
 
   async sendNotification(dto: SendNotificationDto): Promise<Notification> {
@@ -70,6 +73,13 @@ export class NotificationService {
       notification.sentAt = new Date();
       await this.notificationRepo.save(notification);
       await this.logStatus(notification.id, 'SENT');
+
+      // 🔥 Send real-time notification via WebSocket
+      this.notificationGateway.sendNotificationToUser(userId, notification);
+      
+      // Update unread count
+      const unreadCount = await this.getUnreadCount(userId);
+      this.notificationGateway.sendUnreadCountUpdate(userId, unreadCount);
 
       return notification;
     } catch (error) {

@@ -1,7 +1,8 @@
 // File: src/components/NotificationBell.tsx
 // Component hiển thị icon chuông notification ở header
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import {
   IconButton,
   Badge,
@@ -40,25 +41,35 @@ import {
   NotificationType,
 } from '../api/notification';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Use ref to prevent double connection in React StrictMode
+  const socketRef = useRef<Socket | null>(null);
+  const isConnectingRef = useRef(false);
 
   // Fetch notifications
   const fetchNotifications = async () => {
+    if (!user?.id) return;
+    
+    const userId = user.id.toString();
+    
     try {
       setLoading(true);
       
       // Get unread count
-      const countResponse = await notificationApi.getUnreadCount();
-      setUnreadCount(countResponse.data);
+      const countResponse = await notificationApi.getUnreadCount(userId);
+      setUnreadCount(countResponse.data.count);
       
       // Get recent notifications (latest 5)
-      const response = await notificationApi.getAll({ page: 1, limit: 5 });
+      const response = await notificationApi.getAll(userId, { page: 1, limit: 5 });
       setRecentNotifications(response.data.data);
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -68,12 +79,76 @@ export const NotificationBell: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
+    
+    const userId = user.id.toString();
+    
+    // Prevent double connection in React StrictMode
+    if (isConnectingRef.current || socketRef.current?.connected) {
+      return;
+    }
+    
+    isConnectingRef.current = true;
+    
+    // Initial fetch
     fetchNotifications();
     
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    
-    return () => clearInterval(interval);
+    // 🔥 Connect to WebSocket for real-time notifications
+    const newSocket = io('http://localhost:3010/notifications', {
+      query: { userId },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    newSocket.on('connect', () => {
+      console.log('✅ Connected to notification WebSocket', newSocket.id);
+      isConnectingRef.current = false;
+    });
+
+    newSocket.on('notification', (notification: Notification) => {
+      console.log('🔔 New notification received:', notification);
+      
+      // Add to recent notifications
+      setRecentNotifications(prev => [notification, ...prev.slice(0, 4)]);
+      
+      // Update unread count
+      setUnreadCount(prev => prev + 1);
+      
+      // Show toast
+      toast.success(`New notification: ${notification.title}`, {
+        duration: 4000,
+        icon: '🔔',
+      });
+    });
+
+    newSocket.on('unread-count', ({ count }: { count: number }) => {
+      console.log('📊 Unread count updated:', count);
+      setUnreadCount(count);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Disconnected from notification WebSocket:', reason);
+      isConnectingRef.current = false;
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('❌ WebSocket error:', error);
+      isConnectingRef.current = false;
+    });
+
+    socketRef.current = newSocket;
+
+    return () => {
+      console.log('🧹 Cleaning up WebSocket connection');
+      isConnectingRef.current = false;
+      if (socketRef.current) {
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
   }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -85,8 +160,10 @@ export const NotificationBell: React.FC = () => {
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
+    if (!user?.id) return;
+    const userId = user.id.toString();
     try {
-      await notificationApi.markAsRead(notificationId);
+      await notificationApi.markAsRead(notificationId, userId);
       fetchNotifications();
     } catch (err) {
       toast.error('Failed to mark as read');
@@ -94,8 +171,10 @@ export const NotificationBell: React.FC = () => {
   };
 
   const handleMarkAllAsRead = async () => {
+    if (!user?.id) return;
+    const userId = user.id.toString();
     try {
-      await notificationApi.markAllAsRead();
+      await notificationApi.markAllAsRead(userId);
       toast.success('All notifications marked as read');
       fetchNotifications();
       handleClose();
@@ -264,11 +343,12 @@ export const NotificationBell: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            recentNotifications.map((notification, index) => (
-              <React.Fragment key={notification.id}>
-                {index > 0 && <Divider />}
-                <MenuItem
-                  onClick={() => handleNotificationClick(notification)}
+            <>
+              {recentNotifications.map((notification, index) => (
+                <div key={notification.id}>
+                  {index > 0 && <Divider />}
+                  <MenuItem
+                    onClick={() => handleNotificationClick(notification)}
                   sx={{
                     py: 1.5,
                     px: 2,
@@ -346,8 +426,9 @@ export const NotificationBell: React.FC = () => {
                     />
                   )}
                 </MenuItem>
-              </React.Fragment>
-            ))
+              </div>
+            ))}
+          </>
           )}
         </Box>
 

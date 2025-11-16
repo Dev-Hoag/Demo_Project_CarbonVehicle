@@ -1,4 +1,4 @@
-package com.tripservice.configs;
+package com.creditservice.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
     
     public static final String EXCHANGE_NAME = "ccm.events";
-    public static final String TRIP_VERIFIED_ROUTING_KEY = "trip.verified";
+    public static final String CREDIT_ISSUED_ROUTING_KEY = "credit.issued";
     
     @Bean
     public TopicExchange ccmEventsExchange() {
@@ -31,4 +31,3 @@ public class RabbitMQConfig {
         return rabbitTemplate;
     }
 }
-

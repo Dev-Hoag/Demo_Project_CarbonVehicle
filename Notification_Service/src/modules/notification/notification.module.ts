@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationService } from './notification.service';
 import { NotificationController, InternalNotificationController } from './notification.controller';
+import { NotificationGateway } from './notification.gateway';
 import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { DeviceToken } from './entities/device-token.entity';
@@ -21,7 +22,7 @@ import { FirebaseModule } from '../firebase/firebase.module';
     FirebaseModule,
   ],
   controllers: [NotificationController, InternalNotificationController],
-  providers: [NotificationService],
-  exports: [NotificationService],
+  providers: [NotificationService, NotificationGateway],
+  exports: [NotificationService, NotificationGateway],
 })
 export class NotificationModule {}

@@ -86,38 +86,52 @@ export interface UpdatePreferencesDto {
 
 export const notificationApi = {
   // Get all notifications for current user (paginated)
-  getAll: (params?: { page?: number; limit?: number }) =>
-    apiClient.get('/api/notifications', { params }),
+  getAll: (userId: string, params?: { page?: number; limit?: number }) =>
+    apiClient.get('/api/notifications', {
+      params: { userId, ...params },
+    }),
 
-  // Get unread count
-  getUnreadCount: () =>
-    apiClient.get('/api/notifications/unread-count'),
+  // Get unread count (requires userId)
+  getUnreadCount: (userId: string) =>
+    apiClient.get('/api/notifications/unread', {
+      params: { userId },
+    }),
 
   // Mark notification as read
-  markAsRead: (notificationId: number) =>
-    apiClient.put(`/api/notifications/${notificationId}/read`),
+  markAsRead: (notificationId: number, userId: string) =>
+    apiClient.put(`/api/notifications/${notificationId}/read`, null, {
+      params: { userId },
+    }),
 
-  // Mark all as read
-  markAllAsRead: () =>
-    apiClient.put('/api/notifications/mark-all-read'),
+  // Mark all as read (POST /api/notifications/read-all)
+  markAllAsRead: (userId: string) =>
+    apiClient.post('/api/notifications/read-all', { userId }),
 
   // Delete notification
-  delete: (notificationId: number) =>
-    apiClient.delete(`/api/notifications/${notificationId}`),
+  delete: (notificationId: number, userId: string) =>
+    apiClient.delete(`/api/notifications/${notificationId}`, {
+      params: { userId },
+    }),
 
   // Get notification preferences
-  getPreferences: () =>
-    apiClient.get('/api/notifications/preferences'),
+  getPreferences: (userId: string) =>
+    apiClient.get('/api/notifications/preferences', {
+      params: { userId },
+    }),
 
   // Update preferences
-  updatePreferences: (data: UpdatePreferencesDto) =>
-    apiClient.put('/api/notifications/preferences', data),
+  updatePreferences: (userId: string, data: UpdatePreferencesDto) =>
+    apiClient.put('/api/notifications/preferences', data, {
+      params: { userId },
+    }),
+
+  // Get notification history
+  getHistory: (userId: string, days?: number) =>
+    apiClient.get('/api/notifications/history', {
+      params: { userId, days },
+    }),
 
   // Register device for push notifications
   registerDevice: (data: RegisterDeviceDto) =>
     apiClient.post('/api/notifications/register-device', data),
-
-  // Get notification history
-  getHistory: (days?: number) =>
-    apiClient.get('/api/notifications/history', { params: { days } }),
 };

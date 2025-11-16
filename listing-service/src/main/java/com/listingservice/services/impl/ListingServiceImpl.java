@@ -16,6 +16,8 @@ import com.listingservice.repositories.BidRepository;
 import com.listingservice.repositories.ListingRepository;
 import com.listingservice.repositories.TransactionRepository;
 import com.listingservice.services.ListingService;
+import com.listingservice.events.EventPublisher;
+import com.listingservice.events.ListingEvent;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class ListingServiceImpl implements ListingService {
     private final TransactionMapper transactionMapper;
     private final TransactionRepository transactionRepository;
     private final CreditServiceClient creditServiceClient;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -79,6 +82,16 @@ public class ListingServiceImpl implements ListingService {
         Listing savedListing = listingRepository.save(listing);
 
         log.info("Listing created successfully with ID: {}", savedListing.getId());
+
+        // Publish listing.created event
+        ListingEvent event = ListingEvent.listingCreated(
+                savedListing.getId(),
+                savedListing.getSellerId(),
+                savedListing.getTitle(),
+                savedListing.getCo2Amount(),
+                savedListing.getPricePerKg()
+        );
+        eventPublisher.publishListingCreated(event);
 
         return listingMapper.toResponse(savedListing, 0);
     }
@@ -407,6 +420,16 @@ public class ListingServiceImpl implements ListingService {
         if (newAvailableAmount <= 0) {
             listingRepository.updateStatus(listingId, ListingStatus.SOLD, Instant.now());
             log.info("Listing {} marked as SOLD (fully purchased)", listingId);
+            
+            // Publish listing.sold event
+            ListingEvent soldEvent = ListingEvent.listingSold(
+                    listing.getId(),
+                    listing.getSellerId(),
+                    listing.getTitle(),
+                    listing.getCo2Amount(),
+                    listing.getPricePerKg()
+            );
+            eventPublisher.publishListingSold(soldEvent);
         }
 
         log.info("Purchase completed successfully for listing {}", listingId);

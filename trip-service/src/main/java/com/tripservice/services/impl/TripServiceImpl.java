@@ -7,6 +7,8 @@ import com.tripservice.dtos.request.AddCreditRequest;
 import com.tripservice.dtos.request.TripUploadRequest;
 import com.tripservice.dtos.response.*;
 import com.tripservice.entities.Trip;
+import com.tripservice.events.EventPublisher;
+import com.tripservice.events.TripEvent;
 import com.tripservice.exceptions.InvalidCalculationException;
 import com.tripservice.exceptions.InvalidTripStateException;
 import com.tripservice.exceptions.TripNotFoundException;
@@ -36,6 +38,7 @@ public class TripServiceImpl implements TripService {
     private final TripUploadService uploadService;
     private final TripCustomMapper tripCustomMapper;
     private final CreditServiceClient creditServiceClient;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -181,6 +184,17 @@ public class TripServiceImpl implements TripService {
             if (creditResponse.getStatusCode() == 200) {
                 log.info("Successfully added {} kg CO2 credits to user: {}",
                         completedTrip.getCo2Reduced(), completedTrip.getUserId());
+                
+                // Publish trip.verified event to RabbitMQ
+                TripEvent event = TripEvent.tripVerified(
+                        completedTrip.getId(),
+                        completedTrip.getUserId(),
+                        completedTrip.getCo2Reduced(),
+                        completedTrip.getDistanceKm(),
+                        completedTrip.getCreatedAt().toString()
+                );
+                eventPublisher.publishTripVerified(event);
+                
             } else {
                 log.error("Failed to add credits: {}", creditResponse.getMessage());
                 // Note: Trip is still marked as completed even if credit addition fails

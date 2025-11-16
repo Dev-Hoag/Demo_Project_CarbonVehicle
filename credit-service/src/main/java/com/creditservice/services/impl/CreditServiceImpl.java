@@ -17,6 +17,8 @@ import com.creditservice.mappers.CreditTransactionMapper;
 import com.creditservice.repositories.CreditRepository;
 import com.creditservice.repositories.CreditTransactionRepository;
 import com.creditservice.services.CreditService;
+import com.creditservice.events.EventPublisher;
+import com.creditservice.events.CreditEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,7 @@ public class CreditServiceImpl implements CreditService {
     private final CreditMapper creditMapper;
     private final CreditTransactionMapper transactionMapper;
     private final CreditStatisticsMapper statisticsMapper;
+    private final EventPublisher eventPublisher;
 
     @Override
     public CreditResponse createCreditAccount(UUID userId) {
@@ -129,6 +132,16 @@ public class CreditServiceImpl implements CreditService {
 
         log.info("Successfully added {} credits to user: {}. New balance: {}",
                 request.getAmount(), request.getUserId(), updatedCredit.getBalance());
+
+        // Publish credit.issued event
+        CreditEvent event = CreditEvent.creditIssued(
+                request.getUserId(),
+                request.getAmount(),
+                "TRIP",
+                request.getRelatedTripId(),
+                request.getDescription()
+        );
+        eventPublisher.publishCreditIssued(event);
 
         return creditMapper.toResponse(updatedCredit);
     }

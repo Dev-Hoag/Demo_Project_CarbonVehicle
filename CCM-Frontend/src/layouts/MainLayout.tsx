@@ -35,6 +35,7 @@ import {
   VerifiedUser as VerifiedUserIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
+import { NotificationBell } from '../components/NotificationBell';
 
 const drawerWidth = 240;
 
@@ -133,7 +134,9 @@ export const MainLayout: React.FC = () => {
             Carbon Credit Market
           </Typography>
 
-          <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>
+          <NotificationBell />
+
+          <IconButton onClick={handleMenuClick} sx={{ p: 0, ml: 1 }}>
             <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
               {user?.fullName?.charAt(0) || 'U'}
             </Avatar>

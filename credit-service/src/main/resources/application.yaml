@@ -39,6 +39,13 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:ccm_admin}
+    password: ${RABBITMQ_PASSWORD:ccm_password_2024}
+    virtual-host: ${RABBITMQ_VHOST:ccm_vhost}
+
 logging:
   level:
     com.tripservice: DEBUG
