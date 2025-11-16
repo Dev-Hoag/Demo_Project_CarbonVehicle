@@ -8,7 +8,9 @@ volumes:
   mysql-data:
 
 services:
+  # ================================
   # MySQL Database
+  # ================================
   verification-mysql:
     image: mysql:8.0
     container_name: verification-mysql
@@ -29,7 +31,22 @@ services:
       timeout: 5s
       retries: 5
 
-  # Verification Service
+  # ================================
+  # RabbitMQ Message Broker
+  # ================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - app-network
+
+  # ================================
+  # Verification Service (FastAPI)
+  # ================================
   verification-service:
     build:
       context: .
@@ -43,13 +60,40 @@ services:
     depends_on:
       verification-mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - app-network
     volumes:
-      - ./app:/app/app
+      - ./app:/app
       - ./logs:/app/logs
     command: uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
 
+  # ================================
+  # Verification Event Consumer
+  # ================================
+  verification-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: verification-consumer
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      verification-mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./app:/app
+    command: python -m app.events.event_consumer
+
+  # ================================
+  # Adminer (Database UI)
+  # ================================
   adminer:
     image: adminer
     container_name: adminer
@@ -58,6 +102,6 @@ services:
       - "8080:8080"
     environment:
       ADMINER_DEFAULT_SERVER: verification-mysql
-      ADMINER_DESIGN: nette   # tùy chọn: giao diện đẹp hơn
+      ADMINER_DESIGN: nette
     networks:
       - app-network

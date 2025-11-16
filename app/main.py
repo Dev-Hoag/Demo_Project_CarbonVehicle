@@ -5,6 +5,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from .events.event_consumer import start_consumer
+from threading import Thread
 import time
 
 from app.config.settings import settings
@@ -182,6 +184,13 @@ async def log_requests(request: Request, call_next):
             f"→ Error: {str(e)}"
         )
         raise
+
+
+
+@app.on_event("startup")
+def startup_event():
+    Thread(target=start_consumer, daemon=True).start()
+
 
 
 # ============================================
