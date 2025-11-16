@@ -6,8 +6,10 @@ import threading
 
 from app.config import settings
 from app.database import init_db
-from app.api import router
-from app.messaging import rabbitmq_connection, start_consumer
+from app.api.routes import router
+from app.messaging.rabbitmq import rabbitmq_connection
+from app.messaging.consumer import start_consumer
+
 
 # Configure logging
 logging.basicConfig(
