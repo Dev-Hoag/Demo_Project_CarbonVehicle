@@ -13,6 +13,8 @@ from app.models.verification import Verification, VerificationStatus
 from app.repositories.verification_repository import VerificationRepository
 from app.core.exceptions import NotFoundException, ValidationException
 from app.utils.logger import logger
+from app.events.event_publisher import EventPublisher
+from app.events.event_definitions import EventType
 
 class VerificationService:
     """
@@ -170,8 +172,22 @@ class VerificationService:
             f"(Credits: {verification.credits_suggested})"
         )
         
-        # TODO: Publish event VerificationApproved qua Kafka
-        # → Registry Service sẽ mint credits
+        # Publish VerificationApproved event → Registry/Wallet Service sẽ mint credits vào ví
+        EventPublisher.publish(
+            EventType.VERIFICATION_APPROVED,
+            {
+                'verification_id': verification.id,
+                'trip_id': verification.trip_id,
+                'user_id': verification.user_id,
+                'verifier_id': verifier_id,
+                'credits_amount': float(verification.credits_suggested),
+                'co2_saved_kg': float(verification.co2_saved_kg),
+                'signature_hash': verification.signature_hash,
+                'approved_at': verification.signed_at.isoformat() if verification.signed_at else datetime.utcnow().isoformat(),
+                'remarks': remarks
+            }
+        )
+        logger.info(f"📤 Published VerificationApproved event for verification {verification_id}")
         
         return verification
     
@@ -223,8 +239,19 @@ class VerificationService:
             f"Reason: {remarks[:50]}..."
         )
         
-        # TODO: Publish event VerificationRejected qua Kafka
-        # → Notification Service thông báo cho EV Owner
+        # Publish VerificationRejected event → Notification Service thông báo cho EV Owner
+        EventPublisher.publish(
+            EventType.VERIFICATION_REJECTED,
+            {
+                'verification_id': verification.id,
+                'trip_id': verification.trip_id,
+                'user_id': verification.user_id,
+                'verifier_id': verifier_id,
+                'reason': remarks,
+                'rejected_at': datetime.utcnow().isoformat()
+            }
+        )
+        logger.info(f"📤 Published VerificationRejected event for verification {verification_id}")
         
         return verification
     

@@ -1,6 +1,7 @@
 # ============================================
 # Đọc environment variables từ .env
 # ============================================
+import os
 from pydantic_settings import BaseSettings
 from typing import List
 from pydantic import validator
@@ -59,6 +60,17 @@ class Settings(BaseSettings):
     MRV_SERVICE_URL: str = "http://mrv-service:8003"
     REGISTRY_SERVICE_URL: str = "http://registry-service:8007"
     NOTIFICATION_SERVICE_URL: str = "http://notification-service:8010"
+
+
+    # RabbitMQ Configuration
+    RABBITMQ_HOST: str = os.getenv("RABBITMQ_HOST", "rabbitmq")
+    RABBITMQ_PORT: int = int(os.getenv("RABBITMQ_PORT", 5672))
+    RABBITMQ_USER: str = os.getenv("RABBITMQ_USER", "guest")
+    RABBITMQ_PASSWORD: str = os.getenv("RABBITMQ_PASSWORD", "guest")
+    RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "carbon_exchange")
+
+    # 🔥 Thêm dòng này để Pydantic chấp nhận biến môi trường
+    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "verification_queue")
     
     class Config:
         env_file = ".env"
