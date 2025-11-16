@@ -43,11 +43,11 @@ import adminService from '../../services/admin';
 import type { WalletFilters } from '../../services/admin';
 
 interface WalletTransaction {
-  id: number;
-  userId: string;
+  id: string;
+  userId: string | number;
   amount: number;
-  transactionType: string;
-  status: string;
+  type: string;
+  status?: string;
   description?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
@@ -89,7 +89,7 @@ const AdminWithdrawals: React.FC = () => {
   const [completeDialog, setCompleteDialog] = useState(false);
   const [reason, setReason] = useState('');
   const [transactionHash, setTransactionHash] = useState('');
-  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Load transactions
   const loadTransactions = async () => {
@@ -99,7 +99,7 @@ const AdminWithdrawals: React.FC = () => {
         page: page + 1,
         limit,
         status: statusFilter === 'ALL' ? undefined : statusFilter,
-        transactionType: transactionTypeFilter || undefined,
+        type: transactionTypeFilter || undefined,
       };
 
       const response: WalletTransactionListResponse = await adminService.wallets.getAllTransactions(filters);
@@ -374,11 +374,11 @@ const AdminWithdrawals: React.FC = () => {
                     <TableCell>{tx.id}</TableCell>
                     <TableCell>{tx.userId}</TableCell>
                     <TableCell>
-                      <Chip label={tx.transactionType} size="small" variant="outlined" />
+                      <Chip label={tx.type} size="small" variant="outlined" />
                     </TableCell>
                     <TableCell>{formatCurrency(tx.amount)}</TableCell>
                     <TableCell>
-                      <Chip label={tx.status} color={getStatusColor(tx.status)} size="small" />
+                      <Chip label={tx.status || 'N/A'} color={getStatusColor(tx.status || '')} size="small" />
                     </TableCell>
                     <TableCell>
                       {tx.bankAccountName && (
@@ -419,7 +419,7 @@ const AdminWithdrawals: React.FC = () => {
                           </IconButton>
                         </>
                       )}
-                      {tx.status === 'CONFIRMED' && tx.transactionType === 'WITHDRAWAL' && (
+                      {tx.status === 'CONFIRMED' && tx.type === 'WITHDRAWAL' && (
                         <>
                           <IconButton
                             size="small"
@@ -441,7 +441,7 @@ const AdminWithdrawals: React.FC = () => {
                           </IconButton>
                         </>
                       )}
-                      {tx.status === 'CONFIRMED' && tx.transactionType !== 'WITHDRAWAL' && (
+                      {tx.status === 'CONFIRMED' && tx.type !== 'WITHDRAWAL' && (
                         <IconButton
                           size="small"
                           color="warning"
@@ -487,7 +487,7 @@ const AdminWithdrawals: React.FC = () => {
                 <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Type:</strong> {selectedTransaction.transactionType}
+                <strong>Type:</strong> {selectedTransaction.type}
               </Typography>
               <TextField
                 autoFocus

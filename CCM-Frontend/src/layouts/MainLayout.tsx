@@ -27,6 +27,8 @@ import {
   Person as PersonIcon,
   ShoppingCart as ShoppingIcon,
   ListAlt as ListIcon,
+  DirectionsCar as TripIcon,
+  Stars as CreditIcon,
   AdminPanelSettings as AdminIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
@@ -45,9 +47,12 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { title: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
+  { title: 'My Trips', path: '/trips', icon: <TripIcon /> },
+  { title: 'My Credits', path: '/credits', icon: <CreditIcon /> },
+  { title: 'Marketplace', path: '/listings', icon: <ListIcon /> },
+  { title: 'My Listings', path: '/my-listings', icon: <ShoppingIcon /> },
   { title: 'Wallet', path: '/wallet', icon: <WalletIcon /> },
   { title: 'Payments', path: '/payments', icon: <PaymentIcon /> },
-  { title: 'Listings', path: '/listings', icon: <ListIcon /> },
   { title: 'Transactions', path: '/transactions', icon: <ShoppingIcon /> },
   { title: 'Profile', path: '/profile', icon: <PersonIcon /> },
   { title: 'KYC Verification', path: '/kyc', icon: <VerifiedUserIcon /> },

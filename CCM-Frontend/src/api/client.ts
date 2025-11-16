@@ -13,17 +13,30 @@ export const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token from Zustand persisted storage
+    // Check for admin token first (for admin routes)
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
+      console.log('[API Client] Added admin token to request:', config.url);
+      return config;
+    }
+
+    // Fallback to regular user auth (Zustand persisted storage)
     const token = localStorage.getItem('auth-storage');
     if (token) {
       try {
         const authData = JSON.parse(token);
         if (authData.state?.accessToken) {
           config.headers.Authorization = `Bearer ${authData.state.accessToken}`;
+          console.log('[API Client] Added user token to request:', config.url);
+        } else {
+          console.warn('[API Client] No accessToken found in auth storage');
         }
       } catch (error) {
         console.error('Failed to parse auth token:', error);
       }
+    } else {
+      console.warn('[API Client] No auth token found (neither admin nor user)');
     }
     return config;
   },

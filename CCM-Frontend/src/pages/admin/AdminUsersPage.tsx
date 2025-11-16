@@ -38,10 +38,12 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   History as HistoryIcon,
+  AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
 import adminService from '../../services/admin';
 import type { UserFilters } from '../../services/admin';
 import UserDetailDialog from '../../components/admin/UserDetailDialog';
+import UserWalletDetailDialog from '../../components/admin/UserWalletDetailDialog';
 
 interface ManagedUser {
   id: number;
@@ -102,6 +104,10 @@ export const AdminUsersPage: React.FC = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [actionHistory, setActionHistory] = useState<any[]>([]);
   const [historyUserId, setHistoryUserId] = useState<number | null>(null);
+
+  // Wallet detail dialog
+  const [walletDetailDialog, setWalletDetailDialog] = useState(false);
+  const [walletUserId, setWalletUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -406,6 +412,21 @@ export const AdminUsersPage: React.FC = () => {
                           </IconButton>
                         </Tooltip>
 
+                        <Tooltip title="View Wallet">
+                          <IconButton
+                            size="small"
+                            color="success"
+                            onClick={() => {
+                              // Use externalUserId for wallet query (real User Service ID)
+                              const userId = user.externalUserId ? parseInt(user.externalUserId) : user.id;
+                              setWalletUserId(userId);
+                              setWalletDetailDialog(true);
+                            }}
+                          >
+                            <WalletIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
                         {user.status === 'ACTIVE' && (
                           <>
                             <Tooltip title="Lock User">
@@ -594,6 +615,17 @@ export const AdminUsersPage: React.FC = () => {
           <Button onClick={() => setHistoryDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Wallet Detail Dialog */}
+      <UserWalletDetailDialog
+        open={walletDetailDialog}
+        onClose={() => {
+          setWalletDetailDialog(false);
+          setWalletUserId(null);
+        }}
+        userId={walletUserId || 0}
+        userName={users.find(u => u.id === walletUserId)?.fullName}
+      />
     </Box>
   );
 };

@@ -1,0 +1,64 @@
+server:
+  port: ${PORT:8081}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: trip-service
+
+  datasource:
+    url: "jdbc:mysql://localhost:3306/trip_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  cloud:
+    config:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+#  eureka:
+#    client:
+#      enabled: false
+#      register-with-eureka: false
+#      fetch-registry: false
+#      service-url:
+#        defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    com.tripservice: DEBUG
+    org.springframework.web: INFO
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+services:
+  credit-service:
+    url: http://localhost:8083/api

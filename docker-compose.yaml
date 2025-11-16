@@ -1,0 +1,167 @@
+version: '3.8'
+
+services:
+
+  # TRIP SERVICE APPLICATION
+  trip-service:
+    build:
+      context: ./trip-service
+      dockerfile: Dockerfile
+    container_name: evowner-trip-service
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      - SERVER_PORT=8091
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-trip:3306/trip_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+    depends_on:
+      mysql-trip:
+        condition: service_healthy
+    networks:
+      - evowner-network
+      - ccm_net
+
+  # LISTING SERVICE APPLICATION
+  listing-service:
+    build:
+      context: ./listing-service
+      dockerfile: Dockerfile
+    container_name: evowner-listing-service
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      - SERVER_PORT=8092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-listing:3306/listing_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SERVICES_TRIP_SERVICE_URL=http://trip-service:8091/api
+      - SERVICES_CREDIT_SERVICE_URL=http://credit-service:8093/api
+    depends_on:
+      mysql-listing:
+        condition: service_healthy
+      trip-service:
+        condition: service_started
+      credit-service:
+        condition: service_started
+    networks:
+      - evowner-network
+      - ccm_net
+
+  # CREDIT SERVICE APPLICATION
+  credit-service:
+    build:
+      context: ./credit-service
+      dockerfile: Dockerfile
+    container_name: evowner-credit-service
+    restart: unless-stopped
+    ports:
+      - "8093:8093"
+    environment:
+      - SERVER_PORT=8093
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-credit:3306/credit_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+    depends_on:
+      mysql-credit:
+        condition: service_healthy
+    networks:
+      - evowner-network
+      - ccm_net
+
+  # TRIP SERVICE DATABASE
+  mysql-trip:
+    image: mysql:8.0.43
+    container_name: mysql-trip-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: trip_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3319:3306"
+    volumes:
+      - mysql-trip-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+  # LISTING SERVICE
+  mysql-listing:
+    image: mysql:8.0.43
+    container_name: mysql-listing-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: listing_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3317:3306"
+    volumes:
+      - mysql-listing-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+  # CREDIT SERVICE
+  mysql-credit:
+    image: mysql:8.0.43
+    container_name: mysql-credit-service
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: credit_service_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3318:3306"
+    volumes:
+      - mysql-credit-data:/var/lib/mysql
+    networks:
+      - evowner-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+# VOLUMES
+volumes:
+  mysql-trip-data:
+    name: evowner_mysql_trip_data
+    driver: local
+  mysql-listing-data:
+    name: evowner_mysql_listing_data
+    driver: local
+  mysql-credit-data:
+    name: evowner_mysql_credit_data
+    driver: local
+
+# NETWORKS
+networks:
+  evowner-network:
+    name: evowner-network
+    driver: bridge
+  ccm_net:
+    external: true

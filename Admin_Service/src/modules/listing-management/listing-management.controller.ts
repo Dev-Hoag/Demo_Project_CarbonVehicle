@@ -22,19 +22,32 @@ export class ListingManagementController {
   @ApiOperation({ summary: 'List listings', description: 'Lấy danh sách listing' })
   @ApiResponse({ status: 200, description: 'List of listings' })
   async getAllListings(
-    @Query('page', ParseIntPipe) page: number = 1,
-    @Query('limit', ParseIntPipe) limit: number = 10,
-    @Query() filters: FilterListingDto,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('status') status?: string,
+    @Query('listingType') listingType?: string,
+    @Query('ownerId') ownerId?: string,
   ) {
-    return this.service.getAllListings(page, limit, filters);
+    // Convert to numbers
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
+    
+    // Build filters object
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (listingType) filters.listingType = listingType;
+    if (ownerId) filters.ownerId = ownerId;
+    
+    return this.service.getAllListings(pageNum, limitNum, filters);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get listing by ID' })
   @ApiResponse({ status: 200, description: 'Listing details' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
-  async getListingById(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getListingById(id);
+  async getListingById(@Param('id') id: string) {
+    const numId = Number(id);
+    return this.service.getListingById(numId);
   }
 
   @Post(':id/suspend')
@@ -43,11 +56,12 @@ export class ListingManagementController {
   @ApiResponse({ status: 200, description: 'Suspend command sent' })
   @ApiResponse({ status: 400, description: 'Cannot suspend listing' })
   async suspendListing(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() dto: SuspendListingDto,
     @CurrentUser() admin: any,
   ) {
-    return this.service.suspendListing(id, admin.id, dto.reason);
+    const numId = Number(id);
+    return this.service.suspendListing(numId, admin.id, dto.reason);
   }
 
   @Post(':id/activate')
@@ -55,19 +69,21 @@ export class ListingManagementController {
   @ApiOperation({ summary: 'Activate listing', description: 'Kích hoạt lại listing đã bị suspend' })
   @ApiResponse({ status: 200, description: 'Activate command sent' })
   async activateListing(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() dto: ActivateListingDto,
     @CurrentUser() admin: any,
   ) {
-    return this.service.activateListing(id, admin.id, dto.reason);
+    const numId = Number(id);
+    return this.service.activateListing(numId, admin.id, dto.reason);
   }
 
   @Post(':id/flag')
   @HttpCode(200)
   @ApiOperation({ summary: 'Flag listing', description: 'Đánh dấu listing có vấn đề' })
   @ApiResponse({ status: 200, description: 'Flag command sent' })
-  async flagListing(@Param('id', ParseIntPipe) id: number, @Body() dto: FlagListingDto, @CurrentUser() admin: any) {
-    return this.service.flagListing(id, admin.id, dto.flagType, dto.reason);
+  async flagListing(@Param('id') id: string, @Body() dto: FlagListingDto, @CurrentUser() admin: any) {
+    const numId = Number(id);
+    return this.service.flagListing(numId, admin.id, dto.flagType, dto.reason);
   }
 
   @Post(':id/unflag')
@@ -75,10 +91,11 @@ export class ListingManagementController {
   @ApiOperation({ summary: 'Unflag listing', description: 'Bỏ cờ đánh dấu' })
   @ApiResponse({ status: 200, description: 'Unflag command sent' })
   async unflagListing(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() dto: UnflagListingDto,
     @CurrentUser() admin: any,
   ) {
-    return this.service.unflagListing(id, admin.id, dto.reason);
+    const numId = Number(id);
+    return this.service.unflagListing(numId, admin.id, dto.reason);
   }
 }

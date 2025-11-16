@@ -412,8 +412,8 @@ export class AdminService {
       qb.andWhere('tx.amount <= :maxAmount', { maxAmount });
     }
 
-    // Count total
-    const total = await qb.getCount();
+    // Count total (use clone to avoid issues with getCount)
+    const total = await qb.clone().getCount();
 
     // Apply pagination
     qb.orderBy('tx.created_at', 'DESC')

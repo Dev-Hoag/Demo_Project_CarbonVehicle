@@ -36,18 +36,25 @@ import {
   Assessment as StatsIcon,
   AccountBalanceWallet as WalletIcon,
   AddCircle as AddIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import adminService from '../../services/admin';
 import type { WalletFilters } from '../../services/admin';
+import UserWalletDetailDialog from '../../components/admin/UserWalletDetailDialog';
 
 interface WalletTransaction {
-  id: number;
-  userId: string;
+  id: string;
+  walletId?: string;
+  userId: string | number;
+  type: string;
   amount: number;
-  transactionType: string;
-  status: string;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  status?: string;
   description?: string;
+  referenceId?: string;
+  metadata?: any;
   createdAt: string;
 }
 
@@ -86,6 +93,10 @@ export const AdminWalletsPage: React.FC = () => {
   const [adjustReason, setAdjustReason] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  // Wallet Detail Dialog
+  const [walletDetailDialog, setWalletDetailDialog] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   // Load transactions
   const loadTransactions = async () => {
     setLoading(true);
@@ -95,9 +106,9 @@ export const AdminWalletsPage: React.FC = () => {
         limit,
         userId: userIdFilter || undefined,
         status: statusFilter || undefined,
-        transactionType: transactionTypeFilter || undefined,
-        fromDate: fromDate || undefined,
-        toDate: toDate || undefined,
+        type: transactionTypeFilter || undefined,
+        startDate: fromDate || undefined,
+        endDate: toDate || undefined,
       };
 
       const response: WalletTransactionListResponse = await adminService.wallets.getAllTransactions(filters);
@@ -117,9 +128,9 @@ export const AdminWalletsPage: React.FC = () => {
   const calculateStatistics = (txs: WalletTransaction[]) => {
     setStatistics({
       total: txs.length,
-      deposits: txs.filter(t => t.transactionType === 'DEPOSIT').length,
-      withdrawals: txs.filter(t => t.transactionType === 'WITHDRAWAL').length,
-      payments: txs.filter(t => t.transactionType === 'PAYMENT').length,
+      deposits: txs.filter(t => t.type === 'DEPOSIT').length,
+      withdrawals: txs.filter(t => t.type === 'WITHDRAWAL').length,
+      payments: txs.filter(t => t.type === 'PAYMENT').length,
     });
   };
 
@@ -386,6 +397,7 @@ export const AdminWalletsPage: React.FC = () => {
                   <TableCell>Status</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Created At</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -394,14 +406,20 @@ export const AdminWalletsPage: React.FC = () => {
                     <TableCell>{tx.id}</TableCell>
                     <TableCell>{tx.userId}</TableCell>
                     <TableCell>
-                      <Chip label={tx.transactionType} color={getTypeColor(tx.transactionType) as any} size="small" />
+                      <Chip label={tx.type} color={getTypeColor(tx.type) as any} size="small" />
                     </TableCell>
                     <TableCell>{formatCurrency(tx.amount)}</TableCell>
                     <TableCell>
-                      <Chip label={tx.status} color={getStatusColor(tx.status)} size="small" />
+                      <Chip label={tx.status || 'N/A'} color={getStatusColor(tx.status || '')} size="small" />
                     </TableCell>
                     <TableCell>{tx.description || '-'}</TableCell>
                     <TableCell>{formatDate(tx.createdAt)}</TableCell>
+                    <TableCell align="right">
+                      {/* Note: View button disabled - transaction userId is string username, not numeric ID */}
+                      {/* Backend wallet endpoint requires numeric userId which we don't have in transaction list */}
+                      {/* Use AdminUsersPage to view wallet details instead */}
+                      -
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -477,6 +495,16 @@ export const AdminWalletsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Wallet Detail Dialog */}
+      <UserWalletDetailDialog
+        open={walletDetailDialog}
+        onClose={() => {
+          setWalletDetailDialog(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId || ''}
+      />
     </Box>
   );
 };

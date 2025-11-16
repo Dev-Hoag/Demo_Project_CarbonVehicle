@@ -34,6 +34,10 @@ import {
   AdminPanelSettings as AdminIcon,
   Description as DescriptionIcon,
   AssignmentTurnedIn as AssignmentIcon,
+  VerifiedUser as VerificationIcon,
+  Stars as CreditIcon,
+  ShoppingCart as ShoppingCartIcon,
+  FormatListBulleted as ListingIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
@@ -48,10 +52,14 @@ interface AdminMenuItem {
 const menuItems: AdminMenuItem[] = [
   { title: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
   { title: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
+  { title: 'Trip Verification (CVA)', path: '/admin/trip-verification', icon: <VerificationIcon /> },
   { title: 'KYC Management', path: '/admin/kyc', icon: <VerifiedUserIcon /> },
   { title: 'Withdrawals', path: '/admin/withdrawals', icon: <MoneyIcon /> },
-  { title: 'Transactions', path: '/admin/transactions', icon: <TransactionIcon /> },
+  { title: 'Wallet Transactions', path: '/admin/transactions', icon: <TransactionIcon /> },
   { title: 'Wallets', path: '/admin/wallets', icon: <WalletIcon /> },
+  { title: 'Credit Management', path: '/admin/credits', icon: <CreditIcon /> },
+  { title: 'Listings Management', path: '/admin/listings', icon: <ListingIcon /> },
+  { title: 'Listing Transactions', path: '/admin/listing-transactions', icon: <ShoppingCartIcon /> },
   { title: 'Reports', path: '/admin/reports', icon: <AssessmentIcon /> },
   { title: 'Admin Management', path: '/admin/management', icon: <AdminIcon /> },
   { title: 'Audit Logs', path: '/admin/audit-logs', icon: <DescriptionIcon /> },

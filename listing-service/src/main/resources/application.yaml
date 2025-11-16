@@ -1,0 +1,70 @@
+server:
+  port: ${PORT:8082}
+  servlet:
+    context-path: /api
+
+spring:
+  name: listing-service
+
+  datasource:
+    url: "jdbc:mysql://localhost:3307/listing_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  cloud:
+    config:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  logging:
+    level:
+      com.CarbonCredit.listingservice: DEBUG
+      org.springframework.web: INFO
+
+#  eureka:
+#    client:
+#      enabled: false
+#      service-url:
+#        defaultZone: http://localhost:8761/eureka/
+#      register-with-eureka: false
+#      fetch-registry: false
+#    instance:
+#       hostname: localhost
+#       prefer-ip-address: true
+#       lease-renewal-interval-in-seconds: 30
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+services:
+  trip-service:
+    url: http://localhost:8081/api
+  credit-service:
+    url: http://localhost:8083/api

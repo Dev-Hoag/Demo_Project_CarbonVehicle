@@ -342,19 +342,21 @@ export const WalletPage: React.FC = () => {
                         <TableCell>Type</TableCell>
                         <TableCell>Description</TableCell>
                         <TableCell align="right">Amount</TableCell>
+                        <TableCell align="right">Balance After</TableCell>
                         <TableCell>Status</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {!transactions || transactions.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} align="center">
+                          <TableCell colSpan={6} align="center">
                             No transactions yet
                           </TableCell>
                         </TableRow>
                       ) : (
                         transactions.map((tx) => {
                           const amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(String(tx.amount)) || 0;
+                          const balanceAfter = typeof tx.balanceAfter === 'number' ? tx.balanceAfter : parseFloat(String(tx.balanceAfter)) || 0;
                           return (
                             <TableRow key={tx.id}>
                               <TableCell>{new Date(tx.createdAt).toLocaleDateString('vi-VN')}</TableCell>
@@ -363,10 +365,12 @@ export const WalletPage: React.FC = () => {
                                   label={tx.type} 
                                   size="small"
                                   color={
-                                    tx.type === 'DEPOSIT'
+                                    tx.type === 'DEPOSIT' || tx.type === 'SETTLE_IN'
                                       ? 'success'
-                                      : tx.type === 'WITHDRAWAL'
+                                      : tx.type === 'WITHDRAWAL' || tx.type === 'SETTLE_OUT'
                                       ? 'warning'
+                                      : tx.type === 'RESERVE'
+                                      ? 'info'
                                       : 'default'
                                   }
                                 />
@@ -375,10 +379,15 @@ export const WalletPage: React.FC = () => {
                               <TableCell align="right">
                                 <Typography
                                   fontWeight={600}
-                                  color={['DEPOSIT', 'REFUND'].includes(tx.type) ? 'success.main' : 'error.main'}
+                                  color={['DEPOSIT', 'REFUND', 'SETTLE_IN'].includes(tx.type) ? 'success.main' : 'error.main'}
                                 >
-                                  {['DEPOSIT', 'REFUND'].includes(tx.type) ? '+' : '-'}
+                                  {['DEPOSIT', 'REFUND', 'SETTLE_IN'].includes(tx.type) ? '+' : '-'}
                                   {amount.toLocaleString('vi-VN')} VND
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography fontWeight={600} color="primary.main">
+                                  {balanceAfter.toLocaleString('vi-VN')} VND
                                 </Typography>
                               </TableCell>
                               <TableCell>

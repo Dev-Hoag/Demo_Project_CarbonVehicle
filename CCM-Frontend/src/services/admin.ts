@@ -213,9 +213,11 @@ export interface WalletFilters {
   limit?: number;
   userId?: string;
   status?: string;
-  transactionType?: string;
-  fromDate?: string;
-  toDate?: string;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export const walletManagement = {
@@ -229,18 +231,28 @@ export const walletManagement = {
     return data;
   },
 
-  reverseTransaction: async (id: number, reason: string) => {
+  reverseTransaction: async (id: string | number, reason: string) => {
     const { data } = await adminApi.post(`/api/admin/wallet-transactions/${id}/reverse`, { reason });
     return data;
   },
 
-  confirmTransaction: async (id: number, reason: string) => {
+  confirmTransaction: async (id: string | number, reason: string) => {
     const { data } = await adminApi.post(`/api/admin/wallet-transactions/${id}/confirm`, { reason });
     return data;
   },
 
   adjustBalance: async (userId: string, amount: number, reason: string) => {
     const { data } = await adminApi.post('/api/admin/wallet-transactions/adjust-balance', { userId, amount, reason });
+    return data;
+  },
+
+  getUserWalletDetail: async (userId: string | number) => {
+    const { data } = await adminApi.get(`/api/admin/reports/wallets/${userId}`);
+    return data;
+  },
+
+  getAllWallets: async (filters: WalletFilters = {}) => {
+    const { data } = await adminApi.get('/api/admin/reports/wallets/list', { params: filters });
     return data;
   },
 };

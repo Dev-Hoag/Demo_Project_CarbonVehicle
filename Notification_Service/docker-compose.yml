@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: notification_service_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notification_service_db
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --default-time-zone=+07:00
+    ports:
+      - '3320:3306'
+    volumes:
+      - notification_service_data:/var/lib/mysql
+      - ./notification_service_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      ccm_net:
+        aliases:
+          - notification_mysql
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification_service_app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=3010
+      - DB_HOST=notification_service_mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_NAME=notification_service_db
+      - RABBITMQ_URL=amqp://ccm_admin:ccm_password_2024@ccm_rabbitmq:5672/ccm_vhost
+      - FIREBASE_PROJECT_ID=carbon-credit-marketplace
+      - FIREBASE_SERVICE_ACCOUNT_PATH=/app/config/firebase-service-account.json
+    volumes:
+      - ./config:/app/config
+    ports:
+      - '3010:3010'
+    networks:
+      - ccm_net
+    restart: unless-stopped
+
+volumes:
+  notification_service_data:
+
+networks:
+  ccm_net:
+    external: true

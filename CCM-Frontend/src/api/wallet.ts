@@ -13,7 +13,7 @@ export interface Wallet {
 export interface WalletTransaction {
   id: number;
   walletId: number;
-  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT' | 'REFUND';
+  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT' | 'REFUND' | 'RESERVE' | 'SETTLE_IN' | 'SETTLE_OUT';
   amount: number;
   balanceBefore: number;
   balanceAfter: number;

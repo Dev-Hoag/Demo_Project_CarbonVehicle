@@ -20,6 +20,9 @@ import DashboardPage from './pages/Dashboard';
 import WalletPage from './pages/Wallet';
 import PaymentsPage from './pages/Payments';
 import ListingsPage from './pages/Listings';
+import MyListingsPage from './pages/MyListings';
+import TripsPage from './pages/Trips';
+import CreditsPage from './pages/Credits';
 import TransactionsPage from './pages/Transactions';
 import ProfilePage from './pages/Profile';
 import KYCPage from './pages/KYC';
@@ -34,6 +37,10 @@ import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import { AdminManagementPage } from './pages/admin/AdminManagement';
 import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogs';
 import { AdminOverrideRequestsPage } from './pages/admin/AdminOverrideRequests';
+import AdminTripVerificationPage from './pages/admin/AdminTripVerification';
+import AdminCreditsPage from './pages/admin/AdminCredits';
+import AdminListingTransactionsPage from './pages/admin/AdminListingTransactions';
+import AdminListingsPage from './pages/admin/AdminListings';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -74,10 +81,14 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="trip-verification" element={<AdminTripVerificationPage />} />
             <Route path="kyc" element={<AdminKYC />} />
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="wallets" element={<AdminWalletsPage />} />
+            <Route path="credits" element={<AdminCreditsPage />} />
+            <Route path="listings" element={<AdminListingsPage />} />
+            <Route path="listing-transactions" element={<AdminListingTransactionsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="management" element={<AdminManagementPage />} />
             <Route path="audit-logs" element={<AdminAuditLogsPage />} />
@@ -94,7 +105,10 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/trips" element={<TripsPage />} />
+              <Route path="/credits" element={<CreditsPage />} />
               <Route path="/listings" element={<ListingsPage />} />
+              <Route path="/my-listings" element={<MyListingsPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/kyc" element={<KYCPage />} />
