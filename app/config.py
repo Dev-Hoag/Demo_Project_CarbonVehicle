@@ -1,5 +1,7 @@
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
+
 
 class Settings(BaseSettings):
     # Application
@@ -16,12 +18,16 @@ class Settings(BaseSettings):
     DB_NAME: str = "certificate_service_db"
     
     # RabbitMQ
-    RABBITMQ_HOST: str = "localhost"
-    RABBITMQ_PORT: int = 5672
-    RABBITMQ_USER: str = "guest"
-    RABBITMQ_PASSWORD: str = "guest"
-    RABBITMQ_EXCHANGE: str = "carbon_credit_exchange"
-    RABBITMQ_QUEUE: str = "certificate_queue"
+    RABBITMQ_HOST: str = os.getenv("RABBITMQ_HOST", "rabbitmq")
+    RABBITMQ_PORT: int = int(os.getenv("RABBITMQ_PORT", 5672))
+    RABBITMQ_USER: str = os.getenv("RABBITMQ_USER", "guest")
+    RABBITMQ_PASS: str = os.getenv("RABBITMQ_PASS", "guest")
+    # Accept either RABBITMQ_PASS or RABBITMQ_PASSWORD in env files
+    RABBITMQ_PASSWORD: Optional[str] = None
+    RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "carbon_exchange")
+    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "certificate_service_queue")
+
+
     
     # JWT
     SECRET_KEY: str = "your-secret-key-change-this"
