@@ -94,7 +94,8 @@ export const MyListingsPage: React.FC = () => {
       setSelectedListing(listing);
       setBidsDialog(true);
       const response = await bidApi.getByListing(listing.id);
-      setBids(response.data.data || []);
+      const bidsData = response.data.data || response.data || [];
+      setBids(Array.isArray(bidsData) ? bidsData : []);
     } catch (err: any) {
       toast.error('Failed to load bids: ' + (err.response?.data?.message || err.message));
     }
@@ -333,10 +334,10 @@ export const MyListingsPage: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>{listing.co2Amount} kg</TableCell>
-                      <TableCell>{listing.pricePerKg.toLocaleString()} VND</TableCell>
+                      <TableCell>{listing.pricePerKg?.toLocaleString() ?? 'N/A'} VND</TableCell>
                       <TableCell>
                         <Typography fontWeight="bold" color="primary">
-                          {listing.totalPrice.toLocaleString()} VND
+                          {listing.totalPrice?.toLocaleString() ?? 'N/A'} VND
                         </Typography>
                       </TableCell>
                       <TableCell>

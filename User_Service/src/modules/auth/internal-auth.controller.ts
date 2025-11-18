@@ -50,13 +50,15 @@ export class InternalAuthController {
         userId: payload.sub,
         userRole: payload.role || payload.userType,
         email: payload.email,
-        userType: payload.userType
+        userType: payload.userType,
+        fullName: payload.fullName || payload.email.split('@')[0]
       };
 
       // Set headers for nginx auth_request_set to capture
       res.setHeader('X-User-ID', String(userInfo.userId));
       res.setHeader('X-User-Role', userInfo.userRole);
       res.setHeader('X-User-Email', userInfo.email);
+      res.setHeader('X-User-Name', userInfo.fullName);
 
       // Also return in body for debugging
       return res.json(userInfo);

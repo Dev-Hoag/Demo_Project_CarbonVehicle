@@ -19,7 +19,9 @@ import {
 } from '@mui/material';
 import { Search, Add, FilterList, Person } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
-import { listingApi, type Listing } from '../api/listing';
+import { listingApi, auctionApi, type Listing } from '../api/listing';
+import { AuctionCard } from '../components/AuctionCard';
+import { BidDialog } from '../components/BidDialog';
 import { walletApi } from '../api/wallet';
 import { statusColors } from '../types';
 import { useAuthStore } from '../store/authStore';
@@ -36,10 +38,10 @@ export const ListingsPage: React.FC = () => {
   const [bidDialog, setBidDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [purchaseAmount, setPurchaseAmount] = useState<number>(0);
-  const [bidAmount, setBidAmount] = useState<number>(0);
   const [filter, setFilter] = useState({ status: 'ALL', search: '' });
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loadingWallet, setLoadingWallet] = useState(false);
+  const [auctionData, setAuctionData] = useState<Record<string, { currentBid: number | null; bidCount: number }>>({});
 
   const { register, handleSubmit, reset } = useForm();
 
@@ -58,6 +60,33 @@ export const ListingsPage: React.FC = () => {
       const data = response.data.data.content;
       setListings(data);
       setFilteredListings(data);
+      
+      // Fetch auction data for auction listings
+      const auctionListings = data.filter((l: Listing) => l.listingType === 'AUCTION');
+      const auctionDataMap: Record<string, { currentBid: number | null; bidCount: number }> = {};
+      
+      await Promise.all(
+        auctionListings.map(async (listing: Listing) => {
+          try {
+            const [bidCountRes, currentBidRes] = await Promise.all([
+              auctionApi.getBidCount(listing.id),
+              auctionApi.getCurrentBid(listing.id).catch((err) => {
+                // 404 is expected when no bids exist yet - suppress error
+                if (err.response?.status === 404) return null;
+                throw err;
+              }),
+            ]);
+            auctionDataMap[listing.id] = {
+              currentBid: currentBidRes?.data?.bidAmount || null,
+              bidCount: bidCountRes?.data || 0,
+            };
+          } catch (err) {
+            auctionDataMap[listing.id] = { currentBid: null, bidCount: 0 };
+          }
+        })
+      );
+      
+      setAuctionData(auctionDataMap);
     } catch (err: any) {
       console.error('Failed to fetch listings:', err);
       console.error('Error response:', err.response);
@@ -95,28 +124,41 @@ export const ListingsPage: React.FC = () => {
       const userId = user?.id?.toString() || '0';
       const sellerId = `00000000-0000-0000-0000-${userId.padStart(12, '0')}`;
       
-      await listingApi.create({
+      const listingData: any = {
         title: data.title || `Carbon Credit Listing - ${new Date().toLocaleDateString()}`,
-        description: data.description,
+        description: data.description || '',
         co2Amount: parseFloat(data.co2Amount),
-        pricePerKg: parseFloat(data.pricePerKg),
         sellerId,
-        listingType: 'FIXED_PRICE', // Default to fixed price
-      });
+        listingType: data.listingType || 'FIXED_PRICE',
+      };
+
+      // Add fields based on listing type
+      if (data.listingType === 'AUCTION') {
+        listingData.startingBid = parseFloat(data.startingBid);
+        listingData.reservePrice = parseFloat(data.reservePrice || data.startingBid);
+        listingData.durationHours = parseInt(data.durationHours || '24');
+      } else {
+        listingData.pricePerKg = parseFloat(data.pricePerKg);
+      }
+      
+      console.log('📤 Sending listing data:', JSON.stringify(listingData, null, 2));
+      
+      await listingApi.create(listingData);
       toast.success('Listing created successfully');
       setCreateDialog(false);
       reset();
       fetchListings();
     } catch (err: any) {
-      console.error('Create listing error:', err);
-      toast.error('Failed to create listing: ' + (err.response?.data?.message || err.message));
+      console.error('❌ Create listing error:', err);
+      console.error('❌ Response data:', err.response?.data);
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+      toast.error('Failed to create listing: ' + errorMsg);
     }
   };
 
   const handleViewDetail = async (listing: Listing) => {
     setSelectedListing(listing);
     setPurchaseAmount(listing.co2Amount);
-    setBidAmount(listing.totalPrice * 1.1);
     setLoadingWallet(true);
     setWalletBalance(0); // Reset to 0 first
     
@@ -199,23 +241,14 @@ export const ListingsPage: React.FC = () => {
     }
   };
 
-  const handlePlaceBid = async () => {
-    if (!selectedListing) return;
-    try {
-      const userId = user?.id?.toString() || '0';
-      const bidderId = `00000000-0000-0000-0000-${userId.padStart(12, '0')}`;
-      
-      await listingApi.placeBid(selectedListing.id, {
-        bidderId,
-        bidAmount,
-      });
-      toast.success('Bid placed successfully!');
-      setBidDialog(false);
-      setDetailDialog(false);
-      fetchListings();
-    } catch (err: any) {
-      toast.error('Bid failed: ' + (err.response?.data?.message || err.message));
-    }
+  const handlePlaceBid = (listing: Listing) => {
+    setSelectedListing(listing);
+    setBidDialog(true);
+  };
+  
+  const handleBidPlaced = () => {
+    fetchListings();
+    setBidDialog(false);
   };
 
   if (loading) {
@@ -305,7 +338,15 @@ export const ListingsPage: React.FC = () => {
         ) : (
           filteredListings.map((listing) => (
             <Grid key={listing.id} size={{ xs: 12, md: 6, lg: 4 }}>
-              <Card 
+              {(listing.listingType as string) === 'AUCTION' ? (
+                <AuctionCard
+                  listing={listing}
+                  currentBid={auctionData[listing.id]?.currentBid || null}
+                  bidCount={auctionData[listing.id]?.bidCount || 0}
+                  onPlaceBid={handlePlaceBid}
+                />
+              ) : (
+                <Card 
                 sx={{ 
                   height: '100%', 
                   display: 'flex', 
@@ -358,10 +399,10 @@ export const ListingsPage: React.FC = () => {
                         <Typography component="span" variant="h6" sx={{ ml: 0.5, color: 'text.secondary' }}>kg CO₂</Typography>
                       </Typography>
                       <Chip 
-                        label={listing.listingType === 'AUCTION' ? 'AUCTION' : 'FIXED PRICE'} 
+                        label={(listing.listingType as string) === 'AUCTION' ? 'AUCTION' : 'FIXED PRICE'} 
                         size="small" 
                         sx={{ 
-                          background: listing.listingType === 'AUCTION' ? 'linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)' : 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                          background: (listing.listingType as string) === 'AUCTION' ? 'linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)' : 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                           color: 'white',
                           fontWeight: 600,
                           fontSize: '0.7rem'
@@ -451,7 +492,7 @@ export const ListingsPage: React.FC = () => {
                         fullWidth
                         variant="contained"
                         sx={{
-                          background: listing.listingType === 'AUCTION' 
+                          background: (listing.listingType as string) === 'AUCTION' 
                             ? 'linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)'
                             : 'linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%)',
                           color: 'white',
@@ -464,7 +505,7 @@ export const ListingsPage: React.FC = () => {
                           '&:hover': {
                             transform: 'translateY(-2px)',
                             boxShadow: '0 6px 16px rgba(46,125,50,0.4)',
-                            background: listing.listingType === 'AUCTION'
+                            background: (listing.listingType as string) === 'AUCTION'
                               ? 'linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)'
                               : 'linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%)'
                           }
@@ -473,20 +514,20 @@ export const ListingsPage: React.FC = () => {
                           e.stopPropagation();
                           setSelectedListing(listing);
                           setPurchaseAmount(listing.co2Amount);
-                          setBidAmount(listing.totalPrice * 1.1);
-                          if (listing.listingType === 'AUCTION') {
+                          if ((listing.listingType as string) === 'AUCTION') {
                             setBidDialog(true);
                           } else {
                             setPurchaseDialog(true);
                           }
                         }}
                       >
-                        {listing.listingType === 'AUCTION' ? '🎯 Place Bid' : '🛒 Buy Now'}
+                        {(listing.listingType as string) === 'AUCTION' ? '🎯 Place Bid' : '🛒 Buy Now'}
                       </Button>
                     )}
                   </Box>
                 )}
               </Card>
+              )}
             </Grid>
           ))
         )}
@@ -497,6 +538,19 @@ export const ListingsPage: React.FC = () => {
         <DialogTitle>Create New Listing</DialogTitle>
         <form onSubmit={handleSubmit(handleCreateListing)}>
           <DialogContent>
+            <TextField
+              {...register('listingType')}
+              select
+              margin="normal"
+              label="Listing Type"
+              fullWidth
+              defaultValue="FIXED_PRICE"
+              helperText="Choose between auction or fixed price"
+            >
+              <MenuItem value="FIXED_PRICE">Fixed Price</MenuItem>
+              <MenuItem value="AUCTION">Auction</MenuItem>
+            </TextField>
+
             <TextField
               {...register('title', { 
                 required: 'Title is required',
@@ -523,18 +577,56 @@ export const ListingsPage: React.FC = () => {
               fullWidth
               required
             />
+            
+            {/* Fixed Price Fields */}
             <TextField
               {...register('pricePerKg', { 
-                required: 'Price is required',
                 min: { value: 1000, message: 'Minimum 1000 VND' }
               })}
               margin="normal"
-              label="Price per kg (VND)"
+              label="Price per kg (VND) - For Fixed Price"
               type="number"
               inputProps={{ step: '1000', min: '1000' }}
               fullWidth
-              required
+              helperText="Only required for Fixed Price listings"
             />
+
+            {/* Auction Fields */}
+            <TextField
+              {...register('startingBid', { 
+                min: { value: 1000, message: 'Minimum 1000 VND' }
+              })}
+              margin="normal"
+              label="Starting Bid (VND/kg) - For Auction"
+              type="number"
+              inputProps={{ step: '100', min: '1000' }}
+              fullWidth
+              helperText="Only required for Auction listings"
+            />
+
+            <TextField
+              {...register('reservePrice', { 
+                min: { value: 1000, message: 'Minimum 1000 VND' }
+              })}
+              margin="normal"
+              label="Reserve Price (VND/kg) - Optional"
+              type="number"
+              inputProps={{ step: '100', min: '1000' }}
+              fullWidth
+              helperText="Minimum price to sell (optional)"
+            />
+
+            <TextField
+              {...register('durationHours')}
+              margin="normal"
+              label="Auction Duration (hours)"
+              type="number"
+              inputProps={{ step: '1', min: '1', max: '168' }}
+              fullWidth
+              defaultValue="24"
+              helperText="How long the auction runs (1-168 hours)"
+            />
+
             <TextField
               {...register('description', { 
                 required: 'Description is required',
@@ -583,7 +675,7 @@ export const ListingsPage: React.FC = () => {
                     <CardContent>
                       <Typography variant="body2" color="text.secondary">Price per kg</Typography>
                       <Typography variant="h5" color="primary">
-                        {selectedListing.pricePerKg.toFixed(2)} VND
+                        {selectedListing.pricePerKg ? selectedListing.pricePerKg.toFixed(2) : 'N/A'} VND
                       </Typography>
                     </CardContent>
                   </Card>
@@ -593,7 +685,7 @@ export const ListingsPage: React.FC = () => {
                     <CardContent>
                       <Typography variant="body2" color="text.secondary">Total Price</Typography>
                       <Typography variant="h4" color="success.main">
-                        {selectedListing.totalPrice.toFixed(2)} VND
+                        {selectedListing.totalPrice ? selectedListing.totalPrice.toFixed(2) : 'N/A'} VND
                       </Typography>
                     </CardContent>
                   </Card>
@@ -670,7 +762,7 @@ export const ListingsPage: React.FC = () => {
                   min: '0.01', 
                   max: selectedListing.co2Amount 
                 }}
-                helperText={`Available: ${selectedListing.co2Amount} kg | Price: ${selectedListing.pricePerKg.toLocaleString()} VND/kg`}
+                helperText={`Available: ${selectedListing.co2Amount} kg | Price: ${selectedListing.pricePerKg ? selectedListing.pricePerKg.toLocaleString() : 'N/A'} VND/kg`}
               />
 
               <Box mt={3} p={2} bgcolor="grey.100" borderRadius={1}>
@@ -686,7 +778,7 @@ export const ListingsPage: React.FC = () => {
                 <Box display="flex" justifyContent="space-between" mb={0.5}>
                   <Typography variant="body2">Price per kg:</Typography>
                   <Typography variant="body2" fontWeight="bold">
-                    {selectedListing.pricePerKg.toLocaleString()} VND
+                    {selectedListing.pricePerKg ? selectedListing.pricePerKg.toLocaleString() : 'N/A'} VND
                   </Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" borderTop="1px solid" borderColor="grey.300" pt={1} mb={1}>
@@ -744,45 +836,13 @@ export const ListingsPage: React.FC = () => {
       </Dialog>
 
       {/* Bid Dialog */}
-      <Dialog open={bidDialog} onClose={() => setBidDialog(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Place Your Bid</DialogTitle>
-        <DialogContent>
-          {selectedListing && (
-            <Box>
-              <Typography variant="body2" gutterBottom>
-                Current price: {selectedListing.totalPrice.toFixed(2)} VND
-              </Typography>
-              <TextField
-                label="Your Bid Amount (VND)"
-                type="number"
-                fullWidth
-                margin="normal"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(parseFloat(e.target.value) || 0)}
-                inputProps={{ 
-                  step: '1000', 
-                  min: selectedListing.totalPrice 
-                }}
-                helperText="Bid must be higher than current price"
-              />
-              <Alert severity="info" sx={{ mt: 2 }}>
-                You are bidding for {selectedListing.co2Amount} kg CO₂
-              </Alert>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBidDialog(false)}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            color="secondary"
-            onClick={handlePlaceBid}
-            disabled={!bidAmount || (selectedListing ? bidAmount <= selectedListing.totalPrice : false)}
-          >
-            Place Bid
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <BidDialog
+        open={bidDialog}
+        onClose={() => setBidDialog(false)}
+        listing={selectedListing}
+        currentBid={selectedListing ? auctionData[selectedListing.id]?.currentBid || null : null}
+        onBidPlaced={handleBidPlaced}
+      />
     </Box>
   );
 };

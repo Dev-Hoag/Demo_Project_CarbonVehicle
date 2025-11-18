@@ -35,7 +35,7 @@ public class BidMapper {
         return toResponse(bid, null);
     }
 
-    public BidResponse toResponse(Bid bid, UUID currentUserId) {
+    public BidResponse toResponse(Bid bid, String currentUserId) {
         if (bid == null) {
             return null;
         }
@@ -74,7 +74,7 @@ public class BidMapper {
     /**
      * Convert list of Bids to list of BidResponses with current user context
      */
-    public List<BidResponse> toResponseList(List<Bid> bids, UUID currentUserId) {
+    public List<BidResponse> toResponseList(List<Bid> bids, String currentUserId) {
         if (bids == null) {
             return List.of();
         }

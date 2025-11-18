@@ -15,7 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PlaceBidRequest {
     @NotNull(message = "Bidder ID is required")
-    private UUID bidderId;
+    private String bidderId;  // Changed from UUID to String to support integer user IDs
 
     private String bidderName;
 

@@ -17,7 +17,7 @@ public class BidResponse {
     private UUID id;
     private UUID listingId;
 
-    private UUID bidderId;
+    private String bidderId;  // Changed from UUID to String to support integer user IDs
     private String bidderName;
 
     private Double bidAmount;

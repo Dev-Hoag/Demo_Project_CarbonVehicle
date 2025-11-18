@@ -312,22 +312,20 @@ export const NotificationBell: React.FC = () => {
         <Divider />
 
         {/* Actions */}
-        {unreadCount > 0 && (
-          <>
-            <Box px={2} py={1}>
-              <Button
-                size="small"
-                startIcon={<DoneAll />}
-                onClick={handleMarkAllAsRead}
-                fullWidth
-                variant="outlined"
-              >
-                Mark all as read
-              </Button>
-            </Box>
-            <Divider />
-          </>
-        )}
+        {unreadCount > 0 && [
+          <Box key="actions" px={2} py={1}>
+            <Button
+              size="small"
+              startIcon={<DoneAll />}
+              onClick={handleMarkAllAsRead}
+              fullWidth
+              variant="outlined"
+            >
+              Mark all as read
+            </Button>
+          </Box>,
+          <Divider key="divider" />
+        ]}
 
         {/* Notifications List */}
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
@@ -343,11 +341,10 @@ export const NotificationBell: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            <>
-              {recentNotifications.map((notification, index) => (
-                <div key={notification.id}>
-                  {index > 0 && <Divider />}
-                  <MenuItem
+            recentNotifications.map((notification, index) => (
+              <div key={notification.id}>
+                {index > 0 && <Divider />}
+                <MenuItem
                     onClick={() => handleNotificationClick(notification)}
                   sx={{
                     py: 1.5,
@@ -427,27 +424,24 @@ export const NotificationBell: React.FC = () => {
                   )}
                 </MenuItem>
               </div>
-            ))}
-          </>
+            ))
           )}
         </Box>
 
         {/* Footer */}
-        {recentNotifications.length > 0 && (
-          <>
-            <Divider />
-            <Box px={2} py={1.5}>
-              <Button
-                fullWidth
-                size="small"
-                onClick={handleViewAll}
-                sx={{ textTransform: 'none' }}
-              >
-                View all notifications
-              </Button>
-            </Box>
-          </>
-        )}
+        {recentNotifications.length > 0 && [
+          <Divider key="footer-divider" />,
+          <Box key="footer-box" px={2} py={1.5}>
+            <Button
+              fullWidth
+              size="small"
+              onClick={handleViewAll}
+              sx={{ textTransform: 'none' }}
+            >
+              View all notifications
+            </Button>
+          </Box>
+        ]}
       </Menu>
     </>
   );

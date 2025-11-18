@@ -123,13 +123,19 @@ export const VerificationsPage: React.FC = () => {
       return;
     }
 
+    if (remarks.trim().length < 10) {
+      toast.error('Rejection reason must be at least 10 characters');
+      return;
+    }
+
     try {
       setProcessing(true);
       await verificationApi.rejectVerification(selectedVerification.id, {
-        rejection_reason: remarks,
+        remarks: remarks.trim(),
       });
       toast.success('Verification rejected');
       setRejectDialog(false);
+      setRemarks('');
       loadVerifications();
     } catch (error: any) {
       console.error('Reject failed:', error);
@@ -379,9 +385,15 @@ export const VerificationsPage: React.FC = () => {
             label="Rejection Reason"
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
-            placeholder="Explain why this verification is being rejected..."
-            error={!remarks.trim()}
-            helperText={!remarks.trim() ? 'Rejection reason is required' : ''}
+            placeholder="Explain why this verification is being rejected (minimum 10 characters)..."
+            error={remarks.trim().length > 0 && remarks.trim().length < 10}
+            helperText={
+              remarks.trim().length === 0 
+                ? 'Rejection reason is required' 
+                : remarks.trim().length < 10 
+                  ? `${10 - remarks.trim().length} more characters required` 
+                  : `${remarks.trim().length}/2000 characters`
+            }
           />
         </DialogContent>
         <DialogActions>
@@ -392,7 +404,7 @@ export const VerificationsPage: React.FC = () => {
             onClick={handleReject}
             variant="contained"
             color="error"
-            disabled={processing || !remarks.trim()}
+            disabled={processing || remarks.trim().length < 10}
             startIcon={processing ? <CircularProgress size={16} /> : <RejectIcon />}
           >
             Reject

@@ -74,7 +74,7 @@ public class BidController {
 
     @GetMapping("/bidder/{bidderId}")
     public ResponseEntity<ApiResponse<Page<BidResponse>>> getBidsByBidder(
-            @PathVariable UUID bidderId,
+            @PathVariable String bidderId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("Fetching bids by bidder: {}", bidderId);
 
@@ -91,7 +91,7 @@ public class BidController {
     @GetMapping("/listings/{listingId}/bidder/{bidderId}")
     public ResponseEntity<ApiResponse<BidResponse>> getUserBidOnListing(
             @PathVariable UUID listingId,
-            @PathVariable UUID bidderId) {
+            @PathVariable String bidderId) {
         log.info("Fetching user bid for listing: {} and bidder: {}", listingId, bidderId);
 
         BidResponse response = bidService.getUserBidOnListing(listingId, bidderId);
@@ -106,7 +106,7 @@ public class BidController {
 
     @GetMapping("/bidder/{bidderId}/active")
     public ResponseEntity<ApiResponse<List<BidResponse>>> getActiveBidsByBidder(
-            @PathVariable UUID bidderId) {
+            @PathVariable String bidderId) {
         log.info("Fetching active bids by bidder: {}", bidderId);
 
         List<BidResponse> response = bidService.getActiveBidsByBidder(bidderId);
@@ -122,7 +122,7 @@ public class BidController {
     @DeleteMapping("/{bidId}")
     public ResponseEntity<ApiResponse<String>> cancelBid(
             @PathVariable UUID bidId,
-            @RequestParam UUID bidderId) {
+            @RequestParam String bidderId) {
         log.info("Cancelling bid: {} by bidder: {}", bidId, bidderId);
 
         bidService.cancelBid(bidId, bidderId);

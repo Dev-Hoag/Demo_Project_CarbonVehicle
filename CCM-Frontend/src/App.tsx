@@ -21,6 +21,7 @@ import WalletPage from './pages/Wallet';
 import PaymentsPage from './pages/Payments';
 import ListingsPage from './pages/Listings';
 import MyListingsPage from './pages/MyListings';
+import MyBidsPage from './pages/MyBids';
 import TripsPage from './pages/Trips';
 import CreditsPage from './pages/Credits';
 import TransactionsPage from './pages/Transactions';
@@ -113,6 +114,7 @@ function App() {
               <Route path="/verifications" element={<VerificationsPage />} />
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/my-listings" element={<MyListingsPage />} />
+              <Route path="/my-bids" element={<MyBidsPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/kyc" element={<KYCPage />} />

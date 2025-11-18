@@ -15,6 +15,7 @@ import { Gavel } from '@mui/icons-material';
 import type { Listing } from '../api/listing';
 import { auctionApi } from '../api/listing';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 
 interface BidDialogProps {
   open: boolean;
@@ -33,6 +34,7 @@ export const BidDialog: React.FC<BidDialogProps> = ({
 }) => {
   const [bidAmount, setBidAmount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuthStore();
 
   const minimumBid = currentBid
     ? currentBid + 100
@@ -52,15 +54,14 @@ export const BidDialog: React.FC<BidDialogProps> = ({
       return;
     }
 
+    if (!user?.id) {
+      toast.error('Please login to place a bid');
+      return;
+    }
+
     try {
       setLoading(true);
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        toast.error('Please login to place a bid');
-        return;
-      }
-
-      await auctionApi.placeBid(listing.id, bidAmount, userId);
+      await auctionApi.placeBid(listing.id, bidAmount, String(user.id));
       toast.success('Bid placed successfully! You are currently the highest bidder.');
       onBidPlaced();
       onClose();

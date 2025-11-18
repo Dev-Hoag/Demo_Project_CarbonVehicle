@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/auctions")
+@RequestMapping("/v1/auctions")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "*")
@@ -32,7 +32,7 @@ public class AuctionController {
             listingId, request.getBidAmount(), userIdHeader);
 
         // Extract user ID from header (or use request if provided)
-        UUID bidderId = userIdHeader != null ? UUID.fromString(userIdHeader) : request.getBidderId();
+        String bidderId = userIdHeader != null ? userIdHeader : request.getBidderId();
         String bidderName = userNameHeader != null ? userNameHeader : request.getBidderName();
 
         Bid bid = auctionService.placeBid(listingId, bidderId, bidderName, request.getBidAmount());
@@ -100,10 +100,9 @@ public class AuctionController {
     public ResponseEntity<List<BidResponse>> getMyBids(
             @RequestHeader(value = "X-User-Id", required = true) String userIdHeader
     ) {
-        UUID bidderId = UUID.fromString(userIdHeader);
-        log.info("Get my bids request: userId={}", bidderId);
+        log.info("Get my bids request: userId={}", userIdHeader);
 
-        List<Bid> bids = auctionService.getMyBids(bidderId);
+        List<Bid> bids = auctionService.getMyBids(userIdHeader);
 
         List<BidResponse> responses = bids.stream()
                 .map(bid -> BidResponse.builder()

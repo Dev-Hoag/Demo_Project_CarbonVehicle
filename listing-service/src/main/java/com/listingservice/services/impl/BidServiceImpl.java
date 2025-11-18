@@ -143,7 +143,7 @@ public class BidServiceImpl implements BidService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BidResponse> getBidsByBidder(UUID bidderId, Pageable pageable) {
+    public Page<BidResponse> getBidsByBidder(String bidderId, Pageable pageable) {
         log.info("Fetching bids by bidder: {} with page: {}, size: {}",
                 bidderId, pageable.getPageNumber(), pageable.getPageSize());
 
@@ -153,7 +153,7 @@ public class BidServiceImpl implements BidService {
 
     @Override
     @Transactional(readOnly = true)
-    public BidResponse getUserBidOnListing(UUID listingId, UUID bidderId) {
+    public BidResponse getUserBidOnListing(UUID listingId, String bidderId) {
         log.info("Fetching user bid for listing: {} and bidder: {}", listingId, bidderId);
 
         // Verify listing exists
@@ -170,7 +170,7 @@ public class BidServiceImpl implements BidService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BidResponse> getActiveBidsByBidder(UUID bidderId) {
+    public List<BidResponse> getActiveBidsByBidder(String bidderId) {
         log.info("Fetching active bids by bidder: {}", bidderId);
 
         List<Bid> activeBids = bidRepository.findActiveBidsByBidder(bidderId);
@@ -179,7 +179,7 @@ public class BidServiceImpl implements BidService {
     }
 
     @Override
-    public void cancelBid(UUID bidId, UUID bidderId) {
+    public void cancelBid(UUID bidId, String bidderId) {
         log.info("Attempting to cancel bid: {} by bidder: {}", bidId, bidderId);
 
         // 1. Find the bid

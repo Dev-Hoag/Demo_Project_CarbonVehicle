@@ -34,6 +34,7 @@ import {
   Settings as SettingsIcon,
   VerifiedUser as VerifiedUserIcon,
   CheckCircle as CheckCircleIcon,
+  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
 import { NotificationBell } from '../components/NotificationBell';
@@ -56,6 +57,7 @@ const menuItems: MenuItem[] = [
   { title: 'Verifications', path: '/verifications', icon: <CheckCircleIcon />, cvaOnly: true },
   { title: 'Marketplace', path: '/listings', icon: <ListIcon /> },
   { title: 'My Listings', path: '/my-listings', icon: <ShoppingIcon /> },
+  { title: 'My Bids', path: '/my-bids', icon: <GavelIcon /> },
   { title: 'Wallet', path: '/wallet', icon: <WalletIcon /> },
   { title: 'Payments', path: '/payments', icon: <PaymentIcon /> },
   { title: 'Transactions', path: '/transactions', icon: <ShoppingIcon /> },

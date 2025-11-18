@@ -246,7 +246,13 @@ export class AuthService {
    * - Payload: userId (sub), email, userType
    */
   private async generateTokens(user: User) {
-  const payload = { sub: user.id, email: user.email, userType: user.userType };
+  const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
+  const payload = { 
+    sub: user.id, 
+    email: user.email, 
+    userType: user.userType,
+    fullName: profile?.fullName || user.email.split('@')[0]
+  };
 
   const accessTtl =
     parseTtl(this.configService.get<string>('ACCESS_TOKEN_TTL')
@@ -269,8 +275,6 @@ export class AuthService {
     secret: refreshSecret,
     expiresIn: refreshTtl as unknown as any,
   });
-
-  const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
 
   return {
     accessToken,

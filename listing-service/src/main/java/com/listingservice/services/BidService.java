@@ -16,11 +16,11 @@ public interface BidService {
 
     Page<BidResponse> getBidsByListing(UUID listingId, Pageable pageable);
 
-    Page<BidResponse> getBidsByBidder(UUID bidderId, Pageable pageable);
+    Page<BidResponse> getBidsByBidder(String bidderId, Pageable pageable);
 
-    BidResponse getUserBidOnListing(UUID listingId, UUID bidderId);
+    BidResponse getUserBidOnListing(UUID listingId, String bidderId);
 
-    List<BidResponse> getActiveBidsByBidder(UUID bidderId);
+    List<BidResponse> getActiveBidsByBidder(String bidderId);
 
-    void cancelBid(UUID bidId, UUID bidderId);
+    void cancelBid(UUID bidId, String bidderId);
 }

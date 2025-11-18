@@ -26,7 +26,7 @@ public class Bid {
     private Listing listing;
 
     @Column(name = "bidder_id", nullable = false)
-    private UUID bidderId;
+    private String bidderId;  // Changed from UUID to String to support integer user IDs
 
     @Column(name = "bidder_name")
     private String bidderName;

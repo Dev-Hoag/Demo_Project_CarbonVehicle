@@ -35,7 +35,7 @@ export interface ApproveVerificationRequest {
 }
 
 export interface RejectVerificationRequest {
-  rejection_reason: string;
+  remarks: string;
 }
 
 class VerificationApi {

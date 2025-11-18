@@ -23,14 +23,14 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     @Query("SELECT b FROM Bid b WHERE b.listing.id = :listingId ORDER BY b.bidAmount DESC, b.createdAt DESC")
     Page<Bid> findByListingId(@Param("listingId") UUID listingId, Pageable pageable);
 
-    Page<Bid> findByBidderId(UUID bidderId, Pageable pageable);
+    Page<Bid> findByBidderId(String bidderId, Pageable pageable);
 
-    Page<Bid> findByBidderIdAndStatus(UUID bidderId, BidStatus status, Pageable pageable);
+    Page<Bid> findByBidderIdAndStatus(String bidderId, BidStatus status, Pageable pageable);
 
     @Query("SELECT COUNT(b) FROM Bid b WHERE b.listing.id = :listingId")
     Integer countByListingId(@Param("listingId") UUID listingId);
 
-    Long countByBidderId(UUID bidderId);
+    Long countByBidderId(String bidderId);
 
     @Query("SELECT b FROM Bid b WHERE b.listing.id = :listingId " +
             "ORDER BY b.bidAmount DESC, b.createdAt ASC")
@@ -45,20 +45,20 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     @Query("SELECT b FROM Bid b WHERE b.listing.id = :listingId AND b.bidderId = :bidderId " +
             "ORDER BY b.createdAt DESC")
     Optional<Bid> findUserBidOnListing(@Param("listingId") UUID listingId,
-                                       @Param("bidderId") UUID bidderId);
+                                       @Param("bidderId") String bidderId);
 
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Bid b " +
             "WHERE b.listing.id = :listingId AND b.bidderId = :bidderId")
     Boolean hasUserBidOnListing(@Param("listingId") UUID listingId,
-                                @Param("bidderId") UUID bidderId);
+                                @Param("bidderId") String bidderId);
 
     @Query("SELECT b FROM Bid b WHERE b.bidderId = :bidderId AND b.status = 'ACTIVE' " +
             "ORDER BY b.createdAt DESC")
-    List<Bid> findActiveBidsByBidder(@Param("bidderId") UUID bidderId);
+    List<Bid> findActiveBidsByBidder(@Param("bidderId") String bidderId);
 
     @Query("SELECT b FROM Bid b WHERE b.bidderId = :bidderId AND b.status = 'WON' " +
             "ORDER BY b.createdAt DESC")
-    List<Bid> findWinningBidsByBidder(@Param("bidderId") UUID bidderId);
+    List<Bid> findWinningBidsByBidder(@Param("bidderId") String bidderId);
 
     @Query("SELECT COUNT(DISTINCT b.bidderId) FROM Bid b WHERE b.listing.id = :listingId")
     Integer countUniqueBiddersByListingId(@Param("listingId") UUID listingId);

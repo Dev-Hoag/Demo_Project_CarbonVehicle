@@ -190,24 +190,24 @@ export const transactionApi = {
 export const auctionApi = {
   // Place a bid on an auction listing
   placeBid: (listingId: string, bidAmount: number, bidderId: string) =>
-    apiClient.post(`/api/v1/auctions/listings/${listingId}/bid`, {
+    apiClient.post(`/api/auctions/listings/${listingId}/bid`, {
       bidderId,
       bidAmount,
     }),
 
   // Get bid history for a listing
   getBidHistory: (listingId: string) =>
-    apiClient.get(`/api/v1/auctions/listings/${listingId}/bids`),
+    apiClient.get(`/api/auctions/listings/${listingId}/bids`),
 
   // Get bid count for a listing
   getBidCount: (listingId: string) =>
-    apiClient.get(`/api/v1/auctions/listings/${listingId}/bid-count`),
+    apiClient.get(`/api/auctions/listings/${listingId}/bid-count`),
 
   // Get current highest bid for a listing
   getCurrentBid: (listingId: string) =>
-    apiClient.get(`/api/v1/auctions/listings/${listingId}/current-bid`),
+    apiClient.get(`/api/auctions/listings/${listingId}/current-bid`),
 
   // Get my bids
   getMyBids: () =>
-    apiClient.get('/api/v1/auctions/my-bids'),
+    apiClient.get('/api/auctions/my-bids'),
 };
