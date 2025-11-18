@@ -17,6 +17,8 @@ public class PlaceBidRequest {
     @NotNull(message = "Bidder ID is required")
     private UUID bidderId;
 
+    private String bidderName;
+
     @NotNull(message = "Bid amount is required")
     @DecimalMin(value = "0.1", message = "Bid amount must be at least 0.1")
     private Double bidAmount;

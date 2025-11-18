@@ -135,13 +135,11 @@ export const TripsPage: React.FC = () => {
     try {
       const response = await listingApi.getAll({ page: 0, size: 100 });
       const allListings = response.data.data.content;
-      // Filter by seller ID and active/pending status
-      const myActiveListings = allListings.filter(
-        (listing: any) => 
-          listing.sellerId === userUUID && 
-          (listing.status === 'ACTIVE' || listing.status === 'PENDING')
+      // Filter by seller ID - include all statuses to check if trip is listed/sold
+      const myListings = allListings.filter(
+        (listing: any) => listing.sellerId === userUUID
       );
-      setUserListings(myActiveListings);
+      setUserListings(myListings);
     } catch (err) {
       console.error('Failed to fetch user listings:', err);
     }
@@ -275,7 +273,7 @@ export const TripsPage: React.FC = () => {
         pricePerKg: listingData.pricePerKg,
         sellerId: userUUID,
         listingType: 'FIXED_PRICE' as const,
-        // tripId: selectedTrip.id, // TEMPORARILY DISABLED - backend may not support this field yet
+        tripId: selectedTrip.id, // Link listing to trip
       };
 
       console.log('Creating listing with payload:', listingPayload);
@@ -499,22 +497,21 @@ export const TripsPage: React.FC = () => {
                             </IconButton>
                           )}
                           {trip.status === 'VERIFIED' && trip.co2Reduced > 0 && (() => {
-                            // Check if trip already has an active listing by matching trip details
-                            const tripIdentifier = `${trip.distanceKm?.toFixed(1)} km EV Trip`;
-                            const hasActiveListing = userListings.some(
-                              listing => listing.title.includes(tripIdentifier) && 
-                                         Math.abs(listing.co2Amount - trip.co2Reduced) < 0.01
+                            // Check if trip already has a listing (active, pending, or sold)
+                            const hasListing = userListings.some(
+                              listing => listing.tripId === trip.id && 
+                                         (listing.status === 'ACTIVE' || listing.status === 'PENDING' || listing.status === 'SOLD')
                             );
                             return (
                               <Button
                                 size="small"
                                 variant="outlined"
-                                color={hasActiveListing ? 'success' : 'secondary'}
+                                color={hasListing ? 'success' : 'secondary'}
                                 startIcon={<Storefront />}
                                 onClick={() => handleCreateListing(trip)}
-                                disabled={hasActiveListing}
+                                disabled={hasListing}
                               >
-                                {hasActiveListing ? 'Already Listed' : 'List for Sale'}
+                                {hasListing ? 'Already Listed' : 'List for Sale'}
                               </Button>
                             );
                           })()}
@@ -542,7 +539,8 @@ export const TripsPage: React.FC = () => {
                             size="small"
                             color="error"
                             onClick={() => handleDeleteTrip(trip.id)}
-                            title="Delete Trip"
+                            disabled={trip.status === 'VERIFIED' || trip.status === 'COMPLETED'}
+                            title={trip.status === 'VERIFIED' || trip.status === 'COMPLETED' ? 'Cannot delete verified/completed trips' : 'Delete Trip'}
                           >
                             <Delete fontSize="small" />
                           </IconButton>

@@ -8,6 +8,8 @@ import com.listingservice.entities.Listing;
 import com.listingservice.entities.Transaction;
 import com.listingservice.enums.ListingStatus;
 import com.listingservice.enums.ListingType;
+import com.listingservice.events.CreditPurchasedEvent;
+import com.listingservice.events.EventPublisher;
 import com.listingservice.exceptions.InsufficientCreditException;
 import com.listingservice.exceptions.InvalidListingException;
 import com.listingservice.exceptions.ListingNotFoundException;
@@ -38,6 +40,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final ListingRepository listingRepository;
     private final TransactionMapper transactionMapper;
     private final ListingMapper listingMapper;
+    private final EventPublisher eventPublisher;
 
     @Override
     public PurchaseCompletedResponse purchaseListing(UUID listingId, PurchaseRequest request) {
@@ -103,6 +106,28 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         log.info("Purchase completed successfully for listing {}", listingId);
+        
+        // 10. Publish credit.purchased event for Certificate Service
+        try {
+            CreditPurchasedEvent event = CreditPurchasedEvent.builder()
+                    .eventType("credit.purchased")
+                    .transactionId(savedTransaction.getId())
+                    .listingId(listingId)
+                    .buyerId(request.getBuyerId())
+                    .sellerId(listing.getSellerId())
+                    .creditAmount(request.getAmount())
+                    .totalPrice(totalPrice)
+                    .pricePerKg(pricePerKg)
+                    .purchasedAt(savedTransaction.getCreatedAt())
+                    .tripId(listing.getTripId()) // May be null for non-trip listings
+                    .build();
+            
+            eventPublisher.publishCreditPurchased(event);
+            log.info("✅ Published credit.purchased event for transaction {}", savedTransaction.getId());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish credit.purchased event", e);
+            // Don't fail the transaction if event publishing fails
+        }
 
         return PurchaseCompletedResponse.builder()
                 .transaction(transactionResponse)

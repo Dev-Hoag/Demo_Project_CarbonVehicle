@@ -26,6 +26,8 @@ import CreditsPage from './pages/Credits';
 import TransactionsPage from './pages/Transactions';
 import ProfilePage from './pages/Profile';
 import KYCPage from './pages/KYC';
+import CertificatesPage from './pages/Certificates';
+import { VerificationsPage } from './pages/Verifications';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -107,6 +109,8 @@ function App() {
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/trips" element={<TripsPage />} />
               <Route path="/credits" element={<CreditsPage />} />
+              <Route path="/certificates" element={<CertificatesPage />} />
+              <Route path="/verifications" element={<VerificationsPage />} />
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/my-listings" element={<MyListingsPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />

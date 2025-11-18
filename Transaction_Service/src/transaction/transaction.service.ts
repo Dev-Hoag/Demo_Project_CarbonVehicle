@@ -12,6 +12,8 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { Transaction, TransactionStatus, TransactionType } from './transaction.entity';
 import { CreateTransactionDto, PurchaseListingDto } from './dto/create-transaction.dto';
+import { EventPublisherService } from '../events/event-publisher.service';
+import { CreditPurchasedEvent } from '../events/credit-purchased.event';
 
 @Injectable()
 export class TransactionService {
@@ -26,6 +28,7 @@ export class TransactionService {
     private transactionRepository: Repository<Transaction>,
     private httpService: HttpService,
     private configService: ConfigService,
+    private eventPublisher: EventPublisherService,
   ) {
     this.walletServiceUrl = this.configService.get('WALLET_SERVICE_URL', 'http://wallet-service:3008');
     this.creditServiceUrl = this.configService.get('CREDIT_SERVICE_URL', 'http://credit-service:8093');
@@ -110,6 +113,27 @@ export class TransactionService {
       // Step 8: Mark transaction as completed
       savedTransaction.status = TransactionStatus.COMPLETED;
       await this.transactionRepository.save(savedTransaction);
+
+      // Step 9: Publish credit.purchased event for Certificate Service
+      try {
+        const event = new CreditPurchasedEvent({
+          transactionId: savedTransaction.id,
+          listingId: listing.id,
+          buyerId: purchaseDto.buyerId,
+          sellerId: listing.sellerId,
+          creditAmount: purchaseDto.amount,
+          totalPrice: totalPrice,
+          pricePerKg: listing.pricePerKg,
+          purchasedAt: savedTransaction.createdAt,
+          tripId: listing.tripId, // May be undefined for non-trip listings
+        });
+        
+        await this.eventPublisher.publishCreditPurchased(event);
+        this.logger.log(`✅ Published credit.purchased event for transaction ${savedTransaction.id}`);
+      } catch (error) {
+        this.logger.error(`❌ Failed to publish event for transaction ${savedTransaction.id}`, error);
+        // Don't fail transaction if event publishing fails
+      }
 
       this.logger.log(`Transaction ${savedTransaction.id} completed successfully`);
       return savedTransaction;
@@ -237,7 +261,7 @@ export class TransactionService {
   private async transferCredits(fromUserId: string, toUserId: string, amount: number): Promise<void> {
     try {
       await firstValueFrom(
-        this.httpService.post(`${this.creditServiceUrl}/credits/transfer`, {
+        this.httpService.post(`${this.creditServiceUrl}/api/v1/credits/transfer`, {
           fromUserId,
           toUserId,
           amount,

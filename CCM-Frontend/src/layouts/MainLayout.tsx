@@ -33,6 +33,7 @@ import {
   Logout as LogoutIcon,
   Settings as SettingsIcon,
   VerifiedUser as VerifiedUserIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
 import { NotificationBell } from '../components/NotificationBell';
@@ -44,12 +45,15 @@ interface MenuItem {
   path: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  cvaOnly?: boolean;
 }
 
 const menuItems: MenuItem[] = [
   { title: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { title: 'My Trips', path: '/trips', icon: <TripIcon /> },
   { title: 'My Credits', path: '/credits', icon: <CreditIcon /> },
+  { title: 'My Certificates', path: '/certificates', icon: <VerifiedUserIcon /> },
+  { title: 'Verifications', path: '/verifications', icon: <CheckCircleIcon />, cvaOnly: true },
   { title: 'Marketplace', path: '/listings', icon: <ListIcon /> },
   { title: 'My Listings', path: '/my-listings', icon: <ShoppingIcon /> },
   { title: 'Wallet', path: '/wallet', icon: <WalletIcon /> },
@@ -90,7 +94,11 @@ export const MainLayout: React.FC = () => {
       <Divider />
       <List>
         {menuItems
-          .filter(item => !item.adminOnly || user?.userType === 'CVA')
+          .filter(item => {
+            if (item.adminOnly) return user?.userType === 'CVA';
+            if (item.cvaOnly) return user?.role === 'CVA' || user?.userType === 'CVA';
+            return true;
+          })
           .map(item => (
             <ListItem key={item.title} disablePadding>
               <ListItemButton onClick={() => handleNavigate(item.path)}>

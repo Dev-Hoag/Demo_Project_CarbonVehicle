@@ -40,4 +40,18 @@ public class EventPublisher {
             log.error("❌ Failed to publish listing.sold event", e);
         }
     }
+    
+    public void publishCreditPurchased(CreditPurchasedEvent event) {
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.CREDIT_PURCHASED_ROUTING_KEY,
+                    event
+            );
+            log.info("📤 Published credit.purchased event for transaction: {}, buyer: {}, amount: {} kg",
+                    event.getTransactionId(), event.getBuyerId(), event.getCreditAmount());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish credit.purchased event", e);
+        }
+    }
 }

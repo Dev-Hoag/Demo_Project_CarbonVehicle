@@ -42,6 +42,7 @@ export class EventConsumerService implements OnModuleInit {
       'withdrawal.approved',
       'withdrawal.rejected',
       'user.registered',
+      'certificate.generated',
     ];
 
     for (const event of events) {
@@ -83,6 +84,7 @@ export class EventConsumerService implements OnModuleInit {
       'withdrawal.approved': 'WITHDRAWAL_APPROVED',
       'withdrawal.rejected': 'WITHDRAWAL_REJECTED',
       'user.registered': 'USER_REGISTERED',
+      'certificate.generated': 'CERTIFICATE_GENERATED',
     };
 
     const templateCode = templateMap[eventName];
@@ -95,7 +97,7 @@ export class EventConsumerService implements OnModuleInit {
     // Some services send: { userId: "1", ... }
     // Others send: { payload: { userId: "1", ... } }
     const eventPayload = data.payload || data;
-    const userId = eventPayload.userId || data.userId;
+    const userId = eventPayload.userId || eventPayload.user_id || data.userId || data.user_id;
     
     if (!userId) {
       this.logger.warn(`❌ No userId found in event: ${eventName}`, JSON.stringify(data));

@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TransactionController } from './transaction.controller';
 import { TransactionService } from './transaction.service';
 import { Transaction } from './transaction.entity';
+import { EventPublisherService } from '../events/event-publisher.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { Transaction } from './transaction.entity';
     ConfigModule,
   ],
   controllers: [TransactionController],
-  providers: [TransactionService],
+  providers: [TransactionService, EventPublisherService],
   exports: [TransactionService],
 })
 export class TransactionModule {}

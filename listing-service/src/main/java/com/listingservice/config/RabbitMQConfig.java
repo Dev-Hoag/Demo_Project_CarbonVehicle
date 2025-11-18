@@ -14,6 +14,7 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_NAME = "ccm.events";
     public static final String LISTING_CREATED_ROUTING_KEY = "listing.created";
     public static final String LISTING_SOLD_ROUTING_KEY = "listing.sold";
+    public static final String CREDIT_PURCHASED_ROUTING_KEY = "credit.purchased";
     
     @Bean
     public TopicExchange ccmEventsExchange() {

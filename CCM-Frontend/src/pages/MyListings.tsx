@@ -41,6 +41,8 @@ const statusColors = {
   PENDING: 'warning',
   SOLD: 'info',
   CANCELLED: 'error',
+  PENDING_PAYMENT: 'warning',
+  EXPIRED: 'default',
 } as const;
 
 export const MyListingsPage: React.FC = () => {

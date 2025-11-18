@@ -31,4 +31,5 @@ public class BidResponse {
 
     private Boolean isCurrentUser;  // Is this bid from current user?
     private String timeAgo;
+    private String message;  // Response message for bid placement
 }

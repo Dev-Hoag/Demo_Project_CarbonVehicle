@@ -132,7 +132,22 @@ public class TripServiceImpl implements TripService {
 
         trip.setStatus(TripStatus.SUBMITTED_FOR_VERIFICATION);
         trip.setVerificationStatus("PENDING");
-        tripRepository.save(trip);
+        Trip savedTrip = tripRepository.save(trip);
+
+        // Publish trip.verified event to RabbitMQ for Verification Service
+        try {
+            TripEvent event = TripEvent.tripVerified(
+                    savedTrip.getId(),
+                    savedTrip.getUserId(),
+                    savedTrip.getCo2Reduced() != null ? savedTrip.getCo2Reduced() : 0.0,
+                    savedTrip.getDistanceKm(),
+                    savedTrip.getCreatedAt().toString()
+            );
+            eventPublisher.publishTripVerified(event);
+            log.info("📤 Published trip.verified event for trip: {} submitted for verification", tripId);
+        } catch (Exception e) {
+            log.error("❌ Failed to publish trip.verified event for trip: {}", tripId, e);
+        }
 
         log.info("Trip {} submitted for verification", tripId);
     }

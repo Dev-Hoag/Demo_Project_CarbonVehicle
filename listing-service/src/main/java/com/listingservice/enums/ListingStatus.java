@@ -4,6 +4,7 @@ public enum ListingStatus {
     DRAFT("Draft", "Listing is being created"),
     ACTIVE("Active", "Listing is live and accepting offers"),
     PENDING("Pending", "Waiting for payment/confirmation"),
+    PENDING_PAYMENT("Pending Payment", "Auction won, waiting for winner payment"),
     SOLD("Sold", "Listing has been sold"),
     EXPIRED("Expired", "Listing has expired"),
     CANCELLED("Cancelled", "Listing was cancelled by seller");

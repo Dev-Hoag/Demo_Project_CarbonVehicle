@@ -9,10 +9,17 @@ export interface Listing {
   co2Amount: number;
   pricePerKg: number;
   totalPrice: number;
-  status: 'ACTIVE' | 'PENDING' | 'SOLD' | 'CANCELLED';
+  status: 'ACTIVE' | 'PENDING' | 'SOLD' | 'CANCELLED' | 'PENDING_PAYMENT' | 'EXPIRED';
   listingType: 'FIXED_PRICE' | 'AUCTION';
   sellerId: string;
   tripId?: string;
+  // Auction-specific fields
+  startingBid?: number;
+  reservePrice?: number;
+  auctionStartTime?: string;
+  auctionEndTime?: string;
+  winnerId?: string;
+  winningBidAmount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,11 +67,15 @@ export interface PurchaseRequest {
 }
 
 export interface Transaction {
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
   id: string;
   listingId: string;
   buyerId: string;
   sellerId: string;
-  co2Amount: number;
+  amount: number; // CO2 amount in kg
   pricePerKg: number;
   totalPrice: number;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -154,8 +165,8 @@ export const transactionApi = {
     apiClient.get(`/api/transactions/status/${status}`, { params }),
 
   // Get recent transactions
-  getRecent: (params?: { limit?: number }) =>
-    apiClient.get('/api/transactions/recent', { params }),
+  getRecent: (limit: number = 10) =>
+    apiClient.get('/api/transactions/recent', { params: { limit } }),
 
   // Get seller revenue
   getSellerRevenue: (sellerId: string, params?: { startDate?: string; endDate?: string }) =>
@@ -172,4 +183,31 @@ export const transactionApi = {
   // Get seller CO2 sold
   getSellerCO2: (sellerId: string, params?: { startDate?: string; endDate?: string }) =>
     apiClient.get(`/api/transactions/seller/${sellerId}/co2-sold`, { params }),
+};
+
+// ========== Auction API ==========
+
+export const auctionApi = {
+  // Place a bid on an auction listing
+  placeBid: (listingId: string, bidAmount: number, bidderId: string) =>
+    apiClient.post(`/api/v1/auctions/listings/${listingId}/bid`, {
+      bidderId,
+      bidAmount,
+    }),
+
+  // Get bid history for a listing
+  getBidHistory: (listingId: string) =>
+    apiClient.get(`/api/v1/auctions/listings/${listingId}/bids`),
+
+  // Get bid count for a listing
+  getBidCount: (listingId: string) =>
+    apiClient.get(`/api/v1/auctions/listings/${listingId}/bid-count`),
+
+  // Get current highest bid for a listing
+  getCurrentBid: (listingId: string) =>
+    apiClient.get(`/api/v1/auctions/listings/${listingId}/current-bid`),
+
+  // Get my bids
+  getMyBids: () =>
+    apiClient.get('/api/v1/auctions/my-bids'),
 };

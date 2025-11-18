@@ -7,6 +7,7 @@ export interface UserProfile {
   phone?: string; // Backend uses 'phone' not 'phoneNumber'
   phoneNumber?: string; // Keep for backward compatibility
   userType: 'EV_OWNER' | 'BUYER' | 'CVA';
+  role?: string; // JWT role field from Verification Service
   status: string;
   isEmailVerified: boolean;
   kycStatus?: string;

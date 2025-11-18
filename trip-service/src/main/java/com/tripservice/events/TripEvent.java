@@ -24,7 +24,7 @@ public class TripEvent {
     
     public static TripEvent tripVerified(UUID tripId, UUID userId, Double carbonCredits, Double distanceKm, String tripDate) {
         return TripEvent.builder()
-                .eventType("trip.verified")
+                .eventType("trip.submitted")
                 .tripId(tripId)
                 .userId(userId)
                 .carbonCredits(carbonCredits)
