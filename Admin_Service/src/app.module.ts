@@ -18,6 +18,7 @@ import { ReportModule } from './modules/report/report.module';
 import { OverrideRequestModule } from './modules/override-request/override-request.module';
 import { EventsModule } from './modules/events/events.module';
 import { KycManagementModule } from './modules/kyc-management/kyc-management.module';
+import { CreditManagementModule } from './modules/credit-management/credit-management.module';
 
 // ⚠️ Sửa đường dẫn: 'health' (không phải 'heatlh')
 import { HealthController } from './health/health.controller';
@@ -39,6 +40,7 @@ import { HealthController } from './health/health.controller';
     OverrideRequestModule,
     EventsModule,
     KycManagementModule,
+    CreditManagementModule,
 
     // ❌ KHÔNG đưa Controller vào đây
     // HealthController,

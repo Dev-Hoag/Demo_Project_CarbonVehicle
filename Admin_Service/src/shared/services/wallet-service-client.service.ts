@@ -34,7 +34,10 @@ export class WalletServiceClient {
       'X-Trace-Id': randomUUID(),
     };
     if (adminId != null) h['X-Admin-User-Id'] = String(adminId);
-    if (this.apiKey) h['x-api-key'] = this.apiKey;
+    if (this.apiKey) {
+      h['x-api-key'] = this.apiKey;
+      h['x-internal-api-key'] = this.apiKey; // For internal endpoints
+    }
     return h;
   }
 
@@ -82,5 +85,48 @@ export class WalletServiceClient {
       return this.stubOk('adjust-balance', { userId, amount, adminUserId: adminId, reason }, { status: 'ADJUSTED' });
     }
     return this.post('/internal/admin/wallet/adjust-balance', { userId, amount, adminUserId: adminId, reason }, adminId);
+  }
+
+  // ---- Query Methods --------------------------------------------------------
+
+  async getTransactions(
+    page: number = 1,
+    limit: number = 50,
+    filters?: {
+      userId?: string;
+      type?: string;
+      startDate?: string;
+      endDate?: string;
+      minAmount?: number;
+      maxAmount?: number;
+    },
+  ): Promise<any> {
+    if (!this.enabled) {
+      this.logger.warn('Wallet service disabled, returning empty transaction list');
+      return { success: true, data: { items: [], total: 0, page, limit, totalPages: 0 } };
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (filters?.userId) params.append('userId', filters.userId);
+      if (filters?.type) params.append('type', filters.type);
+      if (filters?.startDate) params.append('startDate', filters.startDate);
+      if (filters?.endDate) params.append('endDate', filters.endDate);
+      if (filters?.minAmount !== undefined) params.append('minAmount', filters.minAmount.toString());
+      if (filters?.maxAmount !== undefined) params.append('maxAmount', filters.maxAmount.toString());
+
+      // Use internal endpoint instead of public admin endpoint
+      const url = `${this.baseUrl}/internal/admin/transactions?${params.toString()}`;
+      const res = await firstValueFrom(this.http.get(url, { headers: this.headers() }).pipe(timeout(this.timeoutMs)));
+      return { success: true, data: res.data };
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      const msg = err?.message;
+      this.logger.error(`GET transactions failed. status=${status} data=${JSON.stringify(data)} msg=${msg}`);
+      return { success: false, error: data?.message || msg || 'Wallet service unavailable', data: { items: [], total: 0, page, limit, totalPages: 0 } };
+    }
   }
 }

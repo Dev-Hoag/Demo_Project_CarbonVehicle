@@ -360,8 +360,8 @@ export const AdminListingsPage: React.FC = () => {
                         {listing.ownerId.substring(0, 8)}...
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">{Number(listing.creditsAmount).toFixed(2)}</TableCell>
-                    <TableCell align="right">{Number(listing.pricePerCredit).toLocaleString()} ₫</TableCell>
+                    <TableCell align="right">{Number(listing.amount).toFixed(2)}</TableCell>
+                    <TableCell align="right">{Number(listing.pricePerKg).toLocaleString()} ₫</TableCell>
                     <TableCell>
                       <Chip
                         icon={listing.listingType === 'AUCTION' ? <AuctionIcon /> : <FixedPriceIcon />}
@@ -378,9 +378,9 @@ export const AdminListingsPage: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      {listing.flagType ? (
+                      {listing.flag ? (
                         <Chip
-                          label={listing.flagType}
+                          label={listing.flag}
                           color="warning"
                           size="small"
                           icon={<FlagIcon />}
@@ -427,7 +427,7 @@ export const AdminListingsPage: React.FC = () => {
                           </Tooltip>
                         )}
 
-                        {!listing.flagType ? (
+                        {!listing.flag ? (
                           <Tooltip title="Flag">
                             <IconButton
                               size="small"
@@ -626,7 +626,7 @@ export const AdminListingsPage: React.FC = () => {
                   Listing: <strong>{selectedListing.externalListingId.substring(0, 16)}...</strong>
                 </Typography>
                 <Typography variant="body2">
-                  Current Flag: <strong>{selectedListing.flagType}</strong>
+                  Current Flag: <strong>{selectedListing.flag}</strong>
                 </Typography>
               </Alert>
 
@@ -674,11 +674,11 @@ export const AdminListingsPage: React.FC = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">Credits Amount</Typography>
-                  <Typography variant="body2">{Number(selectedListing.creditsAmount).toFixed(2)} kg CO₂</Typography>
+                  <Typography variant="body2">{Number(selectedListing.amount).toFixed(2)} kg CO₂</Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">Price per kg</Typography>
-                  <Typography variant="body2">{Number(selectedListing.pricePerCredit).toLocaleString()} ₫</Typography>
+                  <Typography variant="body2">{Number(selectedListing.pricePerKg).toLocaleString()} ₫</Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">Type</Typography>
@@ -694,7 +694,7 @@ export const AdminListingsPage: React.FC = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">Last Synced</Typography>
-                  <Typography variant="body2">{formatDate(selectedListing.syncedAt)}</Typography>
+                  <Typography variant="body2">{formatDate(selectedListing.updatedAt || selectedListing.createdAt)}</Typography>
                 </Box>
               </Box>
 
@@ -707,10 +707,10 @@ export const AdminListingsPage: React.FC = () => {
                 </Box>
               )}
 
-              {selectedListing.flagType && (
+              {selectedListing.flag && (
                 <Box sx={{ mt: 2 }}>
                   <Alert severity="error">
-                    <Typography variant="caption" fontWeight={600}>Flag: {selectedListing.flagType}</Typography>
+                    <Typography variant="caption" fontWeight={600}>Flag: {selectedListing.flag}</Typography>
                     <Typography variant="body2">{selectedListing.flagReason}</Typography>
                   </Alert>
                 </Box>

@@ -1,6 +1,6 @@
 // src/shared/dtos/transaction-management.dto.ts (with ApiProperty for Swagger)
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDateString, IsNumber, IsPositive } from 'class-validator';
 import { TransactionType, TransactionStatus } from '../enums/admin.enums';
 
 export class FilterTransactionDto {
@@ -50,10 +50,20 @@ export class CancelTransactionDto {
 }
 
 export class RefundTransactionDto {
+  @ApiProperty({ description: 'Refund amount', example: 100000 })
+  @IsNumber()
+  @IsPositive()
+  amount!: number;
+
   @ApiProperty({ description: 'Reason for refund', example: 'Dispute resolved' })
   @IsString()
   @IsNotEmpty()
   reason!: string;
+
+  @ApiProperty({ description: 'Additional notes', required: false })
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class ResolveDisputeDto {
@@ -74,6 +84,9 @@ export class TransactionResponseDto {
   @ApiProperty({ description: 'External transaction ID', nullable: true })
   externalTransactionId: string | null;
 
+  @ApiProperty({ description: 'Listing ID', nullable: true })
+  listingId?: string | null;
+
   @ApiProperty({ description: 'Seller ID', nullable: true })
   sellerId: string | null;
 
@@ -83,8 +96,8 @@ export class TransactionResponseDto {
   @ApiProperty({ description: 'Amount' })
   amount!: number;
 
-  @ApiProperty({ description: 'Credits amount' })
-  creditsAmount!: number;
+  @ApiProperty({ description: 'Credits amount', nullable: true })
+  creditsAmount?: number;
 
   @ApiProperty({ enum: TransactionType })
   transactionType!: TransactionType;
@@ -92,17 +105,26 @@ export class TransactionResponseDto {
   @ApiProperty({ enum: TransactionStatus })
   status!: TransactionStatus;
 
+  @ApiProperty({ description: 'Transaction description', nullable: true })
+  description?: string | null;
+
   @ApiProperty({ description: 'Dispute reason', nullable: true })
-  disputeReason: string | null;
+  disputeReason?: string | null;
 
   @ApiProperty({ description: 'Is disputed' })
-  isDisputed!: boolean;
+  isDisputed?: boolean;
 
   @ApiProperty({ description: 'Created at' })
   createdAt!: Date;
 
+  @ApiProperty({ description: 'Confirmed at', nullable: true })
+  confirmedAt?: Date | null;
+
+  @ApiProperty({ description: 'Cancelled at', nullable: true })
+  cancelledAt?: Date | null;
+
   @ApiProperty({ description: 'Completed at', nullable: true })
-  completedAt: Date | null;
+  completedAt?: Date | null;
 }
 
 export class TransactionListResponseDto {

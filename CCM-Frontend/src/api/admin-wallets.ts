@@ -111,11 +111,24 @@ export const adminWalletsApi = {
     return response.data;
   },
 
-  // Get all transactions with filters
+  // Get all transactions with filters - FIXED: Use correct backend endpoint
   getTransactionList: async (params?: TransactionListParams): Promise<TransactionListResponse> => {
-    const response = await axios.get(`${API_URL}/api/admin/reports/transactions/list`, {
+    const response = await axios.get(`${API_URL}/api/admin/wallet-transactions`, {
       headers: getAuthHeaders(),
       params,
+    });
+    return response.data;
+  },
+
+  // Alias for backward compatibility
+  getAllTransactions: async (params?: TransactionListParams): Promise<TransactionListResponse> => {
+    return adminWalletsApi.getTransactionList(params);
+  },
+
+  // Adjust balance function
+  adjustBalance: async (data: { userId: string; amount: number; reason: string }) => {
+    const response = await axios.post(`${API_URL}/api/admin/wallet-transactions/adjust-balance`, data, {
+      headers: getAuthHeaders(),
     });
     return response.data;
   },

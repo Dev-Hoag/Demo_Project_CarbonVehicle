@@ -13,10 +13,15 @@ export class FilterWalletTransactionDto {
   @IsOptional()
   status?: WalletTransactionStatus;
 
-  @ApiPropertyOptional({ enum: WalletTransactionType })
-  @IsEnum(WalletTransactionType)
+  @ApiPropertyOptional({ example: 'DEPOSIT' })
+  @IsString()
   @IsOptional()
-  transactionType?: WalletTransactionType;
+  type?: string;
+
+  @ApiPropertyOptional({ example: 'DEPOSIT' })
+  @IsString()
+  @IsOptional()
+  transactionType?: string;
 
   @ApiPropertyOptional({ example: '2025-01-01' })
   @IsOptional()

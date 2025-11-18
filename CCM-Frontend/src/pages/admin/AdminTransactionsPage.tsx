@@ -30,10 +30,6 @@ import {
   Grid,
 } from '@mui/material';
 import {
-  CheckCircle as ConfirmIcon,
-  Cancel as CancelIcon,
-  Undo as RefundIcon,
-  Gavel as ResolveIcon,
   Refresh as RefreshIcon,
   Assessment as StatsIcon,
   Visibility as ViewIcon,
@@ -84,22 +80,12 @@ export const AdminTransactionsPage: React.FC = () => {
     cancelled: 0,
   });
 
-  // Action dialogs
+  // Action dialogs (command dialogs disabled - read-only mode)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState(false);
-  const [cancelDialog, setCancelDialog] = useState(false);
-  const [refundDialog, setRefundDialog] = useState(false);
-  const [resolveDialog, setResolveDialog] = useState(false);
   const [detailDialog, setDetailDialog] = useState(false);
   const [historyDialog, setHistoryDialog] = useState(false);
   const [actionHistory, setActionHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-
-  const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState('');
-  const [refundAmount, setRefundAmount] = useState('');
-  const [resolution, setResolution] = useState('');
-  const [processingId, setProcessingId] = useState<number | null>(null);
 
   // Load transactions
   const loadTransactions = async () => {
@@ -108,22 +94,30 @@ export const AdminTransactionsPage: React.FC = () => {
       const filters: TransactionFilters = {
         page: page + 1,
         limit,
-        status: statusFilter || undefined,
-        userId: userIdFilter ? parseInt(userIdFilter) : undefined,
-        listingId: listingIdFilter ? parseInt(listingIdFilter) : undefined,
-        fromDate: fromDate || undefined,
-        toDate: toDate || undefined,
       };
 
+      // Map filters to match backend expectations
+      // Backend uses: status, transactionType, sellerId, buyerId, fromDate, toDate
+      if (statusFilter) filters.status = statusFilter;
+      if (userIdFilter) filters.buyerId = userIdFilter; // Map userId to buyerId
+      if (fromDate) filters.fromDate = fromDate;
+      if (toDate) filters.toDate = toDate;
+
+      console.log('Transaction filters:', filters); // Debug log
+
       const response: TransactionListResponse = await adminService.transactions.getAllTransactions(filters);
-      setTransactions(response.data);
-      setTotal(response.total);
+      setTransactions(response.data || []);
+      setTotal(response.total || 0);
 
       // Calculate statistics
-      calculateStatistics(response.data);
+      calculateStatistics(response.data || []);
     } catch (error: any) {
       console.error('Failed to load transactions:', error);
       toast.error(error.response?.data?.message || 'Failed to load transactions');
+      
+      // Fallback: set empty data
+      setTransactions([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -157,99 +151,7 @@ export const AdminTransactionsPage: React.FC = () => {
     loadTransactions();
   };
 
-  // Handle confirm
-  const handleConfirmClick = (tx: Transaction) => {
-    setSelectedTransaction(tx);
-    setNotes('');
-    setConfirmDialog(true);
-  };
-
-  const handleConfirmSubmit = async () => {
-    if (!selectedTransaction) return;
-
-    setProcessingId(selectedTransaction.id);
-    try {
-      await adminService.transactions.confirmTransaction(selectedTransaction.id, notes);
-      toast.success('Transaction confirmed successfully');
-      setConfirmDialog(false);
-      setSelectedTransaction(null);
-      setNotes('');
-      loadTransactions();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to confirm transaction');
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  // Handle cancel
-  const handleCancelClick = (tx: Transaction) => {
-    setSelectedTransaction(tx);
-    setReason('');
-    setNotes('');
-    setCancelDialog(true);
-  };
-
-  const handleCancelSubmit = async () => {
-    if (!selectedTransaction || !reason.trim()) {
-      toast.error('Please provide a cancellation reason');
-      return;
-    }
-
-    setProcessingId(selectedTransaction.id);
-    try {
-      await adminService.transactions.cancelTransaction(selectedTransaction.id, reason, notes);
-      toast.success('Transaction cancelled successfully');
-      setCancelDialog(false);
-      setSelectedTransaction(null);
-      setReason('');
-      setNotes('');
-      loadTransactions();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to cancel transaction');
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  // Handle refund
-  const handleRefundClick = (tx: Transaction) => {
-    setSelectedTransaction(tx);
-    setRefundAmount(tx.amount.toString());
-    setReason('');
-    setNotes('');
-    setRefundDialog(true);
-  };
-
-  const handleRefundSubmit = async () => {
-    if (!selectedTransaction || !refundAmount || !reason.trim()) {
-      toast.error('Please provide refund amount and reason');
-      return;
-    }
-
-    setProcessingId(selectedTransaction.id);
-    try {
-      await adminService.transactions.refundTransaction(
-        selectedTransaction.id,
-        parseFloat(refundAmount),
-        reason,
-        notes
-      );
-      toast.success('Transaction refunded successfully');
-      setRefundDialog(false);
-      setSelectedTransaction(null);
-      setRefundAmount('');
-      setReason('');
-      setNotes('');
-      loadTransactions();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to refund transaction');
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  // Handle view action history
+  // View action history
   const handleViewHistory = async (tx: Transaction) => {
     setSelectedTransaction(tx);
     setHistoryDialog(true);
@@ -264,36 +166,6 @@ export const AdminTransactionsPage: React.FC = () => {
       setActionHistory([]);
     } finally {
       setLoadingHistory(false);
-    }
-  };
-
-  // Handle resolve dispute
-  const handleResolveClick = (tx: Transaction) => {
-    setSelectedTransaction(tx);
-    setResolution('');
-    setNotes('');
-    setResolveDialog(true);
-  };
-
-  const handleResolveSubmit = async () => {
-    if (!selectedTransaction || !resolution.trim()) {
-      toast.error('Please provide a resolution');
-      return;
-    }
-
-    setProcessingId(selectedTransaction.id);
-    try {
-      await adminService.transactions.resolveDispute(selectedTransaction.id, resolution, notes);
-      toast.success('Dispute resolved successfully');
-      setResolveDialog(false);
-      setSelectedTransaction(null);
-      setResolution('');
-      setNotes('');
-      loadTransactions();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to resolve dispute');
-    } finally {
-      setProcessingId(null);
     }
   };
 
@@ -511,7 +383,8 @@ export const AdminTransactionsPage: React.FC = () => {
                         <HistoryIcon fontSize="small" />
                       </IconButton>
 
-                      {tx.status === 'PENDING' && (
+                      {/* Admin command buttons disabled - Transaction_Service doesn't implement these endpoints */}
+                      {/* {tx.status === 'PENDING' && (
                         <>
                           <IconButton
                             size="small"
@@ -560,7 +433,7 @@ export const AdminTransactionsPage: React.FC = () => {
                         >
                           <ResolveIcon fontSize="small" />
                         </IconButton>
-                      )}
+                      )} */}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -603,10 +476,12 @@ export const AdminTransactionsPage: React.FC = () => {
               <Typography variant="body1" gutterBottom>
                 <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
               </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Status:</strong>{' '}
+              <Box sx={{ mb: 1 }}>
+                <Typography component="span" variant="body1">
+                  <strong>Status:</strong>{' '}
+                </Typography>
                 <Chip label={selectedTransaction.status} color={getStatusColor(selectedTransaction.status)} size="small" />
-              </Typography>
+              </Box>
               {selectedTransaction.transactionType && (
                 <Typography variant="body1" gutterBottom>
                   <strong>Type:</strong> {selectedTransaction.transactionType}
@@ -638,217 +513,8 @@ export const AdminTransactionsPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Confirm Dialog */}
-      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Confirm Transaction</DialogTitle>
-        <DialogContent>
-          {selectedTransaction && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Confirm this transaction to mark it as completed.
-              </Alert>
-              <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
-              </Typography>
-              <TextField
-                margin="dense"
-                label="Notes (optional)"
-                type="text"
-                fullWidth
-                multiline
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any notes about this confirmation..."
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)}>Cancel</Button>
-          <Button onClick={handleConfirmSubmit} color="success" variant="contained" disabled={processingId !== null}>
-            {processingId ? <CircularProgress size={20} /> : 'Confirm'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Cancel Dialog */}
-      <Dialog open={cancelDialog} onClose={() => setCancelDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Cancel Transaction</DialogTitle>
-        <DialogContent>
-          {selectedTransaction && (
-            <Box>
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                This will cancel the transaction and reverse any payments.
-              </Alert>
-              <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
-              </Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Cancellation Reason"
-                type="text"
-                fullWidth
-                multiline
-                rows={3}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Provide a reason for cancellation..."
-                required
-              />
-              <TextField
-                margin="dense"
-                label="Additional Notes (optional)"
-                type="text"
-                fullWidth
-                multiline
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional notes..."
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCancelDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleCancelSubmit}
-            color="error"
-            variant="contained"
-            disabled={!reason.trim() || processingId !== null}
-          >
-            {processingId ? <CircularProgress size={20} /> : 'Cancel Transaction'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Refund Dialog */}
-      <Dialog open={refundDialog} onClose={() => setRefundDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Refund Transaction</DialogTitle>
-        <DialogContent>
-          {selectedTransaction && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Refund will return the specified amount to the user's wallet.
-              </Alert>
-              <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Original Amount:</strong> {formatCurrency(selectedTransaction.amount)}
-              </Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Refund Amount"
-                type="number"
-                fullWidth
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
-                required
-                inputProps={{ min: 0, max: selectedTransaction.amount }}
-              />
-              <TextField
-                margin="dense"
-                label="Refund Reason"
-                type="text"
-                fullWidth
-                multiline
-                rows={3}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Provide a reason for refund..."
-                required
-              />
-              <TextField
-                margin="dense"
-                label="Additional Notes (optional)"
-                type="text"
-                fullWidth
-                multiline
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional notes..."
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRefundDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleRefundSubmit}
-            color="warning"
-            variant="contained"
-            disabled={!refundAmount || !reason.trim() || processingId !== null}
-          >
-            {processingId ? <CircularProgress size={20} /> : 'Process Refund'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Resolve Dispute Dialog */}
-      <Dialog open={resolveDialog} onClose={() => setResolveDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Resolve Dispute</DialogTitle>
-        <DialogContent>
-          {selectedTransaction && (
-            <Box>
-              <Alert severity="success" sx={{ mb: 2 }}>
-                Provide a resolution for this disputed transaction.
-              </Alert>
-              <Typography variant="body1" gutterBottom>
-                <strong>Transaction ID:</strong> {selectedTransaction.id}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Amount:</strong> {formatCurrency(selectedTransaction.amount)}
-              </Typography>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Resolution"
-                type="text"
-                fullWidth
-                multiline
-                rows={4}
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                placeholder="Describe how this dispute was resolved..."
-                required
-              />
-              <TextField
-                margin="dense"
-                label="Additional Notes (optional)"
-                type="text"
-                fullWidth
-                multiline
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional notes..."
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setResolveDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleResolveSubmit}
-            color="primary"
-            variant="contained"
-            disabled={!resolution.trim() || processingId !== null}
-          >
-            {processingId ? <CircularProgress size={20} /> : 'Resolve Dispute'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Admin command dialogs removed - Transaction_Service doesn't implement these endpoints */}
+      {/* Confirm, Cancel, Refund, and Resolve Dispute dialogs disabled */}
 
       {/* Action History Dialog */}
       <Dialog open={historyDialog} onClose={() => setHistoryDialog(false)} maxWidth="md" fullWidth>

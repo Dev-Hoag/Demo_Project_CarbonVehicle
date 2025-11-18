@@ -316,15 +316,24 @@ export interface TransactionFilters {
   page?: number;
   limit?: number;
   status?: string;
+  transactionType?: string;
+  sellerId?: string;
+  buyerId?: string;
   fromDate?: string;
   toDate?: string;
-  userId?: number;
-  listingId?: number;
 }
 
 export const transactionManagement = {
   getAllTransactions: async (filters: TransactionFilters = {}) => {
-    const { data } = await adminApi.get('/api/admin/transactions', { params: filters });
+    // Separate page/limit from other filters to match backend controller signature
+    const { page = 1, limit = 10, ...otherFilters } = filters;
+    const { data } = await adminApi.get('/api/admin/transactions', { 
+      params: { 
+        page, 
+        limit, 
+        ...otherFilters 
+      } 
+    });
     return data;
   },
 

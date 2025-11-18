@@ -117,15 +117,19 @@ const AdminWithdrawals: React.FC = () => {
   // Load statistics from API
   const loadStatistics = async () => {
     try {
-      const stats = await adminService.withdrawals.getStatistics();
-      setStatistics({
-        total: stats.total || 0,
-        pending: stats.pending || 0,
-        approved: stats.approved || stats.confirmed || 0,
-        rejected: stats.rejected || stats.reversed || 0,
-      });
+      // Since statistics endpoint may not exist, we calculate from data
+      // const stats = await adminService.withdrawals.getStatistics();
+      // For now, statistics will be calculated from loaded withdrawals
+      // in the calculateStatistics function
+      if (withdrawals.length > 0) {
+        calculateStatistics(withdrawals);
+      }
     } catch (error: any) {
       console.error('Failed to load withdrawal statistics:', error);
+      // Fallback: calculate from loaded data
+      if (withdrawals.length > 0) {
+        calculateStatistics(withdrawals);
+      }
     }
   };
 

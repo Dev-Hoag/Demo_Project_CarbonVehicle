@@ -55,6 +55,7 @@ const menuItems: MenuItem[] = [
   { title: 'My Credits', path: '/credits', icon: <CreditIcon /> },
   { title: 'My Certificates', path: '/certificates', icon: <VerifiedUserIcon /> },
   { title: 'Verifications', path: '/verifications', icon: <CheckCircleIcon />, cvaOnly: true },
+  { title: 'CVA Certificates', path: '/cva/certificates', icon: <VerifiedUserIcon />, cvaOnly: true },
   { title: 'Marketplace', path: '/listings', icon: <ListIcon /> },
   { title: 'My Listings', path: '/my-listings', icon: <ShoppingIcon /> },
   { title: 'My Bids', path: '/my-bids', icon: <GavelIcon /> },

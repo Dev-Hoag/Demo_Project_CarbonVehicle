@@ -63,27 +63,27 @@ export const creditApi = {
 
   // Get credit account by user ID
   getByUserId: (userId: string) =>
-    apiClient.get(`/api/credits/user/${userId}`),
+    apiClient.get(`/api/admin/credits/user/${userId}`),
 
-  // Add credits to account
+  // Add credits to account (admin)
   addCredit: (data: AddCreditRequest) =>
-    apiClient.post('/api/credits/add', data),
+    apiClient.post('/api/admin/credits/add', data),
 
-  // Deduct credits from account
+  // Deduct credits from account (admin)
   deductCredit: (data: DeductCreditRequest) =>
-    apiClient.post('/api/credits/deduct', data),
+    apiClient.post('/api/admin/credits/deduct', data),
 
-  // Transfer credits between users
+  // Transfer credits between users (admin)
   transfer: (data: TransferCreditRequest) =>
-    apiClient.post('/api/credits/transfer', data),
+    apiClient.post('/api/admin/credits/transfer', data),
 
   // Get all credit accounts (admin)
   getAll: (params?: { page?: number; size?: number; sort?: string }) =>
-    apiClient.get('/api/credits', { params }),
+    apiClient.get('/api/admin/credits', { params }),
 
-  // Get credit statistics
+  // Get credit statistics (admin)
   getStatistics: () =>
-    apiClient.get('/api/credits/statistics'),
+    apiClient.get('/api/admin/credits/statistics'),
 };
 
 // ========== Credit Transaction API ==========
@@ -93,9 +93,9 @@ export const creditTransactionApi = {
   getById: (id: string) =>
     apiClient.get(`/api/credit-transactions/${id}`),
 
-  // Get transactions by user ID
+  // Get transactions by user ID (admin)
   getByUserId: (userId: string, params?: { page?: number; size?: number }) =>
-    apiClient.get(`/api/credit-transactions/user/${userId}`, { params }),
+    apiClient.get(`/api/admin/credits/user/${userId}/transactions`, { params }),
 
   // Get recent transactions by user
   getRecentByUser: (userId: string, limit: number = 10) =>

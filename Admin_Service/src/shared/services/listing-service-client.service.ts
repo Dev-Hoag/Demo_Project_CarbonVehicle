@@ -40,6 +40,22 @@ export class ListingServiceClient {
     return { success: true, data: { stub: true, tag, ...payload, ...extra } };
   }
 
+  private async get(path: string, params?: Record<string, any>): Promise<ListingCommandResult> {
+    try {
+      const url = `${this.baseUrl}${path}`;
+      const res = await firstValueFrom(
+        this.http.get(url, { headers: this.headers(), params }).pipe(timeout(this.timeoutMs)),
+      );
+      return { success: true, data: res.data };
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      const msg = err?.message;
+      this.logger.error(`GET ${this.baseUrl}${path} failed. status=${status} data=${JSON.stringify(data)} msg=${msg}`);
+      return { success: false, error: data?.message || msg || 'Listing service unavailable' };
+    }
+  }
+
   private async post(path: string, body: any, adminId?: number): Promise<ListingCommandResult> {
     try {
       const url = `${this.baseUrl}${path}`;
@@ -54,6 +70,25 @@ export class ListingServiceClient {
       this.logger.error(`POST ${this.baseUrl}${path} failed. status=${status} data=${JSON.stringify(data)} msg=${msg}`);
       return { success: false, error: data?.message || msg || 'Listing service unavailable' };
     }
+  }
+
+  // ------- Query Operations ----------
+  async getListings(page: number, limit: number, filters?: { sellerId?: string; status?: string; listingType?: string }): Promise<ListingCommandResult> {
+    // Listing service uses Spring Boot pagination: page (0-indexed), size
+    const params: Record<string, any> = {
+      page: page - 1, // Convert to 0-indexed
+      size: limit,
+    };
+
+    if (filters?.sellerId) params.sellerId = filters.sellerId;
+    if (filters?.status) params.status = filters.status;
+    if (filters?.listingType) params.type = filters.listingType;
+
+    return this.get('/api/v1/listings', params);
+  }
+
+  async getListingById(id: string): Promise<ListingCommandResult> {
+    return this.get(`/api/v1/listings/${id}`);
   }
 
   // ------- Commands ----------

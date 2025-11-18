@@ -90,13 +90,14 @@ export const AdminListingTransactionsPage: React.FC = () => {
     setLoading(true);
     try {
       const params: any = {
-        page,
+        page: page + 1, // Backend expects 1-indexed
         limit: rowsPerPage,
       };
 
-      let url = '/api/transactions';
+      // Use Admin API endpoint
+      let url = '/api/admin/transactions';
       if (statusFilter !== 'ALL') {
-        url = `/api/transactions/status/${statusFilter}`;
+        params.status = statusFilter;
       }
 
       const response = await apiClient.get(url, { params });
@@ -147,7 +148,7 @@ export const AdminListingTransactionsPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.get(`/api/transactions/${searchId}`);
+      const response = await apiClient.get(`/api/admin/transactions/${searchId}`);
       if (response.data.data) {
         setTransactions([response.data.data]);
         setTotalElements(1);
@@ -217,13 +218,15 @@ export const AdminListingTransactionsPage: React.FC = () => {
   const getActiveStep = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return 0;
-      case 'COMPLETED':
+        return 0; // Only step 1 completed (Reserve Payment)
+      case 'CONFIRMED': // Backend returns CONFIRMED (mapped from COMPLETED)
+        return 5; // All steps completed
+      case 'COMPLETED': // Legacy support
         return 5;
       case 'FAILED':
-        return 2;
+        return 2; // Failed at Transfer Credits
       case 'CANCELLED':
-        return 1;
+        return 1; // Cancelled after Settle Payment
       default:
         return 0;
     }
@@ -546,7 +549,7 @@ export const AdminListingTransactionsPage: React.FC = () => {
 
               {/* Transaction Flow Stepper */}
               <Typography variant="subtitle2" gutterBottom>
-                Transaction Flow (8-Step Atomic Process)
+                Transaction Flow (5-Step Process)
               </Typography>
               <Stepper 
                 activeStep={getActiveStep(selectedTransaction.status)} 

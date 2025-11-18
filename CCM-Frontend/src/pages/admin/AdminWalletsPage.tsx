@@ -29,6 +29,7 @@ import {
   InputLabel,
   Grid,
   InputAdornment,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,9 +38,11 @@ import {
   AccountBalanceWallet as WalletIcon,
   AddCircle as AddIcon,
   Visibility as ViewIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import adminService from '../../services/admin';
+import { adminWalletsApi } from '../../api/admin-wallets';
 import type { WalletFilters } from '../../services/admin';
 import UserWalletDetailDialog from '../../components/admin/UserWalletDetailDialog';
 
@@ -47,7 +50,7 @@ interface WalletTransaction {
   id: string;
   walletId?: string;
   userId: string | number;
-  type: string;
+  transactionType: string; // Backend trả về transactionType, không phải type
   amount: number;
   balanceBefore?: number;
   balanceAfter?: number;
@@ -56,6 +59,7 @@ interface WalletTransaction {
   referenceId?: string;
   metadata?: any;
   createdAt: string;
+  bankInfo?: any;
 }
 
 interface WalletTransactionListResponse {
@@ -111,7 +115,7 @@ export const AdminWalletsPage: React.FC = () => {
         endDate: toDate || undefined,
       };
 
-      const response: WalletTransactionListResponse = await adminService.wallets.getAllTransactions(filters);
+      const response: WalletTransactionListResponse = await adminWalletsApi.getAllTransactions(filters);
       setTransactions(response.data);
       setTotal(response.total);
 
@@ -128,9 +132,9 @@ export const AdminWalletsPage: React.FC = () => {
   const calculateStatistics = (txs: WalletTransaction[]) => {
     setStatistics({
       total: txs.length,
-      deposits: txs.filter(t => t.type === 'DEPOSIT').length,
-      withdrawals: txs.filter(t => t.type === 'WITHDRAWAL').length,
-      payments: txs.filter(t => t.type === 'PAYMENT').length,
+      deposits: txs.filter(t => t.transactionType === 'DEPOSIT').length,
+      withdrawals: txs.filter(t => t.transactionType === 'WITHDRAWAL').length,
+      payments: txs.filter(t => t.transactionType === 'PAYMENT').length,
     });
   };
 
@@ -175,7 +179,7 @@ export const AdminWalletsPage: React.FC = () => {
 
     setProcessing(true);
     try {
-      await adminService.wallets.adjustBalance(adjustUserId, amount, adjustReason);
+      await adminWalletsApi.adjustBalance({ userId: adjustUserId, amount, reason: adjustReason });
       toast.success('Balance adjusted successfully');
       setAdjustDialog(false);
       loadTransactions();
@@ -218,6 +222,12 @@ export const AdminWalletsPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // Handle view wallet
+  const handleViewWallet = (userId: string) => {
+    setSelectedUserId(userId);
+    setWalletDetailDialog(true);
   };
 
   return (
@@ -406,7 +416,7 @@ export const AdminWalletsPage: React.FC = () => {
                     <TableCell>{tx.id}</TableCell>
                     <TableCell>{tx.userId}</TableCell>
                     <TableCell>
-                      <Chip label={tx.type} color={getTypeColor(tx.type) as any} size="small" />
+                      <Chip label={tx.transactionType} color={getTypeColor(tx.transactionType) as any} size="small" />
                     </TableCell>
                     <TableCell>{formatCurrency(tx.amount)}</TableCell>
                     <TableCell>
@@ -415,10 +425,11 @@ export const AdminWalletsPage: React.FC = () => {
                     <TableCell>{tx.description || '-'}</TableCell>
                     <TableCell>{formatDate(tx.createdAt)}</TableCell>
                     <TableCell align="right">
-                      {/* Note: View button disabled - transaction userId is string username, not numeric ID */}
-                      {/* Backend wallet endpoint requires numeric userId which we don't have in transaction list */}
-                      {/* Use AdminUsersPage to view wallet details instead */}
-                      -
+                      <Tooltip title="View Wallet Details">
+                        <IconButton size="small" onClick={() => handleViewWallet(tx.userId)}>
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

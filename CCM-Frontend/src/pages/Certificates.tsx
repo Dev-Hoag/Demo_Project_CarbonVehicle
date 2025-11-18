@@ -76,6 +76,12 @@ export const CertificatesPage: React.FC = () => {
   };
 
   const handleDownload = async (cert: Certificate) => {
+    // Block download for revoked certificates
+    if (cert.status === 'revoked') {
+      toast.error('Cannot download revoked certificate');
+      return;
+    }
+    
     try {
       setDownloading(cert.id);
       await certificateApi.downloadAndSave(cert.id, `Carbon_Credit_Certificate_${cert.cert_hash}.pdf`);
@@ -205,10 +211,23 @@ export const CertificatesPage: React.FC = () => {
                       size="small"
                       startIcon={downloading === cert.id ? <CircularProgress size={16} /> : <DownloadIcon />}
                       onClick={() => handleDownload(cert)}
-                      disabled={downloading === cert.id || !cert.pdf_url}
-                      title={!cert.pdf_url ? 'PDF not available yet' : 'Download certificate PDF'}
+                      disabled={downloading === cert.id || !cert.pdf_url || cert.status === 'revoked'}
+                      title={
+                        cert.status === 'revoked' 
+                          ? 'Certificate has been revoked' 
+                          : !cert.pdf_url 
+                            ? 'PDF not available yet' 
+                            : 'Download certificate PDF'
+                      }
+                      color={cert.status === 'revoked' ? 'error' : 'primary'}
                     >
-                      {downloading === cert.id ? 'Downloading...' : !cert.pdf_url ? 'PDF Unavailable' : 'Download PDF'}
+                      {downloading === cert.id 
+                        ? 'Downloading...' 
+                        : cert.status === 'revoked' 
+                          ? 'Revoked' 
+                          : !cert.pdf_url 
+                            ? 'PDF Unavailable' 
+                            : 'Download PDF'}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -220,6 +239,17 @@ export const CertificatesPage: React.FC = () => {
 
       {/* Info Box */}
       <Box sx={{ mt: 4 }}>
+        {certificates.some(c => c.status === 'revoked') && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="bold">
+              ⚠️ Some certificates have been revoked
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Revoked certificates are no longer valid and cannot be used or downloaded. The associated credits have been deducted from your account.
+            </Typography>
+          </Alert>
+        )}
+        
         <Alert severity="info">
           <Typography variant="body2">
             <strong>About Carbon Credit Certificates:</strong>

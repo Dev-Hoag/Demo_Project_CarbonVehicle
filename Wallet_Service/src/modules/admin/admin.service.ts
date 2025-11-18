@@ -380,15 +380,13 @@ export class AdminService {
    * 🆕 Danh sách transactions với filter và pagination
    */
   async getTransactionList(query: TransactionListQueryDto): Promise<TransactionListResponseDto> {
-    const { userId, type, startDate, endDate, minAmount, maxAmount, page, limit } = query;
+    const { userId, type, startDate, endDate, minAmount, maxAmount, page = 1, limit = 50 } = query;
 
-    const qb = this.transactionRepository
-      .createQueryBuilder('tx')
-      .leftJoinAndSelect('tx.wallet', 'wallet');
+    const qb = this.transactionRepository.createQueryBuilder('tx');
 
-    // Filter by userId
+    // Filter by userId - join wallet to get userId
     if (userId) {
-      qb.andWhere('wallet.user_id = :userId', { userId });
+      qb.innerJoin('tx.wallet', 'wallet').andWhere('wallet.userId = :userId', { userId });
     }
 
     // Filter by type
@@ -398,10 +396,10 @@ export class AdminService {
 
     // Filter by date range
     if (startDate) {
-      qb.andWhere('tx.created_at >= :startDate', { startDate });
+      qb.andWhere('tx.createdAt >= :startDate', { startDate });
     }
     if (endDate) {
-      qb.andWhere('tx.created_at <= :endDate', { endDate });
+      qb.andWhere('tx.createdAt <= :endDate', { endDate });
     }
 
     // Filter by amount range
@@ -412,20 +410,29 @@ export class AdminService {
       qb.andWhere('tx.amount <= :maxAmount', { maxAmount });
     }
 
-    // Count total (use clone to avoid issues with getCount)
+    // Count total
     const total = await qb.clone().getCount();
 
-    // Apply pagination
-    qb.orderBy('tx.created_at', 'DESC')
+    // Apply pagination and ordering
+    qb.orderBy('tx.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     const transactions = await qb.getMany();
 
+    // Get wallet info for userId mapping
+    const walletIds = [...new Set(transactions.map(tx => tx.walletId))];
+    const wallets = await this.walletRepository
+      .createQueryBuilder('w')
+      .where('w.id IN (:...ids)', { ids: walletIds.length ? walletIds : [''] })
+      .getMany();
+    
+    const walletMap = new Map(wallets.map(w => [w.id, w.userId]));
+
     const items: TransactionDetailDto[] = transactions.map(tx => ({
       id: tx.id,
       walletId: tx.walletId,
-      userId: tx.wallet?.userId || 'N/A',
+      userId: walletMap.get(tx.walletId) || 'N/A',
       type: tx.type,
       amount: tx.amount,
       balanceBefore: tx.balanceBefore,

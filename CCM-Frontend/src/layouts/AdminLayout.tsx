@@ -34,7 +34,6 @@ import {
   AdminPanelSettings as AdminIcon,
   Description as DescriptionIcon,
   AssignmentTurnedIn as AssignmentIcon,
-  VerifiedUser as VerificationIcon,
   Stars as CreditIcon,
   ShoppingCart as ShoppingCartIcon,
   FormatListBulleted as ListingIcon,
@@ -51,19 +50,26 @@ interface AdminMenuItem {
 
 const menuItems: AdminMenuItem[] = [
   { title: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
-  { title: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
-  { title: 'Trip Verification (CVA)', path: '/admin/trip-verification', icon: <VerificationIcon /> },
-  { title: 'KYC Management', path: '/admin/kyc', icon: <VerifiedUserIcon /> },
+  
+  // User Management
+  { title: 'Users Management', path: '/admin/users', icon: <PeopleIcon /> },
+  { title: 'KYC Verification', path: '/admin/kyc', icon: <VerifiedUserIcon /> },
+  
+  // Financial Management
   { title: 'Withdrawals', path: '/admin/withdrawals', icon: <MoneyIcon /> },
-  { title: 'Wallet Transactions', path: '/admin/transactions', icon: <TransactionIcon /> },
+  { title: 'Transactions', path: '/admin/transactions', icon: <TransactionIcon /> },
   { title: 'Wallets', path: '/admin/wallets', icon: <WalletIcon /> },
-  { title: 'Credit Management', path: '/admin/credits', icon: <CreditIcon /> },
-  { title: 'Listings Management', path: '/admin/listings', icon: <ListingIcon /> },
+  
+  // Marketplace Management
+  { title: 'Credits', path: '/admin/credits', icon: <CreditIcon /> },
+  { title: 'Listings', path: '/admin/listings', icon: <ListingIcon /> },
   { title: 'Listing Transactions', path: '/admin/listing-transactions', icon: <ShoppingCartIcon /> },
+  
+  // System Management
   { title: 'Reports', path: '/admin/reports', icon: <AssessmentIcon /> },
-  { title: 'Admin Management', path: '/admin/management', icon: <AdminIcon /> },
   { title: 'Audit Logs', path: '/admin/audit-logs', icon: <DescriptionIcon /> },
   { title: 'Override Requests', path: '/admin/override-requests', icon: <AssignmentIcon /> },
+  { title: 'Admin Accounts', path: '/admin/management', icon: <AdminIcon /> },
 ];
 
 export const AdminLayout: React.FC = () => {

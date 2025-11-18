@@ -132,3 +132,16 @@ export const getKycStatistics = async (): Promise<KycStatistics> => {
   });
   return response.data;
 };
+
+// Create a default export object
+const adminKycApi = {
+  getPendingDocuments,
+  getAllDocuments,
+  getUserDocuments,
+  approveDocument,
+  rejectDocument,
+  getKycStatistics,
+};
+
+export { adminKycApi };
+export default adminKycApi;

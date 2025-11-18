@@ -34,28 +34,10 @@ import {
   Assessment as StatsIcon,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
-import adminService from '../../services/admin';
-
-interface KycDocument {
-  id: number;
-  userId: number;
-  user?: { email: string; fullName?: string };
-  documentType: string;
-  documentNumber: string;
-  documentUrl: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  notes?: string;
-  createdAt: string;
-  verifiedAt?: string;
-  verifiedBy?: number;
-}
-
-interface KycDocumentListResponse {
-  documents: KycDocument[];
-  total: number;
-  page: number;
-  limit: number;
-}
+import adminKycApi, { 
+  type KycDocument, 
+  type KycDocumentListResponse 
+} from '../../api/admin-kyc';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -88,11 +70,11 @@ const AdminKYC: React.FC = () => {
     try {
       let response: KycDocumentListResponse;
       if (statusFilter === 'PENDING') {
-        response = await adminService.kyc.getPendingDocuments(page + 1, limit);
+        response = await adminKycApi.getPendingDocuments(page + 1, limit);
       } else if (statusFilter === 'ALL') {
-        response = await adminService.kyc.getAllDocuments({ page: page + 1, limit });
+        response = await adminKycApi.getAllDocuments(page + 1, limit);
       } else {
-        response = await adminService.kyc.getAllDocuments({ page: page + 1, limit, status: statusFilter });
+        response = await adminKycApi.getAllDocuments(page + 1, limit, statusFilter);
       }
       setDocuments(response.documents);
       setTotal(response.total);
@@ -118,15 +100,24 @@ const AdminKYC: React.FC = () => {
   // Load statistics from API
   const loadStatistics = async () => {
     try {
-      const stats = await adminService.kyc.getStatistics();
+      const stats = await adminKycApi.getKycStatistics();
       setStatistics({
-        total: stats.total || 0,
-        pending: stats.pending || 0,
-        approved: stats.approved || 0,
-        rejected: stats.rejected || 0,
+        total: stats.totalDocuments || 0,
+        pending: stats.pendingDocuments || 0,
+        approved: stats.approvedDocuments || 0,
+        rejected: stats.rejectedDocuments || 0,
       });
     } catch (error: any) {
       console.error('Failed to load KYC statistics:', error);
+      // Fallback: calculate from loaded documents
+      if (documents.length > 0) {
+        setStatistics({
+          total: documents.length,
+          pending: documents.filter(d => d.status === 'PENDING').length,
+          approved: documents.filter(d => d.status === 'APPROVED').length,
+          rejected: documents.filter(d => d.status === 'REJECTED').length,
+        });
+      }
     }
   };
 
@@ -149,7 +140,7 @@ const AdminKYC: React.FC = () => {
 
     setProcessingDocId(docId);
     try {
-      await adminService.kyc.approveDocument(docId);
+      await adminKycApi.approveDocument(docId);
       toast.success('Document approved successfully');
       loadDocuments();
     } catch (error: any) {
@@ -174,7 +165,7 @@ const AdminKYC: React.FC = () => {
 
     setProcessingDocId(selectedDoc.id);
     try {
-      await adminService.kyc.rejectDocument(selectedDoc.id, rejectionReason);
+      await adminKycApi.rejectDocument(selectedDoc.id, rejectionReason);
       toast.success('Document rejected successfully');
       setRejectDialogOpen(false);
       setSelectedDoc(null);
@@ -410,14 +401,14 @@ const AdminKYC: React.FC = () => {
                 <strong>Status:</strong>{' '}
                 <Chip label={selectedDoc.status} color={getStatusColor(selectedDoc.status) as any} size="small" />
               </Typography>
-              {selectedDoc.notes && (
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>Notes:</strong> {selectedDoc.notes}
+              {selectedDoc.rejectionReason && selectedDoc.status === 'REJECTED' && (
+                <Typography variant="subtitle1" gutterBottom color="error">
+                  <strong>Rejection Reason:</strong> {selectedDoc.rejectionReason}
                 </Typography>
               )}
               <Box sx={{ mt: 2, textAlign: 'center' }}>
                 <img
-                  src={selectedDoc.documentUrl}
+                  src={selectedDoc.fileUrl}
                   alt="Document"
                   style={{ maxWidth: '100%', maxHeight: '500px' }}
                   onError={(e) => {

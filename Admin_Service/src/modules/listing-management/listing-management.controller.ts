@@ -46,8 +46,7 @@ export class ListingManagementController {
   @ApiResponse({ status: 200, description: 'Listing details' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   async getListingById(@Param('id') id: string) {
-    const numId = Number(id);
-    return this.service.getListingById(numId);
+    return this.service.getListingById(id);
   }
 
   @Post(':id/suspend')
@@ -60,8 +59,7 @@ export class ListingManagementController {
     @Body() dto: SuspendListingDto,
     @CurrentUser() admin: any,
   ) {
-    const numId = Number(id);
-    return this.service.suspendListing(numId, admin.id, dto.reason);
+    return this.service.suspendListing(id, admin.id, dto.reason);
   }
 
   @Post(':id/activate')
@@ -73,8 +71,7 @@ export class ListingManagementController {
     @Body() dto: ActivateListingDto,
     @CurrentUser() admin: any,
   ) {
-    const numId = Number(id);
-    return this.service.activateListing(numId, admin.id, dto.reason);
+    return this.service.activateListing(id, admin.id, dto.reason);
   }
 
   @Post(':id/flag')
@@ -82,8 +79,7 @@ export class ListingManagementController {
   @ApiOperation({ summary: 'Flag listing', description: 'Đánh dấu listing có vấn đề' })
   @ApiResponse({ status: 200, description: 'Flag command sent' })
   async flagListing(@Param('id') id: string, @Body() dto: FlagListingDto, @CurrentUser() admin: any) {
-    const numId = Number(id);
-    return this.service.flagListing(numId, admin.id, dto.flagType, dto.reason);
+    return this.service.flagListing(id, admin.id, dto.flagType, dto.reason);
   }
 
   @Post(':id/unflag')
@@ -95,7 +91,6 @@ export class ListingManagementController {
     @Body() dto: UnflagListingDto,
     @CurrentUser() admin: any,
   ) {
-    const numId = Number(id);
-    return this.service.unflagListing(numId, admin.id, dto.reason);
+    return this.service.unflagListing(id, admin.id, dto.reason);
   }
 }

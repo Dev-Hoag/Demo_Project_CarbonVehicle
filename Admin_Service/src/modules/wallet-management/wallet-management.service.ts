@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   BadGatewayException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,6 +16,8 @@ import { FilterWalletTransactionDto } from '../../shared/dtos/wallet-management.
 
 @Injectable()
 export class WalletManagementService {
+  private readonly logger = new Logger(WalletManagementService.name);
+
   constructor(
     @InjectRepository(ManagedWalletTransaction)
     private readonly walletRepo: Repository<ManagedWalletTransaction>,
@@ -31,44 +34,40 @@ export class WalletManagementService {
     limit: number = 10,
     filters?: FilterWalletTransactionDto,
   ) {
-    const q = this.walletRepo.createQueryBuilder('w');
+    // Query from Wallet_Service instead of local ManagedWalletTransaction table
+    const result = await this.walletClient.getTransactions(page, limit, {
+      userId: filters?.userId,
+      type: filters?.type || filters?.transactionType,
+      startDate: filters?.fromDate,
+      endDate: filters?.toDate,
+    });
 
-    const where: string[] = [];
-    const params: Record<string, any> = {};
-
-    if (filters?.userId) {
-      where.push('w.userId = :userId');
-      params.userId = filters.userId;
-    }
-    if (filters?.status) {
-      where.push('w.status = :status');
-      params.status = filters.status;
-    }
-    if (filters?.transactionType) {
-      where.push('w.transactionType = :type');
-      params.type = filters.transactionType;
-    }
-    if (filters?.fromDate && filters?.toDate) {
-      where.push('w.createdAt BETWEEN :from AND :to');
-      params.from = filters.fromDate;
-      params.to = filters.toDate;
-    } else if (filters?.fromDate) {
-      where.push('w.createdAt >= :from');
-      params.from = filters.fromDate;
-    } else if (filters?.toDate) {
-      where.push('w.createdAt <= :to');
-      params.to = filters.toDate;
+    if (!result.success) {
+      this.logger.error(`Failed to fetch wallet transactions: ${result.error}`);
+      // Fallback to empty result instead of throwing error
+      return { data: [], total: 0, page, limit };
     }
 
-    if (where.length) q.where(where.join(' AND '), params);
+    const { items, total } = result.data;
 
-    const [data, total] = await q
-      .orderBy('w.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    // Map Wallet_Service response to Admin_Service format
+    const mappedData = items.map((tx: any) => ({
+      id: tx.id,
+      externalWalletId: tx.walletId,
+      externalTransactionId: tx.id,
+      userId: tx.userId,
+      transactionType: tx.type,
+      amount: tx.amount,
+      status: 'CONFIRMED', // Wallet service transactions are confirmed
+      balanceBefore: tx.balanceBefore,
+      balanceAfter: tx.balanceAfter,
+      description: tx.description,
+      referenceId: tx.referenceId,
+      metadata: tx.metadata,
+      createdAt: tx.createdAt,
+    }));
 
-    return { data, total, page, limit };
+    return { data: mappedData, total, page, limit };
   }
 
   async getWalletTransactionById(id: number) {

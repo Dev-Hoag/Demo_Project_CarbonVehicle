@@ -63,4 +63,43 @@ public class VerificationEventListener {
             throw e; // Requeue message for retry
         }
     }
+    
+    @RabbitListener(bindings = @QueueBinding(
+        value = @Queue(value = "credit_service_certificate_revoked_queue", durable = "true"),
+        exchange = @Exchange(value = "ccm.events", type = "topic", durable = "true"),
+        key = "certificate.revoked"
+    ))
+    public void handleCertificateRevoked(CertificateRevokedEvent event) {
+        log.info("🚫 RECEIVED certificate.revoked event: {}", event);
+        try {
+            log.info("📨 Processing certificate.revoked for user: {} (cert: {}, credits: {})", 
+                    event.getUserId(), event.getCertificateId(), event.getCreditAmount());
+            
+            // Deduct credits due to certificate revocation
+            // Note: User ID from certificate service is numeric, convert to UUID if needed
+            UUID userId;
+            try {
+                userId = UUID.fromString(event.getUserId());
+            } catch (IllegalArgumentException e) {
+                // If numeric ID, convert to UUID format (00000000-0000-0000-0000-000000000XXX)
+                String paddedId = String.format("%012d", Long.parseLong(event.getUserId()));
+                userId = UUID.fromString("00000000-0000-0000-" + paddedId.substring(0, 4) + "-" + paddedId.substring(4));
+            }
+            
+            // Deduct credits
+            AddCreditRequest deductRequest = new AddCreditRequest();
+            deductRequest.setUserId(userId);
+            deductRequest.setAmount(-event.getCreditAmount()); // Negative to deduct
+            deductRequest.setDescription("Certificate revoked (ID: " + event.getCertificateId() + "). Reason: " + event.getRevokeReason());
+            
+            creditService.addCredit(deductRequest);
+            
+            log.info("✅ Deducted {} kg CO₂ credits from user {} due to certificate revocation", 
+                    event.getCreditAmount(), userId);
+            
+        } catch (Exception e) {
+            log.error("❌ Failed to process certificate.revoked event", e);
+            throw e; // Requeue message for retry
+        }
+    }
 }

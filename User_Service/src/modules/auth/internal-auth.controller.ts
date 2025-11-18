@@ -58,7 +58,8 @@ export class InternalAuthController {
       res.setHeader('X-User-ID', String(userInfo.userId));
       res.setHeader('X-User-Role', userInfo.userRole);
       res.setHeader('X-User-Email', userInfo.email);
-      res.setHeader('X-User-Name', userInfo.fullName);
+      // Encode fullName to prevent "Invalid character in header" error with Vietnamese characters
+      res.setHeader('X-User-Name', encodeURIComponent(userInfo.fullName));
 
       // Also return in body for debugging
       return res.json(userInfo);

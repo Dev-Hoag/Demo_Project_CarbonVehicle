@@ -29,6 +29,7 @@ import ProfilePage from './pages/Profile';
 import KYCPage from './pages/KYC';
 import CertificatesPage from './pages/Certificates';
 import { VerificationsPage } from './pages/Verifications';
+import { CVACertificatesPage } from './pages/CVACertificates';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -40,7 +41,6 @@ import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import { AdminManagementPage } from './pages/admin/AdminManagement';
 import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogs';
 import { AdminOverrideRequestsPage } from './pages/admin/AdminOverrideRequests';
-import AdminTripVerificationPage from './pages/admin/AdminTripVerification';
 import AdminCreditsPage from './pages/admin/AdminCredits';
 import AdminListingTransactionsPage from './pages/admin/AdminListingTransactions';
 import AdminListingsPage from './pages/admin/AdminListings';
@@ -84,7 +84,6 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsersPage />} />
-            <Route path="trip-verification" element={<AdminTripVerificationPage />} />
             <Route path="kyc" element={<AdminKYC />} />
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="transactions" element={<AdminTransactionsPage />} />
@@ -112,6 +111,7 @@ function App() {
               <Route path="/credits" element={<CreditsPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />
               <Route path="/verifications" element={<VerificationsPage />} />
+              <Route path="/cva/certificates" element={<CVACertificatesPage />} />
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/my-listings" element={<MyListingsPage />} />
               <Route path="/my-bids" element={<MyBidsPage />} />

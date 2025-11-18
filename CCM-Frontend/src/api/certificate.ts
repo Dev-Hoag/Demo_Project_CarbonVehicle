@@ -94,6 +94,24 @@ class CertificateApi {
     return response.data;
   }
 
+  // CVA: Get all certificates
+  async getAllCertificates(params?: {
+    skip?: number;
+    limit?: number;
+    status?: 'valid' | 'expired' | 'revoked';
+  }): Promise<{ total: number; items: Certificate[] }> {
+    const response = await apiClient.get(`${this.baseUrl}/all`, { params });
+    return response.data;
+  }
+
+  // CVA: Revoke certificate
+  async revokeCertificate(id: number, revokedBy?: number, reason?: string): Promise<Certificate> {
+    const response = await apiClient.patch(`${this.baseUrl}/${id}/revoke`, null, {
+      params: { revoked_by: revokedBy, reason }
+    });
+    return response.data;
+  }
+
   // Helper: Download and save certificate
   async downloadAndSave(id: number, filename?: string): Promise<void> {
     const blob = await this.downloadCertificate(id);

@@ -8,22 +8,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Logout, AssignmentTurnedIn, Add, Check, Close, Visibility } from '@mui/icons-material';
 import toast from 'react-hot-toast';
-import axios from 'axios';
-
-const API_URL = 'http://localhost';
-
-const adminApi = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('adminToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import { adminOverrideApi } from '../../api/admin-override';
 
 interface OverrideRequest {
   id: number;
@@ -78,7 +63,7 @@ export const AdminOverrideRequestsPage: React.FC = () => {
         limit: 20,
         status: statusFilter || undefined,
       };
-      const { data } = await adminApi.get('/api/admin/override-requests', { params });
+      const { data } = await adminOverrideApi.getAll(params);
       // Handle different response structures
       const requestsList = Array.isArray(data) ? data : (data.requests || data.data || []);
       setRequests(requestsList);
@@ -93,10 +78,14 @@ export const AdminOverrideRequestsPage: React.FC = () => {
   const handleCreateRequest = async () => {
     try {
       const payload = {
-        ...formData,
-        targetId: formData.targetId ? parseInt(formData.targetId) : undefined,
+        type: formData.requestType as any,
+        description: formData.reason,
+        priority: 'MEDIUM' as any,
+        reason: formData.reason,
+        justification: formData.reason,
+        targetUserId: formData.targetId ? formData.targetId : undefined,
       };
-      await adminApi.post('/api/admin/override-requests', payload);
+      await adminOverrideApi.create(payload);
       toast.success('Override request created');
       setOpenCreate(false);
       setFormData({ requestType: '', reason: '', targetType: '', targetId: '' });
@@ -109,10 +98,11 @@ export const AdminOverrideRequestsPage: React.FC = () => {
   const handleReviewRequest = async () => {
     if (!selectedRequest || !isSuperAdmin) return;
     try {
-      const endpoint = reviewAction === 'approve' ? 'approve' : 'reject';
-      await adminApi.post(`/api/admin/override-requests/${selectedRequest.id}/${endpoint}`, {
-        reviewReason: reviewReason || undefined,
-      });
+      if (reviewAction === 'approve') {
+        await adminOverrideApi.approve(selectedRequest.id, { comment: reviewReason });
+      } else {
+        await adminOverrideApi.reject(selectedRequest.id, { comment: reviewReason });
+      }
       toast.success(`Request ${reviewAction}d successfully`);
       setOpenReview(false);
       setReviewReason('');
@@ -125,7 +115,7 @@ export const AdminOverrideRequestsPage: React.FC = () => {
 
   const handleViewDetails = async (request: OverrideRequest) => {
     try {
-      const { data } = await adminApi.get(`/api/admin/override-requests/${request.id}`);
+      const { data } = await adminOverrideApi.getById(request.id);
       setViewingRequest(data);
       setOpenView(true);
     } catch (error: any) {
