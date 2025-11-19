@@ -33,6 +33,19 @@ export class AuthController {
     return this.authService.refreshTokens(dto.refreshToken);
   }
 
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout - Blacklist token' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  async logout(@Headers('authorization') authorization: string) {
+    const token = authorization?.replace('Bearer ', '');
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+    return this.authService.logout(token);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

@@ -21,6 +21,9 @@ import com.creditservice.events.EventPublisher;
 import com.creditservice.events.CreditEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -73,8 +76,9 @@ public class CreditServiceImpl implements CreditService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "creditAccount", key = "#userId.toString()")
     public CreditResponse getCreditByUserId(UUID userId) {
-        log.info("Fetching credit account for user: {}", userId);
+        log.info("[CACHE MISS] Fetching credit account for user: {}", userId);
 
         Credit credit = creditRepository.findByUserId(userId)
                 .orElseThrow(() -> new CreditNotFoundException(userId));
@@ -83,8 +87,14 @@ public class CreditServiceImpl implements CreditService {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "creditAccount", key = "#request.userId.toString()"),
+        @CacheEvict(value = "transactionHistory", key = "#request.userId.toString()"),
+        @CacheEvict(value = "recentTransactions", key = "#request.userId.toString()"),
+        @CacheEvict(value = "creditStatistics", allEntries = true)
+    })
     public CreditResponse addCredit(AddCreditRequest request) {
-        log.info("Adding {} credits to user: {}", request.getAmount(), request.getUserId());
+        log.info("[CACHE INVALIDATE] Adding {} credits to user: {}", request.getAmount(), request.getUserId());
 
         // Validate amount
         if (request.getAmount() <= 0) {
@@ -147,8 +157,14 @@ public class CreditServiceImpl implements CreditService {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "creditAccount", key = "#request.userId.toString()"),
+        @CacheEvict(value = "transactionHistory", key = "#request.userId.toString()"),
+        @CacheEvict(value = "recentTransactions", key = "#request.userId.toString()"),
+        @CacheEvict(value = "creditStatistics", allEntries = true)
+    })
     public CreditResponse deductCredit(DeductCreditRequest request) {
-        log.info("Deducting {} credits from user: {}", request.getAmount(), request.getUserId());
+        log.info("[CACHE INVALIDATE] Deducting {} credits from user: {}", request.getAmount(), request.getUserId());
 
         // Validate amount
         if (request.getAmount() <= 0) {
@@ -194,8 +210,17 @@ public class CreditServiceImpl implements CreditService {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "creditAccount", key = "#request.fromUserId.toString()"),
+        @CacheEvict(value = "creditAccount", key = "#request.toUserId.toString()"),
+        @CacheEvict(value = "transactionHistory", key = "#request.fromUserId.toString()"),
+        @CacheEvict(value = "transactionHistory", key = "#request.toUserId.toString()"),
+        @CacheEvict(value = "recentTransactions", key = "#request.fromUserId.toString()"),
+        @CacheEvict(value = "recentTransactions", key = "#request.toUserId.toString()"),
+        @CacheEvict(value = "creditStatistics", allEntries = true)
+    })
     public TransferCreditResponse transferCredit(TransferCreditRequest request) {
-        log.info("Transferring {} credits from user: {} to user: {}",
+        log.info("[CACHE INVALIDATE] Transferring {} credits from user: {} to user: {}",
                 request.getAmount(), request.getFromUserId(), request.getToUserId());
 
         // Validate amount
@@ -313,8 +338,9 @@ public class CreditServiceImpl implements CreditService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "transactionHistory", key = "#userId.toString() + '_page_' + #pageable.pageNumber + '_size_' + #pageable.pageSize")
     public Page<CreditTransactionResponse> getTransactionsByUserId(UUID userId, Pageable pageable) {
-        log.info("Fetching transactions for user: {} - page: {}, size: {}",
+        log.info("[CACHE MISS] Fetching transactions for user: {} - page: {}, size: {}",
                 userId, pageable.getPageNumber(), pageable.getPageSize());
 
         return transactionRepository.findByUserId(userId, pageable)
@@ -323,8 +349,9 @@ public class CreditServiceImpl implements CreditService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "recentTransactions", key = "#userId.toString() + '_limit_' + #limit")
     public List<CreditTransactionResponse> getRecentTransactionsByUserId(UUID userId, int limit) {
-        log.info("Fetching recent {} transactions for user: {}", limit, userId);
+        log.info("[CACHE MISS] Fetching recent {} transactions for user: {}", limit, userId);
 
         Pageable pageable = PageRequest.of(0, limit);
         List<CreditTransaction> transactions =
@@ -346,8 +373,9 @@ public class CreditServiceImpl implements CreditService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "creditStatistics", key = "'global'")
     public CreditStatisticsResponse getCreditStatistics() {
-        log.info("Calculating credit statistics");
+        log.info("[CACHE MISS] Calculating credit statistics");
 
         Long totalUsersCount = creditRepository.count();
         Integer totalUsers = totalUsersCount.intValue();

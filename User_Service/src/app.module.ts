@@ -9,6 +9,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { KycModule } from './modules/kyc/kyc.module';
 import { EventsModule } from './modules/events/events.module';
+import { HealthModule } from './modules/health/health.module';
+import { RedisCacheModule } from './redis/redis-cache.module';
 
 @Module({
   imports: [
@@ -17,6 +19,9 @@ import { EventsModule } from './modules/events/events.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // Redis Cache Module - Global
+    RedisCacheModule,
 
     // Event Emitter Module 
     EventEmitterModule.forRoot({
@@ -49,6 +54,7 @@ import { EventsModule } from './modules/events/events.module';
     AuthModule,
     UserModule,
     KycModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

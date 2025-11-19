@@ -12,6 +12,9 @@ import { User } from '../../shared/entities/user.entity';
 import { UserProfile } from '../../shared/entities/user-profile.entity';
 import { EmailService } from './email.service';
 import { EventsModule } from '../events/events.module';
+import { RedisCacheModule } from '../../redis/redis-cache.module';
+import { CacheService } from '../../redis/cache.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -27,12 +30,13 @@ import { EventsModule } from '../events/events.module';
       }),
     }),
     EventsModule,
+    RedisCacheModule,
   ],
   controllers: [
     AuthController,
     InternalAuthController
   ],
-  providers: [AuthService, JwtStrategy, EmailService],
-  exports: [AuthService, EmailService],
+  providers: [AuthService, JwtStrategy, EmailService, CacheService, JwtAuthGuard],
+  exports: [AuthService, EmailService, JwtAuthGuard],
 })
 export class AuthModule {}
