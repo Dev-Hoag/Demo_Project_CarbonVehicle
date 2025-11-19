@@ -95,6 +95,18 @@ class TripVerifiedEvent(BaseModel):
     user_id: int
     credit_amount: Decimal
     verified_at: datetime
+
+class CreditPurchasedEvent(BaseModel):
+    eventType: str
+    transactionId: str  # UUID from Java
+    listingId: str  # UUID
+    buyerId: str  # UUID
+    sellerId: str  # UUID
+    creditAmount: float
+    totalPrice: float
+    pricePerKg: float
+    purchasedAt: str  # ISO datetime
+    tripId: Optional[str] = None  # UUID, may be null
     
 class CertificateGeneratedEvent(BaseModel):
     certificate_id: int

@@ -22,6 +22,12 @@ class Certificate(Base):
     pdf_url = Column(String(255), nullable=True)
     template_id = Column(Integer, ForeignKey('certificate_templates.id'), nullable=True)
     status = Column(Enum(CertificateStatus), default=CertificateStatus.valid)
+    
+    # Revocation fields
+    revoke_reason = Column(Text, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_by = Column(Integer, nullable=True)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

@@ -177,3 +177,23 @@ def publish_certificate_downloaded(cert_id: int, user_id: int):
     except Exception as e:
         logger.error(f"Failed to publish CertificateDownloaded event: {str(e)}")
 
+
+def publish_certificate_revoked(cert_id: int, user_id: int, revoked_by: int, reason: str, credit_amount: float):
+    """
+    Publish CertificateRevoked event
+    """
+    try:
+        message = {
+            "event_type": "CertificateRevoked",
+            "data": {
+                "certificate_id": cert_id,
+                "user_id": user_id,
+                "revoked_by": revoked_by,
+                "revoke_reason": reason,
+                "credit_amount": credit_amount
+            }
+        }
+        rabbitmq_connection.publish_message("certificate.revoked", message)
+        logger.info(f"Published CertificateRevoked event for certificate {cert_id}, user {user_id}")
+    except Exception as e:
+        logger.error(f"Failed to publish CertificateRevoked event: {str(e)}")

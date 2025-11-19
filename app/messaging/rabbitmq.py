@@ -15,7 +15,7 @@ class RabbitMQConnection:
     def connect(self):
         try:
             credentials = pika.PlainCredentials(settings.RABBITMQ_USER, settings.RABBITMQ_PASS)
-            params = pika.ConnectionParameters(host=settings.RABBITMQ_HOST, port=settings.RABBITMQ_PORT, credentials=credentials, heartbeat=600, blocked_connection_timeout=300)
+            params = pika.ConnectionParameters(host=settings.RABBITMQ_HOST, port=settings.RABBITMQ_PORT, virtual_host='ccm_vhost', credentials=credentials, heartbeat=600, blocked_connection_timeout=300)
             self.connection = pika.BlockingConnection(params)
             self.channel = self.connection.channel()
             self.channel.exchange_declare(exchange=self.exchange, exchange_type='topic', durable=True)
@@ -39,6 +39,10 @@ class RabbitMQConnection:
     def consume_messages(self, queue_name: str, callback: Callable, auto_ack: bool = False):
         if not self.channel:
             raise Exception("Channel not initialized")
+        
+        # Debug: Check callback parameter
+        logger.info(f"DEBUG rabbitmq.consume_messages: callback={callback}, callable={callable(callback)}")
+        
         self.channel.basic_qos(prefetch_count=1)
         self.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=auto_ack)
         self.channel.start_consuming()

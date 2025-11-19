@@ -12,10 +12,11 @@ from app.schemas import (
     PublicVerificationResponse,
     VerificationResponse
 )
-from app.models import VerificationMethod
+from app.models import VerificationMethod, CertificateStatus
 from app.messaging.publisher import (
     publish_certificate_verified,
-    publish_certificate_downloaded
+    publish_certificate_downloaded,
+    publish_certificate_revoked
 )
 from fastapi.responses import FileResponse
 from app.config import settings
@@ -60,6 +61,37 @@ def list_certificates(
         "items": certificates
     }
 
+# CVA: List all certificates
+@router.get("/all", response_model=CertificateListResponse)
+def list_all_certificates(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    status: Optional[str] = Query(None, description="Filter by status: valid/expired/revoked"),
+    db: Session = Depends(get_db)
+):
+    """
+    [CVA Admin] List all certificates in system
+    """
+    from app.models import CertificateStatus
+    
+    status_filter = None
+    if status:
+        try:
+            status_filter = CertificateStatus[status]
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status. Must be one of: valid, expired, revoked"
+            )
+    
+    service = CertificateService(db)
+    certificates, total = service.get_all_certificates(skip, limit, status_filter)
+    
+    return {
+        "total": total,
+        "items": certificates
+    }
+
 # Get certificate details
 @router.get("/{cert_id}", response_model=CertificateResponse)
 def get_certificate(
@@ -80,6 +112,37 @@ def get_certificate(
     
     return certificate
 
+# CVA: Revoke certificate
+@router.patch("/{cert_id}/revoke", response_model=CertificateResponse)
+def revoke_certificate(
+    cert_id: int,
+    revoked_by: Optional[int] = Query(None, description="CVA user ID"),
+    reason: Optional[str] = Query(None, description="Revocation reason"),
+    db: Session = Depends(get_db)
+):
+    """
+    [CVA Admin] Revoke a certificate
+    """
+    service = CertificateService(db)
+    certificate = service.revoke_certificate(cert_id, revoked_by, reason)
+    
+    if not certificate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certificate not found"
+        )
+    
+    # Publish revocation event to notify other services
+    publish_certificate_revoked(
+        cert_id=certificate.id,
+        user_id=certificate.user_id,
+        revoked_by=revoked_by or 0,
+        reason=reason or "No reason provided",
+        credit_amount=float(certificate.credit_amount)
+    )
+    
+    return certificate
+
 # Download certificate PDF
 @router.get("/{cert_id}/download")
 def download_certificate(
@@ -97,6 +160,13 @@ def download_certificate(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Certificate not found"
+        )
+    
+    # Block download for revoked certificates
+    if certificate.status == CertificateStatus.revoked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot download revoked certificate. This certificate is no longer valid."
         )
     
     if not certificate.pdf_url:

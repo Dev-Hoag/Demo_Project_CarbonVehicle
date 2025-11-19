@@ -2,7 +2,7 @@
 services:
   # MySQL Database
   mysql:
-    image: mysql:8.0
+    image: mysql:5.7
     container_name: certificate_mysql
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -10,7 +10,7 @@ services:
       MYSQL_USER: certuser
       MYSQL_PASSWORD: certpassword
     ports:
-      - "3307:3306"
+      - "3327:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -22,55 +22,46 @@ services:
       timeout: 5s
       retries: 5
 
-  # RabbitMQ
-  rabbitmq:
-    image: rabbitmq:3.12-management
-    container_name: certificate_rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5673:5672"   # AMQP port
-      - "15673:15672" # Management UI
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - certificate_network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # RabbitMQ - Use existing CCM RabbitMQ
+  # Comment out to use shared RabbitMQ from main system
+  # rabbitmq:
+  #   image: rabbitmq:3.12-management
+  #   container_name: certificate_rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: guest
+  #     RABBITMQ_DEFAULT_PASS: guest
+  #   ports:
+  #     - "5673:5672"   # AMQP port
+  #     - "15673:15672" # Management UI
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   networks:
+  #     - certificate_network
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   # Certificate Service
   certificate-service:
     build: .
     container_name: certificate_service
-    environment:
-      - APP_PORT=3009
-      - DEBUG=True
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USER=certuser
-      - DB_PASSWORD=certpassword
-      - DB_NAME=certificate_service_db
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - SECRET_KEY=your-secret-key-change-in-production
+    env_file:
+      - .env
     ports:
-      - "3009:3009"
+      - "3011:3009"
     volumes:
       - ./uploads:/app/uploads
       - ./templates:/app/templates
     depends_on:
       mysql:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      # rabbitmq:
+      #   condition: service_healthy
     networks:
       - certificate_network
+      - ccm_net
     restart: unless-stopped
 
   adminer:
@@ -91,3 +82,5 @@ volumes:
 networks:
   certificate_network:
     driver: bridge
+  ccm_net:
+    external: true

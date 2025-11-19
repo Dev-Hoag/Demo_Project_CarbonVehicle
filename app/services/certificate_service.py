@@ -63,7 +63,7 @@ class CertificateService:
         self.db.commit()
         self.db.refresh(certificate)
         
-        # Generate PDF
+        # Generate PDF using ReportLab
         try:
             pdf_data = {
                 "id": certificate.id,
@@ -85,6 +85,7 @@ class CertificateService:
             
         except Exception as e:
             logger.error(f"Error generating PDF for certificate {certificate.id}: {str(e)}")
+            # Certificate still valid without PDF
         
         return certificate
     
@@ -114,6 +115,23 @@ class CertificateService:
         certificates = query.offset(skip).limit(limit).all()
         return certificates, total
     
+    def get_all_certificates(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        status: Optional[CertificateStatus] = None
+    ) -> tuple[List[Certificate], int]:
+        """
+        Get all certificates in system (CVA admin)
+        """
+        query = self.db.query(Certificate)
+        if status:
+            query = query.filter(Certificate.status == status)
+        
+        total = query.count()
+        certificates = query.order_by(Certificate.issue_date.desc()).offset(skip).limit(limit).all()
+        return certificates, total
+    
     def update_certificate(
         self,
         cert_id: int,
@@ -131,6 +149,30 @@ class CertificateService:
         
         self.db.commit()
         self.db.refresh(certificate)
+        return certificate
+    
+    def revoke_certificate(
+        self,
+        cert_id: int,
+        revoked_by: Optional[int] = None,
+        reason: Optional[str] = None
+    ) -> Optional[Certificate]:
+        """
+        Revoke a certificate (CVA admin action)
+        """
+        certificate = self.get_certificate(cert_id)
+        if not certificate:
+            return None
+        
+        certificate.status = CertificateStatus.revoked
+        certificate.revoke_reason = reason
+        certificate.revoked_at = datetime.utcnow()
+        certificate.revoked_by = revoked_by
+        
+        self.db.commit()
+        self.db.refresh(certificate)
+        
+        logger.info(f"Certificate {cert_id} revoked by user {revoked_by}")
         return certificate
     
     def verify_certificate(

@@ -11,6 +11,7 @@ from app.schemas.certificate import (
     DownloadResponse,
     PublicVerificationResponse,
     TripVerifiedEvent,
+    CreditPurchasedEvent,
     CertificateGeneratedEvent
 )
 
@@ -27,5 +28,6 @@ __all__ = [
     "DownloadResponse",
     "PublicVerificationResponse",
     "TripVerifiedEvent",
+    "CreditPurchasedEvent",
     "CertificateGeneratedEvent"
 ]

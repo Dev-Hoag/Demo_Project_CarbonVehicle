@@ -6,6 +6,14 @@ CREATE DATABASE IF NOT EXISTS certificate_service_db;
 USE certificate_service_db;
 
 -- ============================================
+-- Recreate user with mysql_native_password
+-- ============================================
+DROP USER IF EXISTS 'certuser'@'%';
+CREATE USER 'certuser'@'%' IDENTIFIED WITH mysql_native_password BY 'certpassword';
+GRANT ALL PRIVILEGES ON certificate_service_db.* TO 'certuser'@'%';
+FLUSH PRIVILEGES;
+
+-- ============================================
 -- TABLE: certificate_templates
 -- ============================================
 CREATE TABLE IF NOT EXISTS certificate_templates (
