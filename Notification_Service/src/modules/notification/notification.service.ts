@@ -11,6 +11,7 @@ import { NotificationGateway } from './notification.gateway';
 import { SendNotificationDto, SendInternalNotificationDto } from './dto/send-notification.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { RegisterDeviceDto } from './dto/register-device.dto';
+import { NotificationCacheService } from './notification-cache.service';
 
 @Injectable()
 export class NotificationService {
@@ -30,6 +31,7 @@ export class NotificationService {
     private firebaseService: FirebaseService,
     @Inject(forwardRef(() => NotificationGateway))
     private notificationGateway: NotificationGateway,
+    private notificationCacheService: NotificationCacheService,
   ) {}
 
   async sendNotification(dto: SendNotificationDto): Promise<Notification> {
@@ -172,9 +174,21 @@ export class NotificationService {
   }
 
   async getUnreadCount(userId: string): Promise<number> {
-    return this.notificationRepo.count({
+    // Try cache first
+    const cached = await this.notificationCacheService.getUnreadCount(userId);
+    if (cached !== null) {
+      this.logger.debug(`🎯 Cache HIT for unread count (user: ${userId})`);
+      return cached;
+    }
+
+    this.logger.debug(`💾 Cache MISS for unread count (user: ${userId})`);
+    const count = await this.notificationRepo.count({
       where: { userId, status: NotificationStatus.SENT },
     });
+
+    // Cache the result
+    await this.notificationCacheService.setUnreadCount(userId, count);
+    return count;
   }
 
   async markAsRead(userId: string, notificationId: number): Promise<Notification> {
@@ -188,7 +202,13 @@ export class NotificationService {
 
     notification.status = NotificationStatus.READ;
     notification.readAt = new Date();
-    return this.notificationRepo.save(notification);
+    const result = await this.notificationRepo.save(notification);
+
+    // Invalidate cache since count changed
+    await this.notificationCacheService.invalidateAllForUser(userId);
+    this.logger.debug(`🗑️ Invalidated notification cache for user ${userId}`);
+
+    return result;
   }
 
   async markAllAsRead(userId: string): Promise<void> {
@@ -196,6 +216,10 @@ export class NotificationService {
       { userId, status: NotificationStatus.SENT },
       { status: NotificationStatus.READ, readAt: new Date() },
     );
+
+    // Invalidate cache since all notifications read
+    await this.notificationCacheService.invalidateAllForUser(userId);
+    this.logger.debug(`🗑️ Invalidated notification cache for user ${userId}`);
   }
 
   async deleteNotification(userId: string, notificationId: number): Promise<void> {

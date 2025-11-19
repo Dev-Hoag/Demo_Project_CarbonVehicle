@@ -46,6 +46,29 @@ spring:
     password: ${RABBITMQ_PASSWORD:ccm_password_2024}
     virtual-host: ${RABBITMQ_VHOST:ccm_vhost}
 
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:ccm_redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:ccm_redis_password_2024}
+      database: ${REDIS_DB:0}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 2000ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000  # 5 minutes default TTL
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "credit:"
+
 logging:
   level:
     com.tripservice: DEBUG

@@ -11,7 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { type StringValue } from 'ms';
 import { EmailService } from './email.service';
 import { UserEventPublisher } from '../events/user-event.publisher';
-import { parseTtl } from '../../common/utils/ttl.util'; 
+import { parseTtl } from '../../common/utils/ttl.util';
+import { CacheService } from '../../redis/cache.service'; 
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly userEventPublisher: UserEventPublisher,
+    private readonly cacheService: CacheService,
   ) {}
 
   /**
@@ -114,6 +116,45 @@ export class AuthService {
     await this.userRepo.save(user);
 
     return this.generateTokens(user);
+  }
+
+  /**
+   * Logout - Blacklist token để prevent reuse
+   * Token sẽ bị blacklist cho đến khi hết hạn
+   */
+  async logout(token: string) {
+    try {
+      // Verify token để lấy expiration time
+      const decoded = this.jwtService.decode(token) as any;
+      if (!decoded || !decoded.exp) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      // Calculate TTL = time until token expires
+      const now = Math.floor(Date.now() / 1000);
+      const ttl = decoded.exp - now;
+
+      if (ttl > 0) {
+        // Blacklist token with TTL matching expiration
+        await this.cacheService.blacklistToken(token, ttl);
+        console.log(`🚫 Token blacklisted for ${ttl} seconds`);
+      }
+
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      throw new UnauthorizedException('Logout failed');
+    }
+  }
+
+  /**
+   * Validate token không bị blacklist
+   */
+  async validateToken(token: string): Promise<boolean> {
+    const isBlacklisted = await this.cacheService.isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      throw new UnauthorizedException('Token has been revoked');
+    }
+    return true;
   }
 
   /**

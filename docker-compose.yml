@@ -27,9 +27,38 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  # ==================== CACHE & SESSION STORE ====================
+  redis:
+    image: redis:7.2-alpine
+    container_name: ccm_redis
+    hostname: ccm_redis
+    ports:
+      - "6379:6379"    # Redis protocol
+    command: >
+      redis-server
+      --requirepass ccm_redis_password_2024
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    networks:
+      - ccm_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
 volumes:
   rabbitmq_data:
     external: true
+  redis_data:
+    driver: local
 
 networks:
   ccm_net:

@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Credit Service Database
+  credit-db:
+    image: mysql:8.0
+    container_name: ccm_credit_db
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: trip_service_db
+    ports:
+      - "3311:3306"
+    volumes:
+      - credit_db_data:/var/lib/mysql
+    networks:
+      - ccm_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Credit Service
+  credit-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ccm_credit_service
+    ports:
+      - "8083:8083"
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:mysql://credit-db:3306/trip_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      
+      # Redis Cache
+      REDIS_HOST: ccm_redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ccm_redis_password_2024
+      REDIS_DB: 0
+      
+      # RabbitMQ
+      RABBITMQ_HOST: ccm_rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ccm_admin
+      RABBITMQ_PASSWORD: ccm_password_2024
+      RABBITMQ_VHOST: ccm_vhost
+    depends_on:
+      credit-db:
+        condition: service_healthy
+    networks:
+      - ccm_net
+    restart: unless-stopped
+
+volumes:
+  credit_db_data:
+
+networks:
+  ccm_net:
+    external: true

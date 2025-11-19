@@ -10,6 +10,9 @@ import { getDatabaseConfig } from './config/database.config';
 import { JwtStrategy } from './shared/strategies/jwt.strategy';
 import { Reserve } from './shared/entities/reserve.entity';
 
+// Redis Cache Module
+import { RedisCacheModule } from './redis/redis-cache.module';
+
 // Modules
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
@@ -60,6 +63,9 @@ import { ConsumersModule } from './modules/consumers/consumers.module';
       }),
       inject: [ConfigService],
     }),
+
+    // Redis Cache Module (Global)
+    RedisCacheModule,
 
     // Feature Modules
     WalletsModule,

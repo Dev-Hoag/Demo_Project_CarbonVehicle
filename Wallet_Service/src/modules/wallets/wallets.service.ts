@@ -10,6 +10,7 @@ import { WalletStatus, TransactionType, TransactionStatus } from '../../shared/e
 import { CreateDepositDto, TransferFundsDto } from '../../shared/dtos/wallet.dto';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { randomUUID } from 'crypto';
+import { WalletCacheService } from './wallet-cache.service';
 
 @Injectable()
 export class WalletsService {
@@ -22,9 +23,18 @@ export class WalletsService {
     private readonly auditRepo: Repository<WalletAuditLog>,
     private readonly amqp: AmqpConnection,
     private readonly dataSource: DataSource,
+    private readonly walletCacheService: WalletCacheService,
   ) {}
 
   async getOrCreateWallet(userId: string): Promise<Wallet> {
+    // Check cache first
+    const cached = await this.walletCacheService.getWalletBalance(userId);
+    if (cached) {
+      console.log(`🎯 CACHE HIT: Wallet balance for user ${userId}`);
+      return cached;
+    }
+
+    console.log(`💾 CACHE MISS: Wallet balance for user ${userId} - Fetching from database`);
     let wallet = await this.walletRepo.findOne({ where: { userId } });
     
     if (!wallet) {
@@ -38,10 +48,22 @@ export class WalletsService {
       await this.walletRepo.save(wallet);
     }
 
+    // Cache the wallet for 5 minutes
+    await this.walletCacheService.setWalletBalance(userId, wallet, 300);
+    console.log(`✅ Cached wallet balance for user ${userId} (TTL: 300s)`);
+
     return wallet;
   }
 
   async getWalletSummary(userId: string) {
+    // Check cache first
+    const cached = await this.walletCacheService.getWalletSummary(userId);
+    if (cached) {
+      console.log(`🎯 CACHE HIT: Wallet summary for user ${userId}`);
+      return cached;
+    }
+
+    console.log(`💾 CACHE MISS: Wallet summary for user ${userId} - Fetching from database`);
     const wallet = await this.getOrCreateWallet(userId);
     
     // Get transaction stats
@@ -61,7 +83,7 @@ export class WalletsService {
       .andWhere('t.status = :status', { status: TransactionStatus.COMPLETED })
       .getRawOne();
 
-    return {
+    const result = {
       wallet,
       summary: {
         totalDeposited: Number(deposits.total) || 0,
@@ -70,6 +92,12 @@ export class WalletsService {
         lockedBalance: Number(wallet.lockedBalance),
       },
     };
+
+    // Cache the summary for 5 minutes
+    await this.walletCacheService.setWalletSummary(userId, result, 300);
+    console.log(`✅ Cached wallet summary for user ${userId} (TTL: 300s)`);
+
+    return result;
   }
 
   async initiateDeposit(userId: string, dto: CreateDepositDto) {
@@ -170,6 +198,10 @@ export class WalletsService {
       transactionId: transaction.id,
       description,
     }));
+
+    // Invalidate cache after deposit
+    await this.walletCacheService.invalidateAllForUser(userId);
+    console.log(`🗑️ Cache invalidated after deposit for user ${userId}`);
     return { wallet, transaction };
   }
 
@@ -206,6 +238,11 @@ export class WalletsService {
       transactionId: transaction.id,
       description,
     }));
+
+    // Invalidate cache after withdrawal
+    await this.walletCacheService.invalidateAllForUser(userId);
+    console.log(`🗑️ Cache invalidated after withdrawal for user ${userId}`);
+
     return { wallet, transaction };
   }
 
@@ -342,6 +379,11 @@ export class WalletsService {
       });
 
       await queryRunner.commitTransaction();
+
+      // Invalidate cache for both sender and recipient
+      await this.walletCacheService.invalidateAllForUser(fromUserId);
+      await this.walletCacheService.invalidateAllForUser(dto.toUserId.toString());
+      console.log(`🗑️ Cache invalidated after transfer for users ${fromUserId} and ${dto.toUserId}`);
 
       // Publish transfer event
       await this.amqp.publish('ccm.events', 'transfer.completed', {

@@ -5,6 +5,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { EventsModule } from './modules/events/events.module';
 import { NotificationGateway } from './modules/notification/notification.gateway';
+import { RedisCacheModule } from './redis/redis-cache.module';
 
 @Module({
   imports: [
@@ -12,6 +13,8 @@ import { NotificationGateway } from './modules/notification/notification.gateway
       isGlobal: true,
       envFilePath: '.env',
     }),
+    // Redis Cache Module - Global
+    RedisCacheModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

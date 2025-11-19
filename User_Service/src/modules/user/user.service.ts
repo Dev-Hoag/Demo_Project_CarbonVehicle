@@ -20,6 +20,7 @@ import {
   SuspendUserDto,
 } from '../../shared/dtos/internal-user.dto';
 import { UserEventPublisher } from '../events/user-event.publisher';
+import { CacheService } from '../../redis/cache.service';
 
 @Injectable()
 export class UserService {
@@ -34,6 +35,7 @@ export class UserService {
     private readonly actionLogRepo: Repository<UserActionLog>,
     private readonly eventEmitter: EventEmitter2,
     private readonly userEventPublisher: UserEventPublisher,
+    private readonly cacheService: CacheService,
   ) {}
 
   /**
@@ -72,8 +74,21 @@ export class UserService {
 
   /**
    * Lấy profile của user (cho authenticated user)
+   * Cached with Redis for 1 hour
    */
   async getProfile(userId: number) {
+    // Convert userId to UUID format for cache key consistency
+    const userIdUUID = `00000000-0000-0000-0000-${String(userId).padStart(12, '0')}`;
+    
+    // Try to get from cache first
+    const cached = await this.cacheService.getUserProfile(userIdUUID);
+    if (cached) {
+      this.logger.log(`🎯 CACHE HIT for user ${userId} (key: ${userIdUUID})`);
+      return cached;
+    }
+
+    this.logger.log(`💾 CACHE MISS for user ${userId} - Fetching from database`);
+
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -89,7 +104,13 @@ export class UserService {
       passwordChangedAt: user.passwordChangedAt,
     });
 
-    return this.toProfileResponse(user, profile);
+    const result = this.toProfileResponse(user, profile);
+
+    // Cache the result for 1 hour
+    await this.cacheService.setUserProfile(userIdUUID, result, 3600);
+    this.logger.log(`✅ Cached user ${userId} profile for 3600 seconds`);
+
+    return result;
   }
 
   /**
@@ -97,6 +118,7 @@ export class UserService {
    * - User có thể update: fullName, phone, address, bio, v.v.
    * - Fields phụ thuộc userType: vehicleType (EV_OWNER), companyName (BUYER), certificationNumber (CVA)
    * - Log action và emit event
+   * - Invalidate cache after update
    */
   async updateProfile(userId: number, dto: UpdateProfileDto) {
     let profile: UserProfile | null = await this.profileRepo.findOne({
@@ -110,6 +132,11 @@ export class UserService {
     }
 
     await this.profileRepo.save(profile);
+
+    // Invalidate cache
+    const userIdUUID = `00000000-0000-0000-0000-${String(userId).padStart(12, '0')}`;
+    await this.cacheService.invalidateUserProfile(userIdUUID);
+    this.logger.debug(`🗑️ Invalidated cache for user ${userId}`);
 
     // Log action
     await this.logAction(

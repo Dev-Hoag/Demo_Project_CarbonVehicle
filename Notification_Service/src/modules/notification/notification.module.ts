@@ -9,6 +9,8 @@ import { DeviceToken } from './entities/device-token.entity';
 import { NotificationLog } from './entities/notification-log.entity';
 import { NotificationTemplate } from './entities/notification-template.entity';
 import { FirebaseModule } from '../firebase/firebase.module';
+import { NotificationCacheService } from './notification-cache.service';
+import { CacheService } from '../../redis/cache.service';
 
 @Module({
   imports: [
@@ -22,7 +24,7 @@ import { FirebaseModule } from '../firebase/firebase.module';
     FirebaseModule,
   ],
   controllers: [NotificationController, InternalNotificationController],
-  providers: [NotificationService, NotificationGateway],
+  providers: [NotificationService, NotificationGateway, NotificationCacheService, CacheService],
   exports: [NotificationService, NotificationGateway],
 })
 export class NotificationModule {}

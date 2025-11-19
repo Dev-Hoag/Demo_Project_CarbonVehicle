@@ -18,6 +18,7 @@ import { useAuthStore } from '../store/authStore';
 import { userApi, type UpdateProfileData } from '../api/user';
 import toast from 'react-hot-toast';
 import { ChangePasswordDialog } from '../components/ChangePasswordDialog';
+import { RedisTestPanel } from '../components/RedisTestPanel';
 
 export const ProfilePage: React.FC = () => {
   const { user, setUser } = useAuthStore();
@@ -291,6 +292,11 @@ export const ProfilePage: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Redis Cache Test Panel */}
+        <Grid size={{ xs: 12 }}>
+          <RedisTestPanel />
         </Grid>
       </Grid>
 
