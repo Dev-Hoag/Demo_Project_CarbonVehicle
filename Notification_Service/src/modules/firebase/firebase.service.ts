@@ -17,10 +17,10 @@ export class FirebaseService implements OnModuleInit {
       
       this.firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: this.configService.get<string>('FIREBASE_PROJECT_ID'),
+        // Use project_id from service account JSON instead of env
       });
       
-      console.log('✅ Firebase Admin SDK initialized');
+      console.log(`✅ Firebase Admin SDK initialized for project: ${serviceAccount.project_id}`);
     } else {
       console.warn('⚠️  Firebase service account file not found. Push notifications will be disabled.');
       console.warn(`Looking for: ${serviceAccountPath}`);
@@ -77,6 +77,8 @@ export class FirebaseService implements OnModuleInit {
       throw new Error('Firebase not initialized');
     }
 
+    console.log(`📤 Sending FCM to ${tokens.length} device(s):`, { title, body, tokens: tokens.map(t => t.substring(0, 30) + '...') });
+
     const message: admin.messaging.MulticastMessage = {
       tokens,
       notification: {
@@ -86,7 +88,17 @@ export class FirebaseService implements OnModuleInit {
       data: data || {},
     };
 
-    return await admin.messaging().sendEachForMulticast(message);
+    try {
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`✅ FCM multicast sent: ${response.successCount}/${tokens.length} successful`);
+      if (response.failureCount > 0) {
+        console.error(`❌ FCM failures:`, response.responses.filter(r => !r.success).map(r => r.error?.message));
+      }
+      return response;
+    } catch (error) {
+      console.error('❌ FCM multicast error:', error);
+      throw error;
+    }
   }
 
   async verifyIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {

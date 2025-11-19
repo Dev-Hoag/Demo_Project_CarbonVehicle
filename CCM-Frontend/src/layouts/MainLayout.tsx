@@ -35,6 +35,7 @@ import {
   VerifiedUser as VerifiedUserIcon,
   CheckCircle as CheckCircleIcon,
   Gavel as GavelIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
 import { NotificationBell } from '../components/NotificationBell';
@@ -56,6 +57,7 @@ const menuItems: MenuItem[] = [
   { title: 'My Certificates', path: '/certificates', icon: <VerifiedUserIcon /> },
   { title: 'Verifications', path: '/verifications', icon: <CheckCircleIcon />, cvaOnly: true },
   { title: 'CVA Certificates', path: '/cva/certificates', icon: <VerifiedUserIcon />, cvaOnly: true },
+  { title: 'CVA Reports', path: '/cva/reports', icon: <AssessmentIcon />, cvaOnly: true },
   { title: 'Marketplace', path: '/listings', icon: <ListIcon /> },
   { title: 'My Listings', path: '/my-listings', icon: <ShoppingIcon /> },
   { title: 'My Bids', path: '/my-bids', icon: <GavelIcon /> },

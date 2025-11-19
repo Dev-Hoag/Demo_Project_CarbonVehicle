@@ -81,7 +81,8 @@ export const NotificationBell: React.FC = () => {
   useEffect(() => {
     if (!user?.id) return;
     
-    const userId = user.id.toString();
+    // Convert numeric userId to UUID format (00000000-0000-0000-0000-000000000038)
+    const userId = `00000000-0000-0000-0000-${String(user.id).padStart(12, '0')}`;
     
     // Prevent double connection in React StrictMode
     if (isConnectingRef.current || socketRef.current?.connected) {

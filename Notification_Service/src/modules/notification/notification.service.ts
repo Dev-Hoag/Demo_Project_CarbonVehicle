@@ -60,7 +60,13 @@ export class NotificationService {
       await this.logStatus(notification.id, 'SENDING');
 
       if (channel === NotificationChannel.PUSH) {
-        await this.sendPushNotification(userId, title, message, data);
+        // Convert all data values to strings for FCM
+        const stringData = data ? Object.entries(data).reduce((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {} as Record<string, string>) : undefined;
+        
+        await this.sendPushNotification(userId, title, message, stringData);
       } else if (channel === NotificationChannel.EMAIL) {
         // TODO: Implement email sending
         this.logger.log('Email sending not yet implemented');

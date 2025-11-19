@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 
 import theme from './theme';
 import { useAuthStore } from './store/authStore';
+import { useFirebaseNotifications } from './hooks/useFirebaseNotifications';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -30,6 +31,7 @@ import KYCPage from './pages/KYC';
 import CertificatesPage from './pages/Certificates';
 import { VerificationsPage } from './pages/Verifications';
 import { CVACertificatesPage } from './pages/CVACertificates';
+import CVAReportsPage from './pages/CVAReports';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -67,6 +69,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 function App() {
+  // Initialize Firebase notifications
+  useFirebaseNotifications();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
@@ -112,6 +117,7 @@ function App() {
               <Route path="/certificates" element={<CertificatesPage />} />
               <Route path="/verifications" element={<VerificationsPage />} />
               <Route path="/cva/certificates" element={<CVACertificatesPage />} />
+              <Route path="/cva/reports" element={<CVAReportsPage />} />
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/my-listings" element={<MyListingsPage />} />
               <Route path="/my-bids" element={<MyBidsPage />} />

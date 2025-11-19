@@ -100,6 +100,7 @@ export interface TransactionReportParams {
   startDate?: string;
   endDate?: string;
   groupBy?: 'day' | 'week' | 'month';
+  limit?: number;
 }
 
 export interface WalletReportParams {
