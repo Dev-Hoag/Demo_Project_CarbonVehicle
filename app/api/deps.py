@@ -59,8 +59,11 @@ def get_current_user(
 
     # Expect payload to contain sub, email, role
     user_id = payload.get("sub") or payload.get("id")
+    # Convert to string if it's a number (User Service sends number)
+    if user_id is not None and not isinstance(user_id, str):
+        user_id = str(user_id)
     email = payload.get("email")
-    role = payload.get("role")
+    role = payload.get("role") or payload.get("userType")  # Support both role and userType
     if not user_id or not role:
         logger.error(f"❌ Token missing claims: user_id={user_id}, role={role}")
         raise UnauthorizedException("Token missing required claims")

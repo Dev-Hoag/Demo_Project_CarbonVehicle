@@ -20,10 +20,16 @@ def handle_trip_submitted(payload: dict):
     db: Session = next(get_db())
 
     try:
-        trip_id = payload.get("trip_id")
-        user_id = payload.get("user_id")
-        co2_saved = payload.get("co2_saved_kg") or payload.get("co2_saved")
-        credits = payload.get("credits_suggested") or payload.get("credit_amount") or payload.get("credits")
+        # Support both camelCase (Java) and snake_case (Python) field names
+        trip_id = payload.get("trip_id") or payload.get("tripId")
+        user_id = payload.get("user_id") or payload.get("userId")
+        co2_saved = (payload.get("co2_saved_kg") or 
+                     payload.get("co2_saved") or 
+                     payload.get("carbonCredits"))
+        credits = (payload.get("credits_suggested") or 
+                   payload.get("credit_amount") or 
+                   payload.get("credits") or
+                   payload.get("carbonCredits"))
 
         # Validate required fields
         if not trip_id or not user_id:

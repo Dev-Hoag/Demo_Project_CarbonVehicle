@@ -91,10 +91,12 @@ def decode_token(token: str) -> dict:
         UnauthorizedException: Nếu token invalid/expired
     """
     try:
+        # Decode without validating subject type (User Service sends number)
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
+            algorithms=[settings.JWT_ALGORITHM],
+            options={"verify_sub": False}  # Don't validate subject type
         )
         return payload
     except JWTError as e:

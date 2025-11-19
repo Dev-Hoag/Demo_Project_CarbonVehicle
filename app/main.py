@@ -38,6 +38,12 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Database connection failed: {str(e)}")
         raise
     
+    # Start RabbitMQ consumer in background thread
+    if settings.EVENT_BUS_TYPE == 'rabbitmq':
+        logger.info("🐰 Starting RabbitMQ event consumer...")
+        Thread(target=start_consumer, daemon=True).start()
+        logger.info("✅ RabbitMQ consumer started")
+    
     logger.info("✅ Service started successfully")
     logger.info(f"📖 Swagger UI: http://localhost:{settings.PORT}/docs")
     logger.info(f"📚 ReDoc: http://localhost:{settings.PORT}/redoc")
@@ -56,6 +62,7 @@ async def lifespan(app: FastAPI):
 # ============================================
 app = FastAPI(
     title="🌿 Verification (CVA) Service API",
+    lifespan=lifespan,
     description="""
     ## Carbon Verification & Audit Service
     
@@ -132,8 +139,7 @@ app = FastAPI(
     },
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    lifespan=lifespan
+    openapi_url="/openapi.json"
 )
 
 

@@ -9,6 +9,7 @@ def get_connection():
     params = pika.ConnectionParameters(
         host=settings.RABBITMQ_HOST,
         port=settings.RABBITMQ_PORT,
+        virtual_host='ccm_vhost',  # Use CCM RabbitMQ vhost
         credentials=credentials,
         heartbeat=600,
         blocked_connection_timeout=300

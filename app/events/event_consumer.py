@@ -10,12 +10,19 @@ import pika
 def on_message(ch, method, properties, body):
     try:
         msg = json.loads(body)
-        event_type = msg.get('event_type')
-        data = msg.get('data') or msg.get('payload')
+        # Support both formats: {event_type: "TripSubmitted"} and {eventType: "trip.submitted"}
+        event_type = msg.get('event_type') or msg.get('eventType')
+        # If no data/payload wrapper, use msg itself as data
+        data = msg.get('data') or msg.get('payload') or msg
+        
         logger.info(f"[Verification] Received event {event_type}")
+        logger.debug(f"[Verification] Event data: {data}")
 
-        if event_type == 'TripSubmitted':
+        # Match both TripSubmitted and trip.submitted
+        if event_type in ('TripSubmitted', 'trip.submitted'):
             handle_trip_submitted(data)
+        else:
+            logger.warning(f"[Verification] Unhandled event type: {event_type}")
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:

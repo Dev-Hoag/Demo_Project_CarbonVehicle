@@ -3,6 +3,8 @@ version: '3.8'
 networks:
   app-network:
     driver: bridge
+  ccm_net:
+    external: true
 
 volumes:
   mysql-data:
@@ -19,7 +21,7 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: verification_db
     ports:
-      - "3306:3306"
+      - "3326:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d
@@ -31,18 +33,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # ================================
-  # RabbitMQ Message Broker
-  # ================================
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    restart: unless-stopped
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - app-network
+  # RabbitMQ - Use existing CCM RabbitMQ
+  # Comment out to use shared RabbitMQ from main system
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitmq
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   networks:
+  #     - app-network
 
   # ================================
   # Verification Service (FastAPI)
@@ -60,14 +61,15 @@ services:
     depends_on:
       verification-mysql:
         condition: service_healthy
-      rabbitmq:
-        condition: service_started
+      # rabbitmq:
+      #   condition: service_started
     networks:
       - app-network
-    volumes:
-      - ./app:/app
-      - ./logs:/app/logs
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
+      - ccm_net
+    # volumes:
+    #   - ./app:/app
+    #   - ./logs:/app/logs
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8006
 
   # ================================
   # Verification Event Consumer
@@ -79,16 +81,18 @@ services:
     container_name: verification-consumer
     restart: unless-stopped
     depends_on:
-      rabbitmq:
-        condition: service_started
+      # rabbitmq:
+      #   condition: service_started
       verification-mysql:
         condition: service_healthy
     env_file:
       - .env
     networks:
       - app-network
-    volumes:
-      - ./app:/app
+      - ccm_net  # Add CCM network to connect to RabbitMQ
+    # Remove volume mount to avoid overwriting container code
+    # volumes:
+    #   - ./app:/app
     command: python -m app.events.event_consumer
 
   # ================================
@@ -96,10 +100,10 @@ services:
   # ================================
   adminer:
     image: adminer
-    container_name: adminer
+    container_name: verification-adminer
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8086:8080"
     environment:
       ADMINER_DEFAULT_SERVER: verification-mysql
       ADMINER_DESIGN: nette
