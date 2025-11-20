@@ -1,23 +1,126 @@
 
-
-# Node/React/NestJS/Docker ignore
+# ==================== DEPENDENCIES ====================
+# Node.js
 node_modules/
-dist/
-build/
-uploads/
-mysql_data/
-coverage/
-.env
-.env.*
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.DS_Store
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Java/Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# ==================== BUILD OUTPUT ====================
+dist/
+build/
+out/
+*.bundle.js
+*.bundle.css
+
+# ==================== ENVIRONMENT & CONFIG ====================
+.env
+.env.*
+!.env.example
+*.local
+
+# ==================== LOGS ====================
+*.log
+logs/
+*.log.*
+
+# ==================== DATABASE & STORAGE ====================
+mysql_data/
+postgres_data/
+redis_data/
+uploads/
 *.sqlite
+*.sqlite3
+*.db
+
+# ==================== IDE & EDITOR ====================
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+.DS_Store
+*.iml
 
+# ==================== TESTING ====================
+coverage/
+.nyc_output/
+test-results/
+*.spec.js.snap
+
+# ==================== DOCKER ====================
+# Keep docker-compose files but ignore volumes
+# docker-compose.override.yml
+
+# ==================== TEMPORARY FILES ====================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.old
+
+# ==================== OS GENERATED ====================
+Thumbs.db
+desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ==================== SPECIFIC PATHS ====================
 libs/events/node_modules/
 libs/events/dist/
+
+# ==================== TRASH/LEGACY ====================
+DB-Trash/
+*.doc
+*.docx
+*-backup*
+*-old*
+*.ps1
+systemoverview.doc
+
+# ==================== SERVICE SPECIFIC ====================
+# Admin Service
+Admin_Service/Admin-Service
+Admin_Service/mysql_data/
+Admin_Service/node_modules/
+Admin_Service/dist/
+
+# Certificate Service  
+Certificate-Service/uploads/
+Certificate-Service/__pycache__/
+
+# Frontend
+CCM-Frontend/node_modules/
+CCM-Frontend/dist/
+
+# All services
+**/node_modules/
+**/dist/
+**/mysql_data/
+**/uploads/
+**/__pycache__/
+**/target/
