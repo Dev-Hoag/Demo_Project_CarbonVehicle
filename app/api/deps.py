@@ -72,8 +72,13 @@ def get_current_user(
 
 
 def get_current_cva_user(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
-    if current_user.role != "CVA":
-        raise ForbiddenException("CVA role required")
+    from app.utils.logger import logger
+    # Allow both CVA and ADMIN roles to access CVA reports
+    logger.info(f"🔍 CVA access check: user_id={current_user.id}, role={current_user.role}")
+    if current_user.role not in ["CVA", "ADMIN"]:
+        logger.warning(f"❌ Access denied: role '{current_user.role}' not in ['CVA', 'ADMIN']")
+        raise ForbiddenException("CVA or ADMIN role required")
+    logger.info(f"✅ CVA access granted for role: {current_user.role}")
     return current_user
 
 
