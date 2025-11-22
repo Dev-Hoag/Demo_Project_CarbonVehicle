@@ -1,14 +1,14 @@
 server:
-  port: ${PORT:8083}
+  port: ${PORT:8093}
   servlet:
     context-path: /api
 
 spring:
   application:
-    name: trip-service
+    name: credit-service
 
   datasource:
-    url: "jdbc:mysql://localhost:3306/trip_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    url: "jdbc:mysql://localhost:3306/credit_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver

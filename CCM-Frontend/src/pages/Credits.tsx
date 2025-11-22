@@ -98,11 +98,9 @@ export const CreditsPage: React.FC = () => {
 
   const fetchTransactions = async () => {
     try {
-      const response = await creditTransactionApi.getByUserId(userUUID, {
-        page: 0,
-        size: 50,
-      });
-      const data = response.data.data?.content || response.data.data || [];
+      // Use public user endpoint instead of admin endpoint
+      const response = await creditTransactionApi.getRecentByUser(userUUID, 50);
+      const data = response.data.data || [];
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Failed to fetch transactions:', err);
