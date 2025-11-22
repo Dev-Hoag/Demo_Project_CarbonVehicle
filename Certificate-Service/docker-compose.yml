@@ -1,0 +1,86 @@
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:5.7
+    container_name: certificate_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: certificate_service_db
+      MYSQL_USER: certuser
+      MYSQL_PASSWORD: certpassword
+    ports:
+      - "3327:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - certificate_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ - Use existing CCM RabbitMQ
+  # Comment out to use shared RabbitMQ from main system
+  # rabbitmq:
+  #   image: rabbitmq:3.12-management
+  #   container_name: certificate_rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: guest
+  #     RABBITMQ_DEFAULT_PASS: guest
+  #   ports:
+  #     - "5673:5672"   # AMQP port
+  #     - "15673:15672" # Management UI
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   networks:
+  #     - certificate_network
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Certificate Service
+  certificate-service:
+    build: .
+    container_name: certificate_service
+    env_file:
+      - .env
+    ports:
+      - "3011:3009"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./templates:/app/templates
+    depends_on:
+      mysql:
+        condition: service_healthy
+      # rabbitmq:
+      #   condition: service_healthy
+    networks:
+      - certificate_network
+      - ccm_net
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    container_name: certificate_adminer
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    networks:
+      - certificate_network
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
+
+networks:
+  certificate_network:
+    driver: bridge
+  ccm_net:
+    external: true
